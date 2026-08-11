@@ -342,20 +342,53 @@ test_afterwards() {
   # switched off.
   local since="${1:-}" upto="${2:-}" open_end=0 upto_given=0
   [ -n "$upto" ] && upto_given=1
-  if [ -z "$since" ] && [ -f "$log" ]; then
-    since="$(grep -F 'Blijf actief AAN' "$log" | tail -1 | cut -c1-19)"
+
+  # The archive counts too. Since the log started rotating by rename, a session that ended
+  # just as the file passed a megabyte leaves its markers in dopamine-code.1.log and an
+  # empty current log — which used to leave BOTH bounds unset and hand the whole pmset
+  # history to the verdict.
+  # An ARRAY, not a string. The log path contains a space ("Logs/Dopamine Code/"), so an
+  # unquoted "$sources" word-splits into two non-existent files and every read silently
+  # returns nothing — the same unquoted-path-with-a-space that once made this whole section
+  # print an empty report.
+  local archive="${log%.log}.1.log"
+  local -a sources=("$log")
+  [ -f "$archive" ] && sources=("$archive" "$log")
+
+  if [ -z "$since" ]; then
+    since="$(cat "${sources[@]}" 2>/dev/null | grep -F 'Blijf actief AAN' | tail -1 | cut -c1-19)"
   fi
   if [ -z "$since" ]; then
-    echo "  Geen sessiestart gevonden; het hele logboek wordt bekeken."
-    echo "  Beter: geef er een mee — ./verify.sh --after '2026-08-11 22:00:00'"
+    # Fail closed. With no window the filter passed every Sleep event ever recorded, and
+    # this machine has four perfectly ordinary Clamshell Sleeps from this afternoon alone —
+    # so the one tool that judges the core promise would routinely convict it. No window,
+    # no verdict.
+    skip "Geen sessiestart in het logboek gevonden — geen venster, dus geen oordeel."
+    echo "       Geef er zelf een mee als je weet wanneer de sessie liep:"
+    echo "         ./verify.sh --after '2026-08-11 17:56:37' '2026-08-11 21:14:32'"
+    echo
+    echo "  Laatste 25 regels van het logboek:"
+    cat "${sources[@]}" 2>/dev/null | tail -25 | sed 's/^/    /' || echo "    (geen logboek)"
+    return
   else
     # The end of the window is the moment the flag verifiably reached 0, whatever caused it:
     # the user, a safety net, a SIGTERM or a quit. That single log line covers all four,
     # because every one of them goes through SleepFlag.verify().
+    # Every way a session can end, not just the verified write.
+    #
+    # There is exactly one path that ends a session without SleepFlag.verify() running: the
+    # guardian finds the flag already at 0 because something outside the app cleared it —
+    # `sudo pmset -a disablesleep 0`, the command this project hands out in its own error
+    # messages. That branch writes no flag, so the verify line never appears, the window
+    # stayed open, and the next entirely ordinary lid-close got reported as a failure.
     if [ -z "$upto" ]; then
-      upto="$(awk -v s="$since" '
-        substr($0,1,19) > s && /SleepDisabled = 0, geverifieerd/ { print substr($0,1,19); exit }
-      ' "$log")"
+      upto="$(cat "${sources[@]}" 2>/dev/null | awk -v s="$since" '
+        substr($0,1,19) > s &&
+        (/SleepDisabled = 0, geverifieerd/ ||
+         /van buitenaf op 0 gezet/ ||
+         /Sessie afgesloten —/ ||
+         /Blijf actief UIT/) { print substr($0,1,19); exit }
+      ')"
     fi
     if [ -z "$upto" ]; then
       upto="$(date '+%Y-%m-%d %H:%M:%S')"
@@ -396,8 +429,11 @@ test_afterwards() {
         print
       }' | tail -20)"
 
+  # `since` is guaranteed non-empty here: the no-window case returned above rather than
+  # judging. So "binnen het venster" is now true in all three verdicts, where the FOUT and
+  # OVER texts used to claim it even when the filter had seen the entire history.
   if [ -z "$events" ]; then
-    pass "Geen enkele Sleep- of Wake-gebeurtenis${since:+ binnen het venster}."
+    pass "Geen enkele Sleep- of Wake-gebeurtenis binnen het venster."
   else
     printf '%s\n' "$events" | cut -c1-150 | sed 's/^/    /'
     if printf '%s' "$events" | grep -qi clamshell; then
@@ -409,23 +445,18 @@ test_afterwards() {
   fi
 
   echo
-  echo "  Dopamine Code's eigen logboek${since:+ binnen het venster}:"
-  if [ -f "$log" ]; then
-    if [ -n "$since" ]; then
-      awk -v s="$since" -v u="$upto" '
-        substr($0,1,19) >= s && (u == "" || substr($0,1,19) <= u)
-      ' "$log" | tail -60 | sed 's/^/    /'
-    else
-      tail -25 "$log" | sed 's/^/    /'
-    fi
-  else
-    echo "    (geen logboek op $log)"
-  fi
+  echo "  Dopamine Code's eigen logboek binnen het venster:"
+  cat "${sources[@]}" 2>/dev/null | awk -v s="$since" -v u="$upto" '
+      substr($0,1,19) >= s && (u == "" || substr($0,1,19) <= u)
+    ' | tail -60 | sed 's/^/    /' || echo "    (geen logboek op $log)"
 }
 
 case "${1:-}" in
   --report)  report; exit 0 ;;
-  --after)   test_afterwards "${2:-}" "${3:-}"; exit 0 ;;
+  # Return the real count, not 0. This is the one check that judges the core promise, and
+  # exiting 0 after printing "de Mac is door dichtklappen gaan slapen" makes a failure
+  # machine-indistinguishable from a pass — in a wrapper, a cron line, or a plain `&& echo ok`.
+  --after)   test_afterwards "${2:-}" "${3:-}"; exit "$FAILURES" ;;
   --flag)    test_flag_roundtrip ;;
   --display) test_display ;;
   *)

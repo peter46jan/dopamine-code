@@ -204,21 +204,31 @@ struct MenuView: View {
     /// were holding it awake, so the app's single promise does not hold on this machine.
     /// Deliberately stays visible after the session ends — it is not news that expires.
     private func brokenPromiseWarning(_ episode: SleepWatch.Episode) -> some View {
-        VStack(alignment: .leading, spacing: 6) {
-            Label("De Mac heeft tóch geslapen", systemImage: "exclamationmark.octagon.fill")
+        // Only the flag-was-up case is an accusation against the kernel. The other case —
+        // the flag was cleared from outside while a session was still running — is the Mac
+        // behaving correctly, and saying "dat hoort niet te kunnen" about it would be a
+        // false alarm dressed in red.
+        let broke = model.sleepBrokeThePromise
+        return VStack(alignment: .leading, spacing: 6) {
+            Label(broke ? "De Mac heeft tóch geslapen" : "Mac sliep — de vlag stond niet aan",
+                  systemImage: broke ? "exclamationmark.octagon.fill" : "exclamationmark.triangle.fill")
                 .font(.caption.weight(.semibold))
-                .foregroundStyle(.red)
-            Text(episode.describe().prefix(1).uppercased() + episode.describe().dropFirst()
-                 + ". Dat hoort niet te kunnen met SleepDisabled op 1.")
+                .foregroundStyle(broke ? .red : .orange)
+            Text(episode.describe().prefix(1).uppercased() + episode.describe().dropFirst() + ". "
+                 + (broke
+                    ? "Dat hoort niet te kunnen met SleepDisabled op 1."
+                    : "De vlag was buiten Dopamine Code om uitgezet, dus dit zegt niets over het kernelveto."))
                 .font(.caption2)
                 .foregroundStyle(.secondary)
                 .fixedSize(horizontal: false, vertical: true)
-            Text("./verify.sh --after")
-                .font(.system(.caption2, design: .monospaced))
-                .textSelection(.enabled)
+            if broke {
+                Text("./verify.sh --after")
+                    .font(.system(.caption2, design: .monospaced))
+                    .textSelection(.enabled)
+            }
         }
         .padding(8)
-        .background(Color.red.opacity(0.15), in: RoundedRectangle(cornerRadius: 6))
+        .background((broke ? Color.red : Color.orange).opacity(0.15), in: RoundedRectangle(cornerRadius: 6))
     }
 
     private var grantWarning: some View {

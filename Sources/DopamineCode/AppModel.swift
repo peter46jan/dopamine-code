@@ -73,6 +73,10 @@ final class AppModel: ObservableObject {
     /// of the session on purpose: it is the one finding that must still be on screen hours
     /// later, because it means the app's promise does not hold on this machine.
     @Published private(set) var sleepDuringSession: SleepWatch.Episode?
+    /// Whether that sleep actually broke the promise — the flag was up — or merely happened
+    /// during a session whose flag someone had already cleared from outside. The second is
+    /// correct behaviour by the kernel and must not be reported as a failure of the veto.
+    @Published private(set) var sleepBrokeThePromise = false
 
     // MARK: - Collaborators
 
@@ -547,19 +551,34 @@ final class AppModel: ObservableObject {
         }
 
         sleepDuringSession = episode
-        EventLog.shared.error(
-            "BELOFTE NIET GEHAALD — \(episode.describe()), terwijl "
-            + (intendedOn ? "er een sessie liep" : "de vlag op 1 stond") + ". "
-            + "Het kernelveto heeft het hier niet gehouden."
+
+        // Say which of the two situations this was, everywhere — not just in the log line.
+        //
+        // This branch also runs when a session is live but the flag has already been cleared
+        // from outside the app (`sudo pmset -a disablesleep 0`, the very command the README
+        // and every error message here hand out). The Mac then sleeps entirely correctly,
+        // and blaming the kernel veto for it would be a false accusation on all four
+        // channels at once: log, status, panel and notification.
+        let flagWasUp = flag == true
+        let context = flagWasUp
+            ? "terwijl de vlag op 1 stond"
+            : "terwijl de sessie liep, maar de vlag stond niet (meer) op 1"
+        let verdict = flagWasUp
+            ? " Het kernelveto heeft het hier niet gehouden."
+            : " De vlag was buiten Dopamine Code om uitgezet, dus dit zegt niets over het kernelveto."
+        let sentence = episode.describe().prefix(1).uppercased() + episode.describe().dropFirst()
+
+        EventLog.shared.log(
+            flagWasUp ? .error : .warn,
+            (flagWasUp ? "BELOFTE NIET GEHAALD — " : "Mac sliep tijdens een sessie — ")
+            + "\(episode.describe()), \(context)." + verdict
         )
-        status = .error("De Mac heeft tóch geslapen")
-        lastMessage = "\(episode.describe().prefix(1).uppercased())\(episode.describe().dropFirst()). "
-            + "Dat hoort niet te kunnen met SleepDisabled op 1. Controleer het met "
-            + "./verify.sh --after voordat je hierop vertrouwt."
+        status = .error(flagWasUp ? "De Mac heeft tóch geslapen" : "Mac sliep — vlag stond niet aan")
+        lastMessage = "\(sentence), \(context)." + verdict
+            + (flagWasUp ? " Controleer het met ./verify.sh --after voordat je hierop vertrouwt." : "")
+        sleepBrokeThePromise = flagWasUp
         Feedback.failed()
-        Notify.post(.macSlept,
-                    "\(episode.describe().prefix(1).uppercased())\(episode.describe().dropFirst()), "
-                    + "terwijl de vlag op 1 stond. Het kernelveto heeft het hier niet gehouden.")
+        Notify.post(.macSlept, "\(sentence), \(context)." + verdict)
     }
 
     /// One line every five minutes while the flag is up.
@@ -1037,7 +1056,14 @@ final class AppModel: ObservableObject {
                 // Read the lid live. The cached value lags a lid OPEN by up to ten
                 // seconds, which is long enough to blank the screen while the user is
                 // already typing their password into it.
-                guard let self, self.intendedOn, Prefs.displayOffMoment != .never,
+                // Keyed off the kernel, not off `intendedOn` — design rule 1, which this
+                // timer was quietly breaking. `forceRelease` clears `intendedOn` *before*
+                // the write; if that write fails, `endSession()` never runs, so the timer is
+                // never invalidated and keeps firing with a guard that is now permanently
+                // false. The panel would then burn under a shut lid for the rest of the
+                // night, in exactly the state — flag stuck at 1 — where it matters most.
+                guard let self, Prefs.displayOffMoment != .never,
+                      self.intendedOn || self.kernelFlag == true,
                       SleepFlag.clamshellClosed() ?? self.lidClosed,
                       !DisplayControl.externalDisplayActive else { return }
 

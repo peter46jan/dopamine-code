@@ -73,13 +73,32 @@ final class SleepWatch {
     }()
 
     /// Total seconds the system has slept since boot, from the kernel's own two clocks.
+    ///
+    /// **The order of these two reads is load-bearing.** Swift evaluates the left operand of
+    /// an infix operator first, so `continuous - absolute` samples the continuous clock at
+    /// T1 and the awake clock at T2 > T1, which yields `offset - (T2 - T1)`. On a Mac that
+    /// has not slept since boot the offset is exactly zero, so that underflows and `&-`
+    /// wraps it to about 7.7 × 10¹¹ seconds.
+    ///
+    /// Measured over two million paired reads on this machine: reading continuous first
+    /// lands below the true offset in 8.6% of samples; reading the awake clock first did so
+    /// in 0 of 2,000,000. So this is a deterministic consequence of the read order, not
+    /// noise — and reading `awake` first makes the difference `offset + (T2 - T1)`, which
+    /// cannot be negative.
+    ///
+    /// It never showed up in testing here because this Mac had twelve days of accumulated
+    /// sleep, which swamps a one-tick skew. A freshly rebooted machine has an offset of zero
+    /// and hits it within minutes.
     static func sleptSinceBoot() -> Double {
-        let ticks = mach_continuous_time() &- mach_absolute_time()
+        let awake = mach_absolute_time()
+        let total = mach_continuous_time()
         let tb = timebase
-        return Double(ticks) * Double(tb.numer) / Double(tb.denom) / 1_000_000_000
+        return Double(total &- awake) * Double(tb.numer) / Double(tb.denom) / 1_000_000_000
     }
 
     private var lastReading: Double
+    /// Wall clock at the previous sample, for the plausibility bound below.
+    private var lastSampleAt = Date()
     private var observers: [NSObjectProtocol] = []
     private let onNotification: (String) -> Void
 
@@ -96,6 +115,7 @@ final class SleepWatch {
     func start() {
         stop()
         lastReading = Self.sleptSinceBoot()
+        lastSampleAt = Date()
         let centre = NSWorkspace.shared.notificationCenter
         observers.append(centre.addObserver(
             forName: NSWorkspace.willSleepNotification, object: nil, queue: .main
@@ -121,9 +141,24 @@ final class SleepWatch {
     /// is exact, only the moment of noticing is rounded.
     func sample() -> Episode? {
         let now = Self.sleptSinceBoot()
-        defer { lastReading = now }
+        let wallGap = Date().timeIntervalSince(lastSampleAt)
+        defer { lastReading = now; lastSampleAt = Date() }
+
         let delta = now - lastReading
         guard delta >= Self.floorSeconds else { return nil }
+
+        // The machine cannot have slept longer than the wall clock has advanced since the
+        // previous sample. Anything past that is a measurement fault, and this alarm is far
+        // too loud — red panel, sticky error status, notification, sound — to be raised on
+        // a number that is impossible on its face. Defence in depth behind the read-order
+        // fix above, and a net under whatever the next surprise turns out to be.
+        guard delta <= wallGap + 5 else {
+            EventLog.shared.warn(
+                "Slaapmeting genegeerd: \(Int(delta)) s geslapen gemeld binnen een venster van "
+                + "\(Int(wallGap)) s, wat niet kan."
+            )
+            return nil
+        }
         return Episode(detectedAt: Date(), seconds: delta)
     }
 }
