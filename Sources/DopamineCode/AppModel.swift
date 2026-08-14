@@ -321,13 +321,17 @@ final class AppModel: ObservableObject {
     /// duration there rendered "vangnet na 7 uur" directly above the red "vangnetten staan
     /// uit" panel: a promise that the Mac would be allowed to sleep in seven hours, made at
     /// the one moment nothing was going to release it.
+    ///
+    /// The off case returns nil. It used to preview "stopt straks vanzelf na 4 u 30 min", but
+    /// under the header "Wakker houden staat uit" that reads as a running countdown while
+    /// nothing is running — and the duration is already on the Duur row right below, so the
+    /// line was both contradictory and redundant.
     var safetyNetLine: String? {
         if let remaining = remainingText { return remaining }
         if kernelFlag == true && !intendedOn {
             return "de Mac wordt wakker gehouden zonder dat er iets loopt — niets stopt dat vanzelf"
         }
-        if status.isOn { return nil }
-        return "stopt straks vanzelf na \(configuredDurationText)"
+        return nil
     }
 
     static func durationText(_ total: Int) -> String {
