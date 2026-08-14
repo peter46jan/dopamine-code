@@ -2,6 +2,33 @@ import AppKit
 import Combine
 import SwiftUI
 
+/// Eén verzoek om een sessie, wie het ook doet.
+///
+/// Eén waardetype in plaats van vier startfuncties: een volgende fase voegt hier een veld
+/// toe in plaats van een tweede weg naar binnen — en een tweede weg naar binnen is een
+/// tweede plek waar de accugrens, de warmtegrens of de wachtwoordvrijstelling vergeten kan
+/// worden.
+struct SessionRequest {
+    var trigger: SessionTrigger
+    /// `nil` = de duur die in het paneel staat (`Prefs.autoOffMinutes`).
+    var limitMinutes: Int? = nil
+    /// De sessie stopt zodra dit proces weg is — of eerder, als de timer eerder is.
+    var bindToPID: pid_t? = nil
+    /// Harde bovengrens, bijvoorbeeld een eindtijd of straks een schemavenster.
+    var notLaterThan: Date? = nil
+}
+
+/// Wat er van een verzoek terechtkwam. De weigerzin moet woordelijk doorgegeven kunnen
+/// worden aan de opdrachtregel, en een script moet kunnen zien wat het écht kreeg in plaats
+/// van te denken dat het meer kreeg.
+enum SessionStartResult {
+    case gestart(deadline: Date, minuten: Int)
+    case liepAl(deadline: Date?)
+    case geweigerd(reden: String)
+    /// Er was net iets anders bezig met de vlag. Geen fout: probeer het zo weer.
+    case bezet
+}
+
 /// Single source of truth.
 ///
 /// The central design rule, learned the hard way: **the safety nets key off the kernel
@@ -12,6 +39,11 @@ import SwiftUI
 ///
 /// So there is one guardian tick that reads the kernel and decides, plus event sources
 /// that nudge it. Everything privileged runs off the main thread.
+///
+/// Alles wat een sessie kan starten — de schakelaar, de opdrachtregel, straks een trigger of
+/// een sneltoets — gaat via `startSession(_:)` naar binnen en via `stopSession(reason:)` of
+/// `releaseReason()` weer naar buiten. Vier ingangen die elk hun eigen controles nabouwen is
+/// vier keer de kans dat er eentje vergeten wordt.
 @MainActor
 final class AppModel: ObservableObject {
 
@@ -99,6 +131,45 @@ final class AppModel: ObservableObject {
     /// it then started a *second* session and pushed the deadline out by the full duration.
     @Published private(set) var intendedOn = false
     private var sessionStart: Date?
+
+    /// De duur die voor déze sessie gevraagd is, in minuten. `nil` betekent: de duur die in
+    /// het paneel staat. Staat los van `Prefs.autoOffMinutes` omdat een CLI-aanroep met
+    /// `--for 2h` de opgeslagen instelling niet mag overschrijven — dan zou het paneel na
+    /// afloop iets anders zeggen dan de gebruiker er ooit in gezet heeft.
+    private var sessionLimitMinutes: Int?
+    /// Een harde bovengrens voor déze sessie (`--until`, en straks een schemavenster). De
+    /// tijdslimiet gaat er altijd overheen: wat het eerst komt wint.
+    private var sessionNotLaterThan: Date?
+    /// Waarom de eindtijd staat waar hij staat, in gewone taal, voor de logregel bij het
+    /// aflopen. Gezet op dezelfde plek als de eindtijd zelf.
+    private var deadlineReason = "de ingestelde tijd was om"
+
+    /// Waar de lopende sessie aan hangt. `nil` = alleen de timer.
+    ///
+    /// Dit is géén tweede waarheid over "loopt er een sessie": het is een feit over een
+    /// proces. Of de sessie daardoor stopt, beslist `releaseReason()` en niets anders.
+    struct SessionBinding {
+        let identity: ProcessWatch.Identity
+        var watcher: ProcessWatch.ExitWatcher?
+        /// Of de snelle route (de procesbron) de exit gemeld heeft. Merkt de poll het als
+        /// eerste, dan werkt die route op deze machine niet en dat hoort in het logboek.
+        var fastRouteReported = false
+        /// Zodat die waarschuwing één keer komt en niet elke twintig seconden.
+        var loggedSlowDetection = false
+    }
+    @Published private(set) var binding: SessionBinding?
+
+    /// Wie de sessie gestart heeft. Gezet in hetzelfde blok als `intendedOn = true`.
+    @Published private(set) var sessionTrigger: SessionTrigger?
+
+    /// `guard !busy` dekt niet wat het lijkt te dekken: `activate` heeft twee
+    /// onderbrekingspunten (de grantcontrole en de privileged schrijf) waarop `busy` nog
+    /// vals staat, en met de CLI erbij kunnen twee aanroepen daar tegelijk doorheen. Deze
+    /// vlag sluit de hele functie af, met een `defer` zodat hij ook bij elke vroege
+    /// terugkeer weer opengaat.
+    private var activationInFlight = false
+
+    private var controlServer: ControlServer?
     private var guardianTimer: Timer?
     private var tickTimer: Timer?
     private var displayReassertTimer: Timer?
@@ -202,10 +273,59 @@ final class AppModel: ObservableObject {
         return clock.string(from: deadline)
     }
 
+    /// Waar de lopende sessie aan hangt, voor het paneel. `nil` = alleen de timer.
+    ///
+    /// Bewust naast `safetyNetLine` en niet erin: die zin gaat over wat de Mac straks weer
+    /// laat slapen, en zijn derde tak (vlag aan zonder sessie) mag niet verwateren.
+    var bindingLine: String? {
+        guard intendedOn, let binding else { return nil }
+        return "stopt ook zodra \(binding.identity.label) klaar is"
+    }
+
+    /// Dezelfde klem als `Prefs.autoOffMinutes` (5 minuten tot 24 uur), zodat een verzoek van
+    /// buiten de tijdslimiet niet kan oprekken. `nil` = de duur die in het paneel staat.
+    private func clampedMinutes(_ minutes: Int?) -> Int {
+        min(max(minutes ?? Prefs.autoOffMinutes, 5), 24 * 60)
+    }
+
+    /// De duur die voor de lopende (of eerstvolgende) sessie geldt.
+    var effectiveLimitMinutes: Int { clampedMinutes(sessionLimitMinutes) }
+
+    /// De enige plek die uitrekent wanneer een sessie afloopt.
+    ///
+    /// Twee plekken die dit uitrekenen is twee planners, en dan is de vraag "wanneer stopt
+    /// hij" niet meer te beantwoorden. `activate` en `rescheduleIfRunning` gebruiken allebei
+    /// deze functie; nergens anders wordt `deadline` geschreven, behalve in `endSession`.
+    /// De waarden staan erin als parameters zodat een verzoek van buiten eerst uitgerekend
+    /// kan worden en pas daarna toegepast — de tijdslimiet wint altijd van de bovengrens.
+    private func computeDeadline(start: Date, limitMinutes: Int?, notLaterThan: Date?) -> (date: Date, reason: String) {
+        let byLimit = start.addingTimeInterval(Double(clampedMinutes(limitMinutes)) * 60)
+        if let cap = notLaterThan, cap < byLimit {
+            return (cap, "de sessie liep tot \(Self.clockText(cap))")
+        }
+        return (byLimit, "de ingestelde tijd was om")
+    }
+
+    private func applyDeadline(start: Date) {
+        let planned = computeDeadline(start: start, limitMinutes: sessionLimitMinutes, notLaterThan: sessionNotLaterThan)
+        deadline = planned.date
+        deadlineReason = planned.reason
+    }
+
+    static func clockText(_ date: Date) -> String {
+        let clock = DateFormatter()
+        clock.dateFormat = "HH:mm"
+        return clock.string(from: date)
+    }
+
     /// Sets the duration and, if a session is running, moves its deadline with it.
     func setAutoOff(minutes: Int) {
         Prefs.autoOffMinutes = minutes
         autoOffMinutes = Prefs.autoOffMinutes   // read back, so clamping is visible in the UI
+        // De schuif wint van een duur die van buiten kwam. Zonder dit blijft een sessie die
+        // met `dopamine on --for 2h` begon op twee uur staan terwijl het paneel iets anders
+        // laat zien — en dan liegt het paneel over de enige instelling die ertoe doet.
+        sessionLimitMinutes = nil
         rescheduleIfRunning()
     }
 
@@ -274,6 +394,17 @@ final class AppModel: ObservableObject {
         sleepWatch?.start()
 
         Notify.requestAuthorisation()
+
+        // Het besturingskanaal voor de `dopamine`-opdrachtregel. Hij vraagt de app om iets
+        // te doen en drukt het antwoord af; de vlag blijft van deze app alleen.
+        let server = ControlServer { [weak self] verzoek in
+            guard let self else {
+                return .lokaal(zin: "Dopamine Code is aan het afsluiten.", code: 4)
+            }
+            return await self.handleControl(verzoek)
+        }
+        server.start()
+        controlServer = server
 
         installSignalHandlers()
         startTicking()
@@ -367,6 +498,14 @@ final class AppModel: ObservableObject {
                                               + "Herstel handmatig: sudo pmset -a disablesleep 0")
                     }
                 }
+                // Geen dood socketbestand achterlaten. Een verweesde socket geeft de
+                // volgende `dopamine`-aanroep ECONNREFUSED — dat wordt netjes gemeld als
+                // "de app draait niet", maar het bestand hoort hier weg te zijn.
+                ControlServer.removeSocketFile()
+                // Wachten tot het logboek echt geschreven is: `exit(0)` gooit weg wat er nog
+                // in de wachtrij staat, en dat zijn juist de regels die vertellen waarom de
+                // app wegging.
+                EventLog.shared.flush()
                 exit(0)
             }
             source.resume()
@@ -605,9 +744,13 @@ final class AppModel: ObservableObject {
     }
 
     /// Whether any safety net says the flag should come off right now.
+    ///
+    /// De volgorde is niet vrijblijvend. De tijdslimiet, de accugrens en de warmtegrens
+    /// staan bovenaan en de proceskoppeling eronder: een gekoppeld proces dat vastloopt mag
+    /// de timer niet uitstellen. Er komt hier nooit een vroege `return nil` bij.
     private func releaseReason() -> String? {
         if let deadline {
-            if Date() >= deadline { return "de ingestelde tijd was om" }
+            if Date() >= deadline { return deadlineReason }
         } else if intendedOn {
             // A running session with no deadline has no timer at all. Rather than let it
             // run forever, treat the missing deadline as the fault it is.
@@ -619,7 +762,34 @@ final class AppModel: ObservableObject {
         if thermal == .critical {
             return "de Mac werd te warm"
         }
+        // Onderaan, na de drie vangnetten: de enige nieuwe beslissing van fase 1. De
+        // procesbewaking meldt alleen een feit; dat een sessie daardoor eindigt staat hier,
+        // en het beëindigen zelf loopt langs precies dezelfde weg als een verlopen timer.
+        if let binding {
+            let nu = ProcessWatch.identify(binding.identity.pid)
+            if nu == nil || !(nu!.isSameProcess(as: binding.identity)) {
+                notePollDetectedExit()
+                // Een hergebruikte pid telt als verdwenen: het is een ander programma.
+                let hergebruikt = nu != nil
+                return "het proces \(binding.identity.label) is klaar"
+                    + (hergebruikt ? " (die pid is inmiddels van iets anders)" : "")
+            }
+        }
         return nil
+    }
+
+    /// De poll merkte de exit. Was de snelle route erbij, dan hoort die dat als eerste te
+    /// hebben gemeld; deed hij dat niet, dan is hij op deze machine niet te vertrouwen en
+    /// dat is stille degradatie — precies het soort ding dat je pas maanden later ontdekt.
+    private func notePollDetectedExit() {
+        guard var current = binding else { return }
+        guard current.watcher != nil, !current.fastRouteReported, !current.loggedSlowDetection else { return }
+        current.loggedSlowDetection = true
+        binding = current
+        EventLog.shared.warn(
+            "De snelle procesmelding kwam niet; pas de guardian-tik merkte dat "
+            + "\(current.identity.label) weg was. De koppeling werkt, maar reageert trager."
+        )
     }
 
     private func forceRelease(reason: String) async {
@@ -738,6 +908,15 @@ final class AppModel: ObservableObject {
         online = true
         deadline = nil
         sessionStart = nil
+        // Alle drie de sessie-instellingen weg, niet alleen de eindtijd: anders lekt een
+        // sessie zijn duur, zijn bovengrens of zijn proceskoppeling de volgende in — en dan
+        // stopt een sessie die niemand koppelde alsnog op een proces van een uur geleden.
+        sessionLimitMinutes = nil
+        sessionNotLaterThan = nil
+        deadlineReason = "de ingestelde tijd was om"
+        sessionTrigger = nil
+        binding?.watcher?.cancel()
+        binding = nil
         displayReassertTimer?.invalidate()
         displayReassertTimer = nil
         thermalWatch?.stop()
@@ -758,17 +937,127 @@ final class AppModel: ObservableObject {
 
     func setKeepAwake(_ on: Bool) {
         guard !busy else { return }
-        Task { on ? await activate() : await deactivateManually() }
+        Task {
+            if on {
+                _ = await startSession(SessionRequest(trigger: .schakelaar))
+            } else {
+                _ = await stopSession(reason: "handmatig", allowPrompt: true)
+            }
+        }
     }
 
-    private func activate() async {
+    /// De enige publieke manier om een sessie te starten — voor de schakelaar, de
+    /// opdrachtregel en alles wat er nog bij komt.
+    ///
+    /// Vier ingangen die elk hun eigen controles nabouwen is vier keer de kans dat er eentje
+    /// de accugrens, de warmtegrens of de wachtwoordvrijstelling vergeet.
+    func startSession(_ request: SessionRequest) async -> SessionStartResult {
+        guard !busy, !activationInFlight else { return .bezet }
+        if intendedOn { return adjustRunningSession(request) }
+        return await activate(request)
+    }
+
+    /// Wat er gebeurt als er al een sessie loopt.
+    ///
+    /// Nooit een tweede sessie en nooit een stilzwijgende verlenging: een buildscript dat in
+    /// een lus `dopamine on` roept zou de tijdslimiet anders eindeloos vooruitschuiven, en
+    /// dan is het vangnet weg zonder dat iemand iets ziet. Dezelfde val staat al beschreven
+    /// bij de schakelaar in MenuView (regel 64-71). Korter mag wel, en een koppeling zetten
+    /// of vervangen ook — dat maakt een sessie alleen maar strakker begrensd.
+    private func adjustRunningSession(_ request: SessionRequest) -> SessionStartResult {
+        // Eerst alles controleren, dan pas iets veranderen: een verzoek dat half doorgaat
+        // laat een sessie achter die niemand zo gevraagd heeft.
+        var nieuweKoppeling: ProcessWatch.Identity?
+        if let pid = request.bindToPID {
+            guard let identity = ProcessWatch.identify(pid) else {
+                EventLog.shared.warn("Koppelen van de lopende sessie aan pid \(pid) geweigerd: "
+                                     + "dat proces bestaat niet (meer).")
+                return .geweigerd(reden: "Proces \(pid) bestaat niet (meer). De sessie loopt gewoon door.")
+            }
+            nieuweKoppeling = identity
+        }
+
+        var nieuweEindtijd: (date: Date, reason: String)?
+        if request.limitMinutes != nil || request.notLaterThan != nil {
+            guard let start = sessionStart, let huidige = deadline else {
+                return .geweigerd(reden: "Er loopt een sessie zonder eindtijd; die wordt vanzelf gestopt. "
+                                  + "Probeer het zo opnieuw.")
+            }
+            let gevraagd = computeDeadline(start: start,
+                                           limitMinutes: request.limitMinutes ?? sessionLimitMinutes,
+                                           notLaterThan: request.notLaterThan ?? sessionNotLaterThan)
+            guard gevraagd.date <= huidige else {
+                return .geweigerd(reden: "Een lopende sessie wordt niet verlengd — stop de sessie eerst. "
+                                  + "Hij loopt nu tot \(Self.clockText(huidige)).")
+            }
+            nieuweEindtijd = gevraagd
+        }
+
+        if let identity = nieuweKoppeling {
+            binding?.watcher?.cancel()
+            binding = makeBinding(identity)
+            EventLog.shared.info("Lopende sessie gekoppeld aan \(identity.label) "
+                                 + "(\(request.trigger.logNaam)).")
+        }
+        if let eind = nieuweEindtijd {
+            if let m = request.limitMinutes { sessionLimitMinutes = m }
+            if let cap = request.notLaterThan { sessionNotLaterThan = cap }
+            deadline = eind.date
+            deadlineReason = eind.reason
+            EventLog.shared.info("Lopende sessie ingekort tot \(Self.clockText(eind.date)) "
+                                 + "(\(request.trigger.logNaam)).")
+            Task { await guardianTick() }
+        }
+        return .liepAl(deadline: deadline)
+    }
+
+    /// Maakt de koppeling en zet de snelle melding erop.
+    ///
+    /// Die melding doet precies één ding: de guardian aanstoten. Of de sessie hierdoor stopt
+    /// beslist `releaseReason()`, en die kijkt naar de kerneltabel — niet naar deze melding.
+    private func makeBinding(_ identity: ProcessWatch.Identity) -> SessionBinding {
+        var fresh = SessionBinding(identity: identity)
+        guard identity.uid == getuid() else {
+            // Hier gemeten: een procesbron vuurt nooit voor een proces van een andere
+            // gebruiker. Dan blijft de poll over — die geeft het antwoord toch al, alleen
+            // een tik later. Wel opschrijven, anders lijkt het of de snelle route stuk is.
+            EventLog.shared.info("\(identity.label) is van een andere gebruiker; deze koppeling "
+                                 + "wordt alleen door de guardian-tik bewaakt, niet door een directe melding.")
+            return fresh
+        }
+        fresh.watcher = ProcessWatch.ExitWatcher(pid: identity.pid) { [weak self] in
+            Task { @MainActor in
+                guard let self else { return }
+                // Alleen als de koppeling nog van dit proces is: een sessie kan inmiddels aan
+                // iets anders hangen, en dan zegt deze melding niets meer.
+                if self.binding?.identity.isSameProcess(as: identity) == true {
+                    self.binding?.fastRouteReported = true
+                }
+                await self.guardianTick()
+            }
+        }
+        if fresh.watcher == nil {
+            EventLog.shared.warn("Voor \(identity.label) kon geen directe exit-melding gezet worden; "
+                                 + "alleen de guardian-tik bewaakt deze koppeling.")
+        }
+        return fresh
+    }
+
+    private func activate(_ request: SessionRequest) async -> SessionStartResult {
+        // `guard !busy` dekt de twee onderbrekingspunten hieronder niet — de grantcontrole en
+        // de privileged schrijf — en met de opdrachtregel erbij kunnen daar twee aanroepen
+        // tegelijk doorheen. `defer` zodat elke vroege terugkeer hem ook weer opent.
+        activationInFlight = true
+        defer { activationInFlight = false }
+
         // Refuse to start a session that the battery rule would immediately end.
         if let battery, !battery.onAC, battery.percent <= Prefs.batteryFloor {
             status = .error("Accu \(battery.percent)% — onder je grens van \(Prefs.batteryFloor)%")
             lastMessage = "Sluit de lader aan, of verlaag de accugrens bij Instellingen → Vanzelf stoppen."
             Feedback.failed()
             EventLog.shared.warn("Activeren geweigerd: batterij \(battery.percent)%.")
-            return
+            return .geweigerd(reden: "Accu \(battery.percent)%, onder je grens van \(Prefs.batteryFloor)%. "
+                              + "Sluit de lader aan, of verlaag de accugrens.")
         }
         // Read the live state, not the cached one: `thermal` is only fed by ThermalWatch,
         // which is started inside a session and reset to .nominal when one ends — so the
@@ -778,7 +1067,24 @@ final class AppModel: ObservableObject {
             status = .error("De Mac is te warm")
             lastMessage = "Wacht even tot hij is afgekoeld en probeer het dan opnieuw."
             Feedback.failed()
-            return
+            EventLog.shared.warn("Activeren geweigerd: temperatuur kritiek.")
+            return .geweigerd(reden: "De Mac is te warm. Wacht tot hij is afgekoeld en probeer het opnieuw.")
+        }
+
+        // Bestaat het proces waaraan gekoppeld moet worden? Vóór de schrijfactie, want een
+        // procesbron op een dode pid vuurt meteen (hier gemeten) — dat zou een sessie
+        // opleveren die één tik later alweer stopt, met een schrijf naar de kernelvlag heen
+        // en terug voor niets.
+        var koppeling: ProcessWatch.Identity?
+        if let pid = request.bindToPID {
+            guard let identity = ProcessWatch.identify(pid) else {
+                status = .error("Niet gestart: dat proces bestaat niet")
+                lastMessage = "Proces \(pid) draait niet (meer), dus er is niets om op te wachten."
+                Feedback.failed()
+                EventLog.shared.warn("Activeren geweigerd: pid \(pid) bestaat niet (meer).")
+                return .geweigerd(reden: "Proces \(pid) bestaat niet (meer); er is niets gestart.")
+            }
+            koppeling = identity
         }
 
         // A session that cannot be ended without a password must never be started.
@@ -802,10 +1108,14 @@ final class AppModel: ObservableObject {
                 + "gevraagde wachtwoord invullen."
             Feedback.failed()
             EventLog.shared.warn("Activeren geweigerd: \(grantText).")
-            return
+            return .geweigerd(reden: "\(grantText). Zonder die regel kunnen de tijdslimiet, de "
+                              + "accugrens en de temperatuurbewaking de Mac later niet vanzelf weer "
+                              + "laten slapen. Installeer hem bij Instellingen → Diagnose.")
         }
 
-        let outcome = await write(true, allowPrompt: true)
+        // De enige `write(true, ...)` in de hele codebase. Elke ingang komt hier langs, dus
+        // langs alle drie de weigeringen hierboven.
+        let outcome = await write(true, allowPrompt: request.trigger.mayPrompt)
         switch outcome {
         case .verified:
             break
@@ -814,7 +1124,8 @@ final class AppModel: ObservableObject {
             lastMessage = "Installeer de wachtwoordvrijstelling bij Instellingen → Diagnose."
             await refreshGrantAsync()
             Feedback.failed()
-            return
+            return .geweigerd(reden: "Geen toestemming om de slaapblokkade aan te zetten. "
+                              + "Installeer de wachtwoordvrijstelling bij Instellingen → Diagnose.")
         case .cancelled:
             // Never claim "off" on the strength of a dialog the user dismissed. The write
             // may already have gone through before the sheet was cancelled, and the sheet
@@ -832,21 +1143,23 @@ final class AppModel: ObservableObject {
                 status = .off
                 lastMessage = "Geannuleerd."
             }
-            return
+            return .geweigerd(reden: "Geannuleerd bij het vragen om toestemming.")
         case .commandSucceededButFlagWrong(let actual):
             status = .error("Het systeem meldt iets anders dan verwacht")
             lastMessage = "Het commando gaf geen fout, maar de slaapblokkade staat op "
                 + "\(actual.map { $0 ? "1" : "0" } ?? "onleesbaar") in plaats van op 1."
             Feedback.failed()
-            return
+            return .geweigerd(reden: "Het commando gaf geen fout, maar de slaapblokkade staat op "
+                              + "\(actual.map { $0 ? "1" : "0" } ?? "onleesbaar") in plaats van op 1.")
         case .failed(let message):
             status = .error("Wakker houden is niet gelukt")
             lastMessage = message
             Feedback.failed()
-            return
+            return .geweigerd(reden: "Wakker houden is niet gelukt: \(message)")
         }
 
         intendedOn = true
+        sessionTrigger = request.trigger
         status = .on
         lastMessage = nil
         // Both halves of the backoff, not just the counter: a stale `nextReleaseAttempt`
@@ -857,7 +1170,10 @@ final class AppModel: ObservableObject {
 
         let start = Date()
         sessionStart = start
-        deadline = start.addingTimeInterval(Prefs.autoOffHours * 3600)
+        sessionLimitMinutes = request.limitMinutes
+        sessionNotLaterThan = request.notLaterThan
+        applyDeadline(start: start)
+        if let identity = koppeling { binding = makeBinding(identity) }
         displayRelitCount = 0
         // A finding from a previous session must not haunt this one; it has been logged.
         sleepDuringSession = nil
@@ -891,10 +1207,16 @@ final class AppModel: ObservableObject {
             + " (informatief; het slaapveto zit niet in deze eigenschap)."
         )
 
-        EventLog.shared.info(String(
-            format: "Wakker houden AAN. Stopt vanzelf na %.2f u, accugrens %d%%, temperatuur %@.",
-            Prefs.autoOffHours, Prefs.batteryFloor, thermal.label
-        ))
+        // De aanhef "Wakker houden AAN." staat vast: `verify.sh` zoekt hierop om het venster
+        // van een sessie te bepalen. Er mag alleen achteraan iets bij.
+        var startRegel = String(
+            format: "Wakker houden AAN. Stopt vanzelf na %@, accugrens %d%%, temperatuur %@.",
+            Self.durationText(effectiveLimitMinutes), Prefs.batteryFloor, thermal.label
+        )
+        startRegel += " Gestart via de \(request.trigger.logNaam)."
+        if let deadline { startRegel += " Loopt tot \(Self.clockText(deadline))." }
+        if let binding { startRegel += " Stopt ook als \(binding.identity.label) klaar is." }
+        EventLog.shared.info(startRegel)
 
         // Without the passwordless grant, none of the safety nets can release the flag
         // unattended — they run with the lid shut, where a prompt goes nowhere. The user
@@ -907,7 +1229,7 @@ final class AppModel: ObservableObject {
         // the user has already ended is exactly the surprise this app must never produce.
         guard intendedOn, sessionStart == start else {
             EventLog.shared.info("Activering afgebroken: de sessie was al beëindigd.")
-            return
+            return .geweigerd(reden: "De sessie was alweer beëindigd voordat hij goed en wel liep.")
         }
 
         if grantStatus != .granted {
@@ -933,6 +1255,10 @@ final class AppModel: ObservableObject {
         securedForCurrentLidClose = false
         evaluateLidSecurity()
         startDisplayReassert()
+
+        // De eindtijd die er écht staat, niet de gevraagde: een script hoort te zien wat het
+        // gekregen heeft in plaats van te denken dat het meer kreeg.
+        return .gestart(deadline: deadline ?? start, minuten: effectiveLimitMinutes)
     }
 
     /// Whether the machine has already been secured for the lid close currently in effect.
@@ -1026,10 +1352,18 @@ final class AppModel: ObservableObject {
         }
     }
 
-    private func deactivateManually() async {
+    /// De enige publieke manier om een lopende sessie te beëindigen.
+    ///
+    /// `allowPrompt` staat alleen aan als er aantoonbaar iemand aan het toetsenbord zit. De
+    /// schakelaar mag dus vragen; de opdrachtregel niet, want een buildscript kan geen
+    /// wachtwoord invullen en `Shell.runAsAdmin` wacht tot 180 seconden.
+    ///
+    /// Geeft terug of de vlag ook echt op 0 stond. Alleen `true` betekent dat de Mac weer
+    /// mag slapen; al het andere is een probleem dat gemeld moet worden.
+    @discardableResult
+    func stopSession(reason: String, allowPrompt: Bool) async -> Bool {
         intendedOn = false
-        // The user is at the keyboard, so a prompt here can actually be answered.
-        let outcome = await write(false, allowPrompt: true)
+        let outcome = await write(false, allowPrompt: allowPrompt)
         switch outcome {
         case .verified:
             endSession()
@@ -1037,22 +1371,28 @@ final class AppModel: ObservableObject {
             lastMessage = nil
             safetyNetsDisarmed = false
             allowImmediateRetry()
-            EventLog.shared.info("Wakker houden UIT (handmatig).")
+            EventLog.shared.info("Wakker houden UIT (\(reason)).")
             Feedback.deactivated()
             if Prefs.blinkBacklightOnToggle { backlight.blink() }
+            await refreshGrantAsync()
+            return true
         case .cancelled:
             // The flag is still set and the user knows it; the guardian keeps trying.
             intendedOn = true
             status = .on
             lastMessage = "Geannuleerd — de Mac wordt nog steeds wakker gehouden."
+            await refreshGrantAsync()
+            return false
         default:
             safetyNetsDisarmed = true
             status = .error("De Mac wordt nog steeds wakker gehouden")
             lastMessage = "Uitzetten lukte niet. Zet het zelf terug in Terminal met: "
                 + "sudo pmset -a disablesleep 0"
             Feedback.failed()
+            EventLog.shared.error("Stoppen (\(reason)) mislukte; de vlag staat nog aan.")
+            await refreshGrantAsync()
+            return false
         }
-        await refreshGrantAsync()
     }
 
     /// `displaysleepnow` is a request, not a latch. With system sleep disabled the machine
@@ -1300,6 +1640,156 @@ final class AppModel: ObservableObject {
         }
     }
 
+    // MARK: - Het besturingskanaal (de `dopamine`-opdrachtregel)
+
+    /// Wat Instellingen → Diagnose over het besturingskanaal laat zien.
+    var controlChannelText: String {
+        controlServer?.toestandsTekst ?? "niet gestart"
+    }
+
+    /// De kopieerbare regel om `dopamine` op je PATH te zetten. Nooit automatisch: een app
+    /// die zelf iets in een systeemmap zet is een app die iets doet wat niemand gevraagd
+    /// heeft. Zelfde vorm als `SudoersGrant.manualCommand`.
+    static var cliLinkCommand: String {
+        let binary = Bundle.main.bundleURL
+            .appendingPathComponent("Contents/MacOS/dopamine").path
+        return "ln -sfn '\(binary)' /opt/homebrew/bin/dopamine"
+    }
+
+    /// Eén verzoek van de opdrachtregel. Loopt langs precies dezelfde `startSession` en
+    /// `stopSession` als de schakelaar; er wordt hier niets nagebouwd.
+    func handleControl(_ verzoek: ControlChannel.Request) async -> ControlChannel.Response {
+        switch verzoek.soort {
+        case .status:
+            return controlResponse(gelukt: true, zin: controlStatusSentence(), code: 0)
+
+        case .aan:
+            var gevraagd: [String] = []
+            if let m = verzoek.minuten { gevraagd.append("duur \(Self.durationText(m))") }
+            if let cap = verzoek.nietLaterDan { gevraagd.append("tot \(Self.clockText(cap))") }
+            if let pid = verzoek.pid { gevraagd.append("gekoppeld aan pid \(pid)") }
+            let toelichting = gevraagd.isEmpty ? "" : " (" + gevraagd.joined(separator: ", ") + ")"
+            EventLog.shared.info("Opdrachtregel vraagt aanzetten\(toelichting).")
+
+            let request = SessionRequest(
+                trigger: .cli,
+                limitMinutes: verzoek.minuten,
+                bindToPID: verzoek.pid.map { pid_t($0) },
+                notLaterThan: verzoek.nietLaterDan
+            )
+            switch await startSession(request) {
+            case .gestart(let eind, let minuten):
+                var zin = "De Mac blijft wakker tot \(Self.clockText(eind)) (\(Self.durationText(minuten)))."
+                if let binding { zin += " Stopt eerder als \(binding.identity.label) klaar is." }
+                if let cap = verzoek.nietLaterDan, cap > eind {
+                    // Eerlijk zeggen dat de tijdslimiet vóór het gevraagde tijdstip ligt,
+                    // in plaats van een eindtijd te beloven die niet gehaald wordt.
+                    zin += " Je vroeg tot \(Self.clockText(cap)), maar de tijdslimiet van "
+                        + "\(Self.durationText(minuten)) ligt daarvóór."
+                }
+                return controlResponse(gelukt: true, zin: zin, code: 0)
+
+            case .liepAl(let eind):
+                var zin = "Er liep al een sessie; er is geen tweede gestart."
+                if let eind { zin += " Die loopt tot \(Self.clockText(eind))." }
+                if let binding { zin += " Hij stopt ook als \(binding.identity.label) klaar is." }
+                return controlResponse(gelukt: true, zin: zin, code: 0)
+
+            case .geweigerd(let reden):
+                return controlResponse(gelukt: false, zin: reden, code: 1)
+
+            case .bezet:
+                return controlResponse(
+                    gelukt: false,
+                    zin: "Dopamine Code is net met de slaapblokkade bezig. Probeer het zo opnieuw.",
+                    code: 1
+                )
+            }
+
+        case .uit:
+            EventLog.shared.info("Opdrachtregel vraagt uitzetten.")
+            // Ook zonder sessie doorgaan als de vlag aan staat: dan is er juist iets op te
+            // ruimen. Alleen als er aantoonbaar niets aan staat is dit een lege handeling.
+            if !intendedOn && SleepFlag.read() == false {
+                return controlResponse(gelukt: true, zin: "Er liep niets; de Mac mag gewoon slapen.", code: 0)
+            }
+            // Zonder wachtwoordvenster: een buildscript kan er geen invullen.
+            let gelukt = await stopSession(reason: "via de opdrachtregel", allowPrompt: false)
+            if gelukt {
+                return controlResponse(gelukt: true, zin: "Het wakker houden staat uit; de Mac mag weer slapen.", code: 0)
+            }
+            return controlResponse(
+                gelukt: false,
+                zin: (lastMessage ?? "Uitzetten lukte niet.")
+                    + " Zet het zo nodig zelf terug: sudo pmset -a disablesleep 0",
+                code: 1
+            )
+        }
+    }
+
+    private func controlStatusSentence() -> String {
+        if intendedOn {
+            var zin = "De Mac wordt wakker gehouden"
+            if let deadline { zin += " tot \(Self.clockText(deadline))" }
+            if let remainingText { zin += " (\(remainingText))" }
+            if let binding { zin += ", en stopt zodra \(binding.identity.label) klaar is" }
+            if let sessionTrigger { zin += " — \(sessionTrigger.zin)" }
+            return zin + "."
+        }
+        switch SleepFlag.read() {
+        case true:
+            return "De slaapblokkade staat aan zonder dat er een sessie loopt. "
+                + "Dopamine Code probeert dat terug te zetten."
+        case false:
+            return "Er loopt niets; de Mac mag gewoon slapen."
+        default:
+            return "De slaapblokkade is niet uit te lezen."
+        }
+    }
+
+    /// Elk antwoord leest de kernelvlag opnieuw en zet hem náást het beeld van de app.
+    /// Onenigheid tussen die twee is precies waar deze app voor bestaat; die wegpoetsen tot
+    /// één "aan/uit" zou de enige interessante toestand onzichtbaar maken.
+    private func controlResponse(gelukt: Bool, zin: String, code: Int32) -> ControlChannel.Response {
+        ControlChannel.Response(
+            gelukt: gelukt,
+            zin: zin,
+            code: code,
+            kernelvlag: SleepFlag.read(),
+            sessieLoopt: intendedOn,
+            appStatus: statusText,
+            vangnettenUitgeschakeld: safetyNetsDisarmed,
+            gestartOp: sessionStart,
+            eindtijd: deadline,
+            duurMinuten: intendedOn ? effectiveLimitMinutes : nil,
+            trigger: sessionTrigger?.logNaam,
+            procesPid: binding.map { Int32($0.identity.pid) },
+            procesNaam: binding?.identity.naam,
+            accuProcent: battery?.percent,
+            opLader: battery?.onAC,
+            klepDicht: SleepFlag.clamshellClosed() ?? lidClosed
+        )
+    }
+
+    /// Uit het menu: houd de Mac wakker tot deze app klaar is. Loopt langs dezelfde
+    /// `startSession` als de schakelaar, dus langs dezelfde weigeringen.
+    func keepAwakeUntilQuit(of item: RunningApps.Item) {
+        guard !busy else { return }
+        Task {
+            switch await startSession(SessionRequest(trigger: .schakelaar, bindToPID: item.pid)) {
+            case .gestart(let eind, _):
+                lastMessage = "De Mac blijft wakker tot \(item.naam) klaar is, en hoe dan ook "
+                    + "niet langer dan tot \(Self.clockText(eind))."
+            case .liepAl:
+                lastMessage = "De lopende sessie stopt nu ook zodra \(item.naam) klaar is."
+            case .geweigerd(let reden):
+                lastMessage = reden
+            case .bezet:
+                lastMessage = "Even bezig met de slaapblokkade; probeer het zo opnieuw."
+            }
+        }
+    }
+
     // MARK: - Keyboard backlight
 
     func refreshBacklight() {
@@ -1389,7 +1879,7 @@ final class AppModel: ObservableObject {
     /// mid-session would *extend* the deadline instead of bringing it forward.
     func rescheduleIfRunning() {
         guard intendedOn, let start = sessionStart else { return }
-        deadline = start.addingTimeInterval(Prefs.autoOffHours * 3600)
+        applyDeadline(start: start)
         Task { await guardianTick() }
     }
 
@@ -1470,11 +1960,17 @@ final class AppModel: ObservableObject {
         // Put the system setting we changed back the way we found it.
         backlight.restoreAutoBrightness()
         endSession()
+        // Het socketbestand mee opruimen. Een achtergebleven socket geeft de volgende
+        // `dopamine`-aanroep ECONNREFUSED; dat wordt eerlijk gemeld als "de app draait niet",
+        // maar een dood bestand laten liggen hoort niet.
+        controlServer?.stop()
+        controlServer = nil
         clamshell?.stop()
         powerMonitor?.stop()
         sleepWatch?.stop()
         guardianTimer?.invalidate()
         tickTimer?.invalidate()
         EventLog.shared.info("Dopamine Code afgesloten.")
+        EventLog.shared.flush()
     }
 }

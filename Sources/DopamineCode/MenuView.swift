@@ -7,6 +7,11 @@ import SwiftUI
 struct MenuView: View {
     @ObservedObject var model: AppModel
 
+    /// Eén keer opgehaald bij het openen, niet in de body. De body wordt elke seconde
+    /// opnieuw geëvalueerd door de kloktik, en `NSWorkspace.runningApplications` daarin
+    /// zetten is een systeemaanroep per seconde zolang het paneel openstaat.
+    @State private var runningApps: [RunningApps.Item] = []
+
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
             header
@@ -19,6 +24,7 @@ struct MenuView: View {
         }
         .padding(14)
         .frame(width: 320)
+        .onAppear { runningApps = RunningApps.list() }
     }
 
     // MARK: - Header
@@ -34,6 +40,14 @@ struct MenuView: View {
                     Text(line)
                         .font(.subheadline)
                         .foregroundStyle(model.safetyNetsDisarmed ? Color.orange : Color.secondary)
+                }
+                // Waar de sessie aan hangt, naast hoe lang hij nog loopt. Bewust een aparte
+                // regel: `safetyNetLine` gaat over wat de Mac straks weer laat slapen, en
+                // zijn derde tak (vlag aan zonder sessie) mag daar niet in verwateren.
+                if let line = model.bindingLine {
+                    Text(line)
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
                 }
                 Text(subtitle).font(.caption).foregroundStyle(.secondary)
             }
@@ -76,6 +90,8 @@ struct MenuView: View {
             .disabled(model.busy)
 
             durationRow
+
+            processRow
 
             Text(model.behaviourSummary)
                 .font(.caption)
@@ -178,6 +194,35 @@ struct MenuView: View {
     }
 
     private var quickDurations: [Int] { [30, 2 * 60, 4 * 60, 6 * 60, 8 * 60] }
+
+    /// Koppel de sessie aan een draaiende app: hij stopt dan zodra die app klaar is.
+    ///
+    /// Dit maakt een sessie alleen korter, nooit langer — de tijdslimiet blijft er als
+    /// plafond overheen gaan, precies zoals bij `dopamine on --until-exit`. Willekeurige
+    /// procesnummers blijven werk voor de opdrachtregel; een lijst van álle processen is
+    /// honderden regels systeemwerk waar niemand iets aan heeft.
+    private var processRow: some View {
+        HStack(spacing: 8) {
+            Text("Stoppen als")
+                .font(.callout)
+                .foregroundStyle(.secondary)
+            Menu {
+                if runningApps.isEmpty {
+                    Text("Geen apps gevonden")
+                } else {
+                    ForEach(runningApps) { item in
+                        Button("\(item.naam) (\(item.pid))") { model.keepAwakeUntilQuit(of: item) }
+                    }
+                }
+            } label: {
+                Text(model.binding.map { "\($0.identity.naam) klaar is" } ?? "een app klaar is…")
+                    .font(.callout)
+            }
+            .menuStyle(.borderlessButton)
+            .disabled(model.busy)
+            Spacer()
+        }
+    }
 
     /// The single most important thing this app can tell you: the Mac will not sleep, and
     /// nothing running unattended is able to change that.

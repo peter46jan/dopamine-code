@@ -141,6 +141,12 @@ inlogscherm blijven hangen.
 | `EventLog.swift` | het logboek waarmee een sessie van vannacht morgen nog te beoordelen is |
 | `ConflictWatch.swift` | merkt op dat Amphetamine meedraait |
 | `ScreenState.swift` | of het inlogvenster voor staat, zodat er nooit een dialoog achter blijft hangen |
+| `ProcessWatch.swift` | feiten over een proces: bestaat het nog, en is het nog hetzelfde proces |
+| `RunningApps.swift` | de lijst draaiende apps voor de proceskiezer in het menu |
+| `SessionTrigger.swift` | wie de lopende sessie gestart heeft |
+| `ControlServer.swift` | luistert op de socket waar de `dopamine`-opdrachtregel mee praat |
+| `Sources/Shared/ControlProtocol.swift` | het berichtformaat, meegecompileerd in de app én in de CLI |
+| `Sources/dopamine/main.swift` | de opdrachtregel; schakelt zelf niets, vraagt de app om iets te doen |
 
 ### De centrale regel: vangnetten kijken naar de kernel, niet naar de app
 
@@ -194,6 +200,89 @@ Een paar keuzes die verder niet vanzelf spreken:
   herhaald.
 - **Geluid, niet knipperen, als bevestiging.** De spec bood beide aan. Met de klep dicht
   is knipperende toetsenbordverlichting per definitie onzichtbaar; geluid niet.
+
+---
+
+## De opdrachtregel (`dopamine`)
+
+Een build of een agent weet zelf precies wanneer hij begint en klaar is. Vooraf gokken hoe
+lang je bezig bent is daarom het grofste vangnet dat er is, en de opdrachtregel vervangt dat
+gokwerk door het echte antwoord:
+
+```
+dopamine on --until-exit $$      # blijf wakker zolang dit script draait
+dopamine on --for 2h             # of gewoon een duur
+dopamine on --until 18:00        # of een eindtijd
+dopamine off
+dopamine status --json
+```
+
+De binary staat in de bundel (`Contents/MacOS/dopamine`) en komt nooit vanzelf op je PATH.
+`build.sh` en Instellingen → Diagnose tonen een `ln -sfn`-regel om te plakken — een app die
+zelf iets in een systeemmap zet doet iets wat niemand gevraagd heeft.
+
+**Hij schakelt niets zelf.** Hij linkt geen IOKit, kent `pmset` niet en start de app niet
+op: hij opent een socket, stelt een vraag en drukt het antwoord af. Twee processen die
+allebei de kernelvlag beheren is exact het conflict dat dit project Amphetamine verwijt, en
+dat mag hier niet via een achterdeur alsnog ontstaan. `verify.sh` controleert dat met
+`otool -L` en met een grep over de bronnen; loopt daar ooit iets in, dan valt de test om.
+
+Elk verzoek loopt door dezelfde `startSession`/`stopSession` als de schakelaar in de
+menubalk, en dus langs dezelfde weigeringen: een lege accu, een te warme Mac en een
+ontbrekende wachtwoordvrijstelling. Een duur wordt geklemd op 5 minuten tot 24 uur, en het
+antwoord meldt wat je écht kreeg. Een lopende sessie wordt nooit verlengd — een buildscript
+dat in een lus `dopamine on` roept zou de tijdslimiet anders eindeloos vooruitschuiven en
+het vangnet stilzwijgend uitzetten. Korter mag wel, en een koppeling zetten ook.
+
+Exitcodes: `0` gelukt, `1` geweigerd door een vangnet, `2` verkeerd gebruik, `4` de app
+draait niet. Met `--json` is de uitvoer altijd geldige JSON, ook bij een fout.
+
+### Waarom een unix socket, en niet XPC of een bestand
+
+- **XPC** vraagt een Mach-servicenaam, en die kun je alleen registreren via een launchd-job.
+  Deze app heeft die niet gegarandeerd — `LaunchAtLogin` schrijft er hooguit één als
+  terugval — dus XPC zou een LaunchAgent verplicht maken en daarmee een keuze vooruit
+  beslissen die nog open moet blijven.
+- **Een bestand als postbus** heeft geen antwoordkanaal. Dan kan `dopamine on` niet melden
+  dát de kernelschrijf mislukte, en blijft een commando liggen dat later wordt uitgevoerd in
+  een situatie waarin niemand erom vroeg.
+- **Een socket** bestaat alleen zolang de app draait. "De app draait niet" is daarmee een
+  gewone `connect()`-fout die eerlijk gemeld kan worden (exitcode 4) in plaats van gegokt.
+
+De socket staat op `~/Library/Application Support/Dopamine Code/beheer.sock` — gemeten 74
+bytes tegen een limiet van 103 in `sun_path`, en de app weigert netjes met een logregel als
+het pad ooit langer wordt. De map is `0700`, de socket `0600`, en elke verbinding wordt via
+`LOCAL_PEERCRED` gecontroleerd op je eigen uid.
+
+Eén verrassing die de proefopstelling opleverde en die het vermelden waard is: op BSD — en
+dus op macOS — **erft een geaccepteerde socket de `O_NONBLOCK` van de luisteraar**. Zonder
+die vlag terug te zetten geeft de eerste `read()` meteen EAGAIN, meldt de app "verbinding
+zonder leesbaar verzoek" en ziet de CLI een EPIPE: alles lijkt kapot terwijl er niets mis is.
+
+### Stoppen als een proces klaar is
+
+`--until-exit 4711` koppelt de sessie aan een procesnummer, en in het menubalk-paneel kun je
+hetzelfde doen voor een draaiende app. Naast de pid wordt de **starttijd** van het proces
+bewaard: een pid wordt hergebruikt, en zonder die starttijd zou een sessie blijven hangen aan
+een pid die inmiddels van een heel ander programma is.
+
+De koppeling is een extra reden om te stoppen, nooit een reden om door te gaan. De
+tijdslimiet, de accugrens en de temperatuurbewaking staan er in `releaseReason()` bóven: een
+proces dat vastloopt mag de timer niet uitstellen. Een proces-gebonden sessie eindigt dus bij
+het proces óf bij de timer, wat het eerst komt.
+
+Twee routes merken dat het proces weg is, en dat is met opzet: een `DispatchSource` op de
+exit meldt het meteen, en de guardian-tik van 20 seconden kijkt zelf in de kerneltabel. De
+poll is de garantie, de melding alleen de snelheid — precies de constructie die
+`ClamshellMonitor` al gebruikt. Gemeten: die melding vuurt ook meteen voor een pid die niet
+bestaat (daarom wordt een niet-bestaande pid bij het starten geweigerd) en nooit voor een
+proces van een andere gebruiker (daarom staat er dan een regel in het logboek dat alleen de
+poll bewaakt). Merkt de poll een exit die de melding niet gaf, dan komt daar een WARN-regel
+bij: stille degradatie is nog steeds degradatie.
+
+De koppeling overleeft geen herstart van de app en staat níet in de instellingen. Een sessie
+die herleeft zonder de accu-, warmte- en toestemmingscontrole die hem gestart hebben, is
+precies wat deze app niet moet doen.
 
 ---
 

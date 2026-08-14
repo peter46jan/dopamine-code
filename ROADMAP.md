@@ -63,7 +63,7 @@ elke vreemde regel in `sudoers.d` op.
 
 ---
 
-## Fase 1 — Sessies die zelf weten wanneer ze klaar zijn
+## Fase 1 — Sessies die zelf weten wanneer ze klaar zijn · ✅ gedaan 14 augustus 2026
 
 De timer is nu het grofste vangnet dat er is: je gokt vooraf hoe lang je bezig bent en zit
 er per definitie naast. Te kort en de Mac valt in slaap midden in je werk; te lang en hij
@@ -89,6 +89,25 @@ Een sessie kan aan een PID gekoppeld worden. Verdwijnt het proces, dan stopt de 
 proces eindigt; een sessie gekoppeld aan een proces dat blijft hangen stopt alsnog op de
 timer; en `kill -9` van het gekoppelde proces geeft hetzelfde resultaat als een nette exit.
 
+**Gedaan.** Er is precies één ding bij gekomen dat iets nieuws beslist: een clausule
+onderaan `releaseReason()`. Alles wat daarna volgt — `forceRelease`, `attemptRelease`, de
+schrijf naar de vlag, `endSession` — is ongewijzigd, dus een proces dat verdwijnt neemt exact
+dezelfde weg naar buiten als een verlopen timer. `ProcessWatch` houdt daarom géén sessiestand
+bij: hij kent een pid, een starttijd en een naam, en zijn exit-melding stoot alleen de
+guardian aan.
+
+Die clausule staat *onder* de tijdslimiet, de accugrens en de warmtegrens. Een gekoppeld
+proces dat vastloopt kan de timer dus niet uitstellen — dat is de reden dat de volgorde in
+die functie niet vrijblijvend is.
+
+PID-hergebruik gaat via de starttijd (seconden én microseconden) uit de kerneltabel. Twee
+dingen bleken daarbij te kloppen en zijn gemeten: `sysctl` geeft voor een **dode** pid netto
+`0` terug met `size == 0`, dus alleen op de exitcode controleren levert een genulde struct op
+die als een levend proces leest — er wordt daarom ook op de grootte gecontroleerd. En de
+snelle exit-melding vuurt óók meteen voor een pid die niet bestaat, waardoor een
+niet-bestaande pid bij het starten geweigerd wordt in plaats van een sessie op te leveren die
+één tik later alweer stopt.
+
 ### 1.2 Een CLI die dat aanstuurt
 
 Zonder een manier om dit vanuit een script te doen is 1.1 een handmatige handeling met
@@ -111,6 +130,28 @@ dopamine status --json            # voor scripts en voor verify.sh
 **Klaar als:** een buildscript zichzelf wakker kan houden met twee regels, `dopamine off`
 tijdens een lopende sessie hetzelfde doet als de schakelaar, en `status --json` de
 kernelvlag rapporteert en niet wat de app dénkt.
+
+**Gedaan.** Het werd een unix domain socket op
+`~/Library/Application Support/Dopamine Code/beheer.sock`. XPC viel af omdat een
+Mach-servicenaam een launchd-job vraagt, en die heeft deze app niet gegarandeerd — dan zou de
+CLI een LaunchAgent verplicht maken en daarmee de keuze uit fase 2 vooruit beslissen. Een
+bestand als postbus viel af omdat er geen antwoordkanaal is: `dopamine on` zou niet kunnen
+melden dát de kernelschrijf mislukte, en een commando dat blijft liggen wordt later
+uitgevoerd zonder de context waarin het gevraagd werd. Een socket bestaat alleen zolang de
+app draait, dus "de app draait niet" is een gewone `connect()`-fout (exitcode 4) in plaats
+van een gok. De uitleg met de gemeten cijfers staat in de README.
+
+De CLI is een tweede binary in dezelfde bundel die alleen Foundation linkt. `verify.sh`
+controleert nu met `otool -L` dat hij het IOKit-framework niet linkt, dat geen enkel bestand
+van de opdrachtregel `pmset`, `IOKit` of de vlag aanraakt, en dat er in de hele codebase
+precies één plek is die de slaapblokkade aanzet. Die drie controles zijn er niet voor deze
+fase maar voor de volgende drie.
+
+`status --json` leest de kernelvlag vers bij elk verzoek en zet hem naast het beeld van de
+app als twee losse velden. Onenigheid daartussen is precies waar deze app voor bestaat;
+samenvatten tot één "aan/uit" zou de enige interessante toestand onzichtbaar maken.
+`verify.sh --report` toont beide onder elkaar, en de log-grep in `--after` blijft staan als
+terugval — na een sessie is de app vaak herstart en weet hij niets meer.
 
 ---
 

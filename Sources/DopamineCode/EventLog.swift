@@ -90,6 +90,16 @@ final class EventLog {
         queue.sync { recent }
     }
 
+    /// Wacht tot alles wat al gelogd is ook echt op schijf staat.
+    ///
+    /// `log` schrijft asynchroon, en dat is precies goed zolang het proces blijft bestaan.
+    /// Vlak vóór een `exit(0)` — de signaalafhandeling — is het dat niet: de laatste regels
+    /// staan dan nog in de wachtrij en verdwijnen met het proces. Juist die regels vertellen
+    /// waarom de app wegging.
+    func flush() {
+        queue.sync {}
+    }
+
     /// Rolls the file over once it passes a megabyte. A personal tool should not quietly
     /// eat disk for years.
     ///

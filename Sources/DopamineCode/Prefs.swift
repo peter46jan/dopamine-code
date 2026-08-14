@@ -117,7 +117,11 @@ enum Prefs {
     static var autoOffHoursPart: Int { autoOffMinutes / 60 }
     static var autoOffMinutesPart: Int { autoOffMinutes % 60 }
 
-    /// Convenience for the scheduling code, which works in seconds.
+    /// Alleen nog voor teksten die in uren rekenen.
+    ///
+    /// Uitdrukkelijk NIET meer voor het plannen van een eindtijd: dat gaat sinds fase 1 via
+    /// `AppModel.computeDeadline`, want een sessie kan een eigen duur en een eigen bovengrens
+    /// hebben. Wie hier weer een eindtijd uit gaat rekenen, bouwt een tweede planner.
     static var autoOffHours: Double { Double(autoOffMinutes) / 60 }
 
     /// Carries an older install's fractional-hours setting over to whole minutes, once.

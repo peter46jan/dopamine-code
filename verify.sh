@@ -74,6 +74,27 @@ ask() {
   [[ "$answer" =~ ^[jJyY]$ ]]
 }
 
+# Waar dit script vandaan komt, zodat de broncontroles ook werken als je het vanuit een
+# andere map aanroept.
+PROJECT_DIR="$(cd "$(dirname "$0")" && pwd)"
+
+# De `dopamine`-binary uit de geïnstalleerde bundel, met de bouwmap als terugval. Beide
+# paden bevatten een spatie, dus alles blijft aangehaald.
+cli_path() {
+  local candidate
+  for candidate in "/Applications/Dopamine Code.app/Contents/MacOS/dopamine" \
+                   "$PROJECT_DIR/build/Dopamine Code.app/Contents/MacOS/dopamine"; do
+    if [ -x "$candidate" ]; then printf '%s' "$candidate"; return 0; fi
+  done
+  return 1
+}
+
+# Eén veld uit een JSON-antwoord, zonder jq (dat staat niet op elke Mac). plutil leest JSON
+# van stdin, net als bij read_flag hierboven.
+json_field() {
+  printf '%s' "$1" | plutil -extract "$2" raw -o - - 2>/dev/null
+}
+
 # --------------------------------------------------------------------------------------
 
 report() {
@@ -94,6 +115,33 @@ report() {
   fi
 
   printf '  App draait       %s\n' "$(pgrep -x DopamineCode >/dev/null && echo ja || echo nee)"
+
+  # Wat de app zelf zegt, náást de kernelregel hierboven — nooit in plaats daarvan. Het
+  # verschil tussen die twee is precies waar deze app voor bestaat, dus ze staan hier onder
+  # elkaar in plaats van samengevat tot één "aan/uit".
+  local cli json
+  if cli="$(cli_path)"; then
+    json="$("$cli" status --json 2>/dev/null)"
+    if [ "$(json_field "$json" code)" = "4" ]; then
+      # Draait de app wél maar antwoordt hij niet, dan is dit een oudere versie zonder
+      # besturingskanaal, of de socket kon niet aangemaakt worden — dat staat dan in het
+      # logboek van de app.
+      printf '  Besturingskanaal onbereikbaar (%s)\n' "$(json_field "$json" zin)"
+    elif [ -n "$json" ]; then
+      printf '  App-sessie       %s\n' "$(json_field "$json" sessieLoopt)"
+      printf '  App zegt         %s\n' "$(json_field "$json" zin)"
+      local einde proces
+      einde="$(json_field "$json" eindtijd)"
+      [ -n "$einde" ] && printf '  Sessie tot       %s\n' "$einde"
+      proces="$(json_field "$json" procesNaam)"
+      [ -n "$proces" ] && printf '  Gekoppeld proces %s (%s)\n' "$proces" "$(json_field "$json" procesPid)"
+    else
+      printf '  Besturingskanaal geen antwoord van %s\n' "$cli"
+    fi
+  else
+    printf '  Opdrachtregel    niet gevonden (bouw met ./build.sh)\n'
+  fi
+
   printf '  Handtekening     %s\n' "$(codesign -dvv '/Applications/Dopamine Code.app' 2>&1 | grep '^Authority' | head -1 | cut -d= -f2-)"
   printf '  Andere wakers    %s\n' "$(pmset -g | grep 'sleep prevented by' | sed 's/.*prevented by //; s/)//' || echo geen)"
 
@@ -315,6 +363,51 @@ SWIFT
   rm -f "$probe" "${TMPDIR:-/tmp}/dopamine-kb-probe"
 }
 
+# De opdrachtregel mag de kernelvlag niet kunnen schrijven — niet nu, en niet nadat er nog
+# drie fases overheen zijn gegaan. Eén schrijver, dat is de hele architectuur; een tweede
+# maakt precies het conflict dat dit project Amphetamine verwijt.
+test_cli_purity() {
+  section "7. Blijft de opdrachtregel van de kernelvlag af?"
+
+  # Op het IOKit-*framework*, niet op de naam: de Swift-runtime hangt er zelf een zwakke
+  # libswiftIOKit.dylib aan die niets zegt over wat deze binary doet.
+  local cli
+  if cli="$(cli_path)"; then
+    if otool -L "$cli" 2>/dev/null | grep -q 'Frameworks/IOKit'; then
+      fail "De dopamine-binary linkt het IOKit-framework. Hij hoort alleen Foundation te gebruiken."
+    else
+      pass "De dopamine-binary linkt het IOKit-framework niet."
+    fi
+  else
+    skip "Geen dopamine-binary gevonden; bouw eerst met ./build.sh."
+  fi
+
+  # Commentaar telt niet mee: juist deze bestanden leggen in hun commentaar uit waarom ze
+  # pmset en de kernelvlag NIET aanraken, en dat mag geen fout opleveren.
+  local leaked="" f
+  for f in "$PROJECT_DIR/Sources/dopamine"/*.swift "$PROJECT_DIR/Sources/Shared"/*.swift; do
+    [ -f "$f" ] || continue
+    if sed 's://.*::' "$f" | grep -qE 'pmset|IOKit|SleepFlag|disablesleep'; then
+      leaked="$leaked $(basename "$f")"
+    fi
+  done
+  if [ -n "${leaked// /}" ]; then
+    fail "Deze bestanden raken de vlag of pmset aan, terwijl ze dat niet mogen:$leaked"
+  else
+    pass "Geen enkel bestand van de opdrachtregel raakt pmset, IOKit of de vlag aan."
+  fi
+
+  # Er hoort precies één plek te zijn die de vlag aanzet. Meer dan één betekent dat er een
+  # route is die de accugrens, de warmtegrens of de wachtwoordvrijstelling overslaat.
+  local writers
+  writers="$(grep -c 'await write(true' "$PROJECT_DIR/Sources/DopamineCode/AppModel.swift" 2>/dev/null)"
+  if [ "$writers" = "1" ]; then
+    pass "Er is precies één plek die de slaapblokkade aanzet."
+  else
+    fail "Er zijn $writers plekken die de slaapblokkade aanzetten; dat horen er één te zijn."
+  fi
+}
+
 test_lock() {
   section "6. Vergrendelmechanisme aanwezig?"
   if dyld_info -exports /System/Library/PrivateFrameworks/login.framework/Versions/A/login 2>/dev/null \
@@ -376,6 +469,23 @@ test_afterwards() {
     # Both spellings: the switch was renamed from "Blijf actief" to "Wakker houden" on
     # 14 augustus 2026, and logs from before that are still on disk (and still rotate in).
     since="$(cat "${sources[@]}" 2>/dev/null | grep -E '(Blijf actief|Wakker houden) AAN' | tail -1 | cut -c1-19)"
+  fi
+  # Loopt er nú een sessie, dan weet de app zelf wanneer die begon. Dat helpt precies in het
+  # geval waarin de log-grep niets vindt: het logboek is net geroteerd, of de app is herstart
+  # na een sessie die nog steeds loopt. De grep hierboven blijft de eerste bron — na afloop
+  # van een sessie is de app die start allang vergeten.
+  if [ -z "$since" ]; then
+    local cli json started epoch
+    if cli="$(cli_path)"; then
+      json="$("$cli" status --json 2>/dev/null)"
+      started="$(json_field "$json" gestartOp)"
+      if [ -n "$started" ]; then
+        # De app schrijft ISO8601 in UTC; het logboek en pmset staan in lokale tijd.
+        epoch="$(TZ=UTC date -j -f '%Y-%m-%dT%H:%M:%SZ' "$started" '+%s' 2>/dev/null)"
+        [ -n "$epoch" ] && since="$(date -r "$epoch" '+%Y-%m-%d %H:%M:%S')"
+        [ -n "$since" ] && printf '  (sessiestart uit de draaiende app: %s)\n' "$since"
+      fi
+    fi
   fi
   if [ -z "$since" ]; then
     # Fail closed. With no window the filter passed every Sleep event ever recorded, and
@@ -485,6 +595,7 @@ case "${1:-}" in
     test_grant
     test_backlight
     test_lock
+    test_cli_purity
     test_display
     ;;
 esac

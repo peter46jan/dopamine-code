@@ -371,6 +371,33 @@ struct SettingsView: View {
                 .disabled(!Prefs.autoBrightnessWasSuppressed)
             }
 
+            Section("Bedienen vanaf de opdrachtregel") {
+                // Nooit stil: kon de socket niet aangemaakt worden, dan werkt `dopamine`
+                // gewoon niet en zou je dat nergens zien staan.
+                LabeledContent("Besturingskanaal", value: model.controlChannelText)
+                Text("Hiermee kan een script het wakker houden aan- en uitzetten, bijvoorbeeld "
+                     + "voor de duur van een build. Het schakelt niets zelf: het vraagt Dopamine "
+                     + "Code om iets te doen, met dezelfde tijdslimiet, accugrens en "
+                     + "temperatuurbewaking eromheen. Draait de app niet, dan doet het niets en "
+                     + "zegt het dat ook.")
+                    .font(.caption).foregroundStyle(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
+                Text("dopamine on --until-exit $$   ·   dopamine off   ·   dopamine status --json")
+                    .font(.system(.caption2, design: .monospaced))
+                    .textSelection(.enabled)
+                    .foregroundStyle(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
+                Text("Om 'dopamine' te kunnen typen zonder het hele pad, plak je deze regel één "
+                     + "keer in Terminal:")
+                    .font(.caption).foregroundStyle(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
+                Text(AppModel.cliLinkCommand)
+                    .font(.system(.caption2, design: .monospaced))
+                    .textSelection(.enabled)
+                    .foregroundStyle(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+
             Section("Logboek") {
                 Text("Alles wat de app doet komt in dit bestand te staan — daarin kun je "
                      + "achteraf teruglezen wat er 's nachts gebeurd is.")

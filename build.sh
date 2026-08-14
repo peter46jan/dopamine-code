@@ -19,6 +19,13 @@ cd "$(dirname "$0")"
 APP_NAME="Dopamine Code"
 EXECUTABLE="DopamineCode"
 SRC_DIR="Sources/DopamineCode"
+# De opdrachtregel is een tweede binary in dezelfde bundel. Zijn bron staat bewust BUITEN
+# $SRC_DIR: een main.swift met code op het hoogste niveau botst met -parse-as-library en
+# @main als hij mee de app in gecompileerd wordt.
+CLI_NAME="dopamine"
+CLI_DIR="Sources/dopamine"
+# Wat allebei de binaries nodig hebben — alleen Foundation, geen AppKit, geen IOKit.
+SHARED_DIR="Sources/Shared"
 BUNDLE_ID="com.peter46jan.dopaminecode"
 DEPLOYMENT_TARGET="13.0"
 APP="build/$APP_NAME.app"
@@ -66,7 +73,7 @@ rm -rf "$APP"
 mkdir -p "$APP/Contents/MacOS" "$APP/Contents/Resources"
 
 ARCH="$(uname -m)"
-SOURCES=("$SRC_DIR"/*.swift)
+SOURCES=("$SRC_DIR"/*.swift "$SHARED_DIR"/*.swift)
 [ ${#SOURCES[@]} -gt 0 ] || die "geen bronbestanden gevonden in $SRC_DIR"
 
 swiftc \
@@ -79,6 +86,19 @@ swiftc \
   -framework UserNotifications \
   -o "$APP/Contents/MacOS/$EXECUTABLE" \
   "${SOURCES[@]}"
+
+# --- de opdrachtregel ---------------------------------------------------------
+
+# Bewust zonder -framework IOKit en zonder AppKit: deze binary mag de kernelvlag niet kunnen
+# schrijven, ook niet per ongeluk. Hij opent een socket en drukt het antwoord af.
+# `verify.sh` controleert dat na afloop met `otool -L` en een grep over de bronnen.
+say "Opdrachtregel compileren ($CLI_NAME)"
+swiftc \
+  -O \
+  -swift-version 5 \
+  -target "${ARCH}-apple-macosx${DEPLOYMENT_TARGET}" \
+  -o "$APP/Contents/MacOS/$CLI_NAME" \
+  "$CLI_DIR"/*.swift "$SHARED_DIR"/*.swift
 
 # --- assemble bundle ----------------------------------------------------------
 
@@ -115,6 +135,15 @@ fi
 
 if security find-identity -v -p codesigning | grep -qF "$SIGN_IDENTITY"; then
   say "Ondertekenen met: $SIGN_IDENTITY"
+  # Eerst de tweede binary, dan pas de bundel: codesign verzegelt Contents/MacOS mee, dus
+  # een handtekening die er daarna overheen gaat maakt de bundelhandtekening ongeldig.
+  # Gecontroleerd: `codesign --verify --deep --strict` slaagt in deze volgorde.
+  codesign --force --timestamp --options runtime \
+           --identifier "$BUNDLE_ID.$CLI_NAME" \
+           -s "$SIGN_IDENTITY" "$APP/Contents/MacOS/$CLI_NAME" 2>&1 | sed 's/^/  /' || {
+    warn "Ondertekenen van $CLI_NAME mislukt; val terug op ad-hoc."
+    codesign --force --identifier "$BUNDLE_ID.$CLI_NAME" -s - "$APP/Contents/MacOS/$CLI_NAME"
+  }
   # --timestamp keeps the signature valid after the certificate expires.
   codesign --force --timestamp --options runtime \
            --identifier "$BUNDLE_ID" \
@@ -125,6 +154,7 @@ if security find-identity -v -p codesigning | grep -qF "$SIGN_IDENTITY"; then
 else
   warn "Identiteit '$SIGN_IDENTITY' niet gevonden — ad-hoc ondertekenen."
   warn "Gevolg: de Toegankelijkheid-toestemming vervalt bij elke herbouw."
+  codesign --force --identifier "$BUNDLE_ID.$CLI_NAME" -s - "$APP/Contents/MacOS/$CLI_NAME"
   codesign --force --identifier "$BUNDLE_ID" -s - "$APP"
 fi
 
@@ -175,4 +205,17 @@ if [ "${1:-}" = "--install" ]; then
 else
   say "Klaar: $APP"
   echo "Installeren met: ./build.sh --install"
+fi
+
+# --- de opdrachtregel op je PATH ----------------------------------------------
+
+# Nooit automatisch. Een app die zelf iets in een systeemmap zet doet iets wat niemand
+# gevraagd heeft — /usr/local/bin is hier root:wheel en zou sudo vragen. Dit is een regel om
+# te kopiëren, in dezelfde geest als SudoersGrant.manualCommand.
+echo
+echo "Wil je 'dopamine' op je PATH? Plak deze regel (of laat het):"
+if [ "${1:-}" = "--install" ]; then
+  echo "  ln -sfn '/Applications/$APP_NAME.app/Contents/MacOS/$CLI_NAME' /opt/homebrew/bin/$CLI_NAME"
+else
+  echo "  ln -sfn '$PWD/$APP/Contents/MacOS/$CLI_NAME' /opt/homebrew/bin/$CLI_NAME"
 fi
