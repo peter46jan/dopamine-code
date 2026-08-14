@@ -150,17 +150,27 @@ enum SudoersGrant {
         "\(NSUserName()) ALL=(root) NOPASSWD: /usr/bin/pmset -a disablesleep 1, /usr/bin/pmset -a disablesleep 0"
     }
 
-    /// A one-liner the user can paste into Terminal instead of using the prompt. Reading
-    /// the script first is the point of keeping a plain copy in the bundle.
+    /// A one-liner the user can paste into Terminal instead of using the prompt, shown when
+    /// the authorisation sheet misbehaves and is the only route left.
     ///
-    /// The variable goes through `/usr/bin/env`, not through sudo. macOS sudoers runs with
-    /// `env_reset` and without `setenv`, so `sudo DOPAMINE_USER=… /bin/bash …` is refused
-    /// outright with "you are not allowed to set the following environment variables" — and
-    /// this command is shown precisely when the authorisation sheet is not working, i.e.
-    /// when it is the only route left. `env` is just a command sudo runs, so the assignment
-    /// happens after sudo is done deciding.
+    /// This used to run the on-disk copy: `sudo … /bin/bash '<bundle>/Resources/grant.sh'`.
+    /// A security audit showed why that was wrong. That file is `-rwxr-xr-x` and owned by the
+    /// user, so any process running as the user can rewrite its contents beforehand — and the
+    /// app was telling the user to run exactly that file as root. The reader-friendly copy in
+    /// the bundle stays (`readableScriptURL`, so the script can be read before it is trusted),
+    /// but it is no longer in any execution path.
+    ///
+    /// Instead this pipes the SAME base64 payload that is compiled into the binary
+    /// (`GrantScript.base64`) into root's shell, exactly like the GUI route in
+    /// `runScriptAsRoot`. The bytes come from the signed binary, not from a file an
+    /// unprivileged process can swap. `env` runs after sudo has decided, so the assignment is
+    /// not a sudo-level environment variable (which `env_reset` would refuse anyway).
     static var manualCommand: String {
-        guard let p = readableScriptURL?.path else { return "" }
-        return "sudo /usr/bin/env DOPAMINE_USER=\(NSUserName()) /bin/bash '\(p)'"
+        let payload = GrantScript.base64
+        guard !payload.isEmpty,
+              NSUserName().range(of: "^[A-Za-z0-9._-]+$", options: .regularExpression) != nil
+        else { return "" }
+        return "/bin/echo \(payload) | /usr/bin/base64 -d | "
+            + "sudo /usr/bin/env DOPAMINE_USER=\(NSUserName()) /bin/bash -s"
     }
 }

@@ -420,9 +420,15 @@ dialoog die zegt "een sudoers-regel voor precies twee pmset-commando's", en er d
 heel anders als root. De handtekening vooraf controleren lost het niet op — root opent het
 pad daarna opnieuw, dus het bestand kan er tussenin verwisseld worden.
 
-Nu bakt `build.sh` de scripttekst in de binary en pipet de app die naar de root-shell. Er is
-geen pad meer om te vervangen. De leesbare kopie blijft in de bundel staan, want die kun je
-inzien en met de hand draaien — hij wordt alleen niet meer als root uitgevoerd.
+Nu bakt `build.sh` de scripttekst in de binary en pipet de app die naar de root-shell —
+zowel de knop in Instellingen als de terugvalregel voor Terminal. Er is geen pad meer om te
+vervangen. De leesbare kopie blijft in de bundel staan, want die kun je inzien, maar hij
+wordt nergens meer als root uitgevoerd: geen enkele route draait een bestand van schijf.
+
+Dat laatste was er niet in één keer goed. Een security-audit ving dat de Terminal-terugval
+en de verwijderregel hieronder allebei nog `sudo <bundel>/grant.sh` toonden — een door de
+gebruiker schrijfbaar bestand, als root. Beide zijn omgezet: de terugval pipet de ingebakken
+payload, en verwijderen is nu één transparante regel die je zelf kunt lezen.
 
 De bestandsnaam heeft geen punt en eindigt niet op `~`. Dat is geen smaakkwestie: sudo
 slaat zulke bestanden **stil** over — geen fout, geen logregel, alleen een regel die nooit
@@ -430,9 +436,11 @@ werkt. `grant.sh` weigert daarom te installeren als de naam dat patroon zou sche
 controleert dat `/etc/sudoers` de map überhaupt inleest, valideert met `visudo -cf` vóór
 installatie, en draait de regel terug als `visudo -c` daarna niet meer schoon parst.
 
-Verwijderen:
+Verwijderen doe je met de knop in Instellingen → Diagnose (die pipet de ingebakken payload
+met `--remove`), of met de hand — de regel is niets meer dan het bestand weghalen, dus die
+kun je gewoon lezen voor je hem draait:
 ```
-sudo /Applications/Dopamine Code.app/Contents/Resources/grant.sh --remove
+sudo rm -f /etc/sudoers.d/dopamine-code-disablesleep
 ```
 
 ---

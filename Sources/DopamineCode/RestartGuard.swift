@@ -1,4 +1,5 @@
 import Foundation
+import Security
 
 /// Het vangnet voor de enige manier waarop de app nog kan verdwijnen zonder iets op te ruimen.
 ///
@@ -152,6 +153,51 @@ enum RestartGuard {
     /// Legt vast dat de app bewust wegging. Synchroon, want hierna volgt een `exit`.
     ///
     /// De stand van de blokkade wordt hier vers gelezen en niet meegegeven: dan staat er per
+    /// De designated requirement van DEZE draaiende binary, opgevraagd via de Security-API.
+    ///
+    /// Uit de code die al in het geheugen zit, niet van een bestand op schijf dat juist
+    /// verwisseld kan zijn. Voor een echt certificaat is dit een identiteitseis (bundle-id +
+    /// ondertekenaar) die een herbouw overleeft; voor een ad-hoc build een cdhash-eis die dat
+    /// niet doet — maar dan breekt de Toegankelijkheid-toestemming óók bij elke herbouw, dus
+    /// dat is dezelfde bekende beperking en geen nieuwe.
+    ///
+    /// Berekend en onthouden, niet elke ronde opnieuw: de eigen handtekening verandert niet
+    /// tijdens de looptijd.
+    private static let ownRequirement: SecRequirement? = {
+        var code: SecCode?
+        guard SecCodeCopySelf([], &code) == errSecSuccess, let code else { return nil }
+        var staticCode: SecStaticCode?
+        guard SecCodeCopyStaticCode(code, [], &staticCode) == errSecSuccess, let staticCode else { return nil }
+        var req: SecRequirement?
+        guard SecCodeCopyDesignatedRequirement(staticCode, [], &req) == errSecSuccess else { return nil }
+        return req
+    }()
+
+    /// Controleert of de bundel op schijf intact én van de eigen identiteit is.
+    ///
+    /// Twee dingen in één, want een security-audit toonde dat ze niet los mogen: het oude
+    /// `codesign --verify --strict` controleerde alleen of het zegel intact was, niet WIE
+    /// getekend had. Een zelf ad-hoc getekende bundel kwam er zo doorheen, en `/Applications`
+    /// is voor elk proces-als-de-gebruiker schrijfbaar — dan start de wachter elke 30 seconden
+    /// vreemde code alsof het de app is. `SecStaticCodeCheckValidity` met de eigen requirement
+    /// doet allebei: zegelintegriteit én de identiteitseis. Geen shell, geen requirement-string
+    /// om te quoten — die route bleek in de praktijk stuk te gaan op de aanhalingstekens in de
+    /// designated requirement.
+    ///
+    /// Geeft `nil` als alles klopt, anders een leesbare reden voor het logboek.
+    static func bundleIdentityProblem(_ url: URL) -> String? {
+        var target: SecStaticCode?
+        let maak = SecStaticCodeCreateWithPath(url as CFURL, [], &target)
+        guard maak == errSecSuccess, let target else {
+            return "de bundel op \(url.path) kon niet als ondertekende code gelezen worden (\(maak))"
+        }
+        let flags = SecCSFlags(rawValue: kSecCSCheckAllArchitectures | kSecCSCheckNestedCode | kSecCSStrictValidate)
+        let status = SecStaticCodeCheckValidity(target, flags, ownRequirement)
+        guard status != errSecSuccess else { return nil }
+        let reden = (SecCopyErrorMessageString(status, nil) as String?) ?? "onbekende fout \(status)"
+        return "\(url.path): \(reden)"
+    }
+
     /// definitie wat de kernel op dát moment zei, en niet wat een aanroeper een paar regels
     /// eerder dacht. `!= false` zoals overal op de afsluitpaden — onleesbaar is geen "uit".
     static func recordDeliberateExit(reason: String) {
@@ -447,16 +493,18 @@ enum RestartGuard {
         }
 
         // Een halfgekopieerde bundel starten is erger dan even niets doen: build.sh --install
-        // doet rm -rf gevolgd door cp -R op /Applications, en daar zit een raampje tussen.
-        let handtekening = Shell.run("/usr/bin/codesign", ["--verify", "--strict", bundle.path], timeout: 30)
-        guard handtekening.ok else {
+        // doet rm -rf gevolgd door cp -R op /Applications, en daar zit een raampje tussen. En
+        // een VREEMDE bundel starten is nog erger: `/Applications` is voor elk
+        // proces-als-de-gebruiker schrijfbaar. `bundleIdentityProblem` controleert daarom
+        // allebei — zegelintegriteit én de eigen identiteit.
+        if let probleem = Self.bundleIdentityProblem(bundle) {
             // De regel om het met de hand terug te zetten staat bewust niet in deze zin: dit
             // bestand mag de woorden van het schrijfpad niet bevatten, zodat `verify.sh` met
             // één grep kan aantonen dat de wachter nooit zelf schrijft. Diagnose en de andere
             // foutregels noemen hem wel.
             EventLog.shared.error(
                 "De Mac wordt wakker gehouden zonder app, maar de bundel op \(bundle.path) is nu niet "
-                + "in orde (\(handtekening.combined)). Er wordt niets gestart. Zet de slaapblokkade zelf "
+                + "in orde (\(probleem)). Er wordt niets gestart. Zet de slaapblokkade zelf "
                 + "uit met de regel die in Instellingen → Diagnose staat."
             )
             melding = "bundel niet in orde"
