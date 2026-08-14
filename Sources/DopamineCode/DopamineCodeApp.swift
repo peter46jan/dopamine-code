@@ -56,7 +56,31 @@ final class AppDelegate: NSObject, NSApplicationDelegate, UNUserNotificationCent
         // frontmost — which for an accessory app happens as soon as its panel is open. These
         // four notifications are the ones you must not miss, so ask for them regardless.
         UNUserNotificationCenter.current().delegate = self
+        watchForSettingsClose()
         AppModel.shared.start()
+    }
+
+    /// Zakt terug naar `.accessory` zodra het instellingenvenster sluit.
+    ///
+    /// De knop tilt de app naar `.regular` zodat het venster naar voren kan komen. Het terug
+    /// zetten hing aan `SettingsView.onDisappear`, maar SwiftUI houdt de `Settings`-scene in
+    /// leven na het sluiten, dus die vuurt niet betrouwbaar — en dan blijft er een Dock-icoon
+    /// hangen zonder venster erbij. `NSWindow.willCloseNotification` is het signaal dat wél
+    /// altijd komt. Na de sluiting kijken of er nog een echt venster over is (het
+    /// menubalk-paneel telt niet: dat kan geen hoofdvenster worden), en zo niet: terug naar
+    /// de menubalk.
+    private func watchForSettingsClose() {
+        NotificationCenter.default.addObserver(
+            forName: NSWindow.willCloseNotification, object: nil, queue: .main
+        ) { note in
+            let closing = note.object as? NSWindow
+            DispatchQueue.main.async {
+                let stillOpen = NSApp.windows.contains {
+                    $0 !== closing && $0.isVisible && $0.canBecomeMain
+                }
+                if !stillOpen { NSApp.setActivationPolicy(.accessory) }
+            }
+        }
     }
 
     func userNotificationCenter(

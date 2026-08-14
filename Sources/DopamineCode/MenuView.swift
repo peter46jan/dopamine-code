@@ -12,6 +12,12 @@ struct MenuView: View {
     /// zetten is een systeemaanroep per seconde zolang het paneel openstaat.
     @State private var runningApps: [RunningApps.Item] = []
 
+    /// De officiële manier om de Settings-scene te openen (macOS 14+). Vervangt het
+    /// `showSettingsWindow:`-selectorspel: dat faalde stil vanuit een MenuBarExtra-paneel —
+    /// de activation policy ging wél naar `.regular` (Dock-icoon verscheen) maar er kwam geen
+    /// venster, dus je bleef met een icoon en niets zitten.
+    @Environment(\.openSettings) private var openSettings
+
     /// De gekozen eindtijd bij "Tot", en wat daaruit volgde. Lokaal, want dit is een vraag die
     /// je stelt en geen instelling die bewaard wordt — wat er van de vraag terechtkwam staat
     /// daarna in `Prefs.autoOffMinutes`, op de enige plek waar een duur hoort te staan.
@@ -508,7 +514,14 @@ struct MenuView: View {
 
     private var footer: some View {
         HStack {
-            Button("Instellingen…") { SettingsWindow.show() }
+            Button("Instellingen…") {
+                // Een accessory-app kan geen venster naar voren halen; even naar `.regular`,
+                // en `SettingsView.onDisappear` zet hem weer terug op `.accessory` zodat er
+                // geen Dock-icoon blijft hangen. Daarna de scene openen via de nette API.
+                NSApp.setActivationPolicy(.regular)
+                NSApp.activate(ignoringOtherApps: true)
+                openSettings()
+            }
             Spacer()
             Button("Stop") {
                 NSApp.terminate(nil)

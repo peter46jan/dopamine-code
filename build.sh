@@ -27,7 +27,7 @@ CLI_DIR="Sources/dopamine"
 # Wat allebei de binaries nodig hebben — alleen Foundation, geen AppKit, geen IOKit.
 SHARED_DIR="Sources/Shared"
 BUNDLE_ID="com.peter46jan.dopaminecode"
-DEPLOYMENT_TARGET="13.0"
+DEPLOYMENT_TARGET="14.0"
 APP="build/$APP_NAME.app"
 
 # Which of the three exported marks becomes the Finder icon. "aan" is the state the app
