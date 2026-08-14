@@ -646,7 +646,7 @@ struct SettingsView: View {
                 // keep-awake on in the menu bar next to it.
                 LabeledContent("Slaapblokkade (SleepDisabled)",
                                value: model.kernelFlag.map {
-                                   $0 ? "1 — de Mac mag niet slapen" : "0 — de Mac mag gewoon slapen"
+                                   $0 ? "1 — de Mac mag niet slapen" : "0 — de Mac mag slapen"
                                } ?? "onleesbaar")
                 LabeledContent("Klep dicht laat de Mac slapen", value: diagnostics.clamshellCausesSleep)
                 Text("Die tweede regel staat er alleen ter informatie: hij verandert niet mee met "

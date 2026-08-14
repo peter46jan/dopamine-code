@@ -276,7 +276,7 @@ final class AppModel: ObservableObject {
 
     var statusText: String {
         switch status {
-        case .off: return "De Mac mag gewoon slapen"
+        case .off: return "Wakker houden staat uit"
         case .on: return "De Mac blijft wakker"
         case .error(let message): return message
         }
@@ -2518,7 +2518,7 @@ final class AppModel: ObservableObject {
             // Ook zonder sessie doorgaan als de vlag aan staat: dan is er juist iets op te
             // ruimen. Alleen als er aantoonbaar niets aan staat is dit een lege handeling.
             if !intendedOn && SleepFlag.read() == false {
-                return controlResponse(gelukt: true, zin: "Er liep niets; de Mac mag gewoon slapen.", code: 0)
+                return controlResponse(gelukt: true, zin: "Er liep niets; het wakker houden stond al uit.", code: 0)
             }
             // Zonder wachtwoordvenster: een buildscript kan er geen invullen.
             let gelukt = await stopSession(reason: "via de opdrachtregel", allowPrompt: false)
@@ -2548,7 +2548,7 @@ final class AppModel: ObservableObject {
             return "De slaapblokkade staat aan zonder dat er een sessie loopt. "
                 + "Dopamine Code probeert dat terug te zetten."
         case false:
-            return "Er loopt niets; de Mac mag gewoon slapen."
+            return "Er loopt niets; het wakker houden staat uit."
         default:
             return "De slaapblokkade is niet uit te lezen."
         }
