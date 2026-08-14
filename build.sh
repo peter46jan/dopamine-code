@@ -23,6 +23,10 @@ BUNDLE_ID="com.peter46jan.dopaminecode"
 DEPLOYMENT_TARGET="13.0"
 APP="build/$APP_NAME.app"
 
+# Which of the three exported marks becomes the Finder icon. "aan" is the state the app
+# exists for: the ring broken open with the infinity loop sitting in the break.
+APP_ICON="icons/appicon-aan-1024.png"
+
 # TCC keys the Accessibility grant to the code signature. Signing with a real identity
 # yields a designated requirement based on the bundle id and the certificate's common
 # name, which stays constant across rebuilds. An ad-hoc signature is pinned to the
@@ -82,6 +86,30 @@ cp Resources/Info.plist "$APP/Contents/Info.plist"
 cp Resources/grant.sh "$APP/Contents/Resources/grant.sh"
 chmod 0755 "$APP/Contents/Resources/grant.sh"
 printf 'APPL????' > "$APP/Contents/PkgInfo"
+
+# --- app icon -----------------------------------------------------------------
+
+# Without an .icns in Resources and CFBundleIconFile in Info.plist, Finder and the Dock
+# draw their generic white placeholder — which is what this bundle shipped until now.
+#
+# Regenerate the source artwork after changing AppIcon.swift:
+#   swiftc Sources/DopamineCode/AppIcon.swift tools/main.swift -o /tmp/icons && /tmp/icons
+if [ -f "$APP_ICON" ]; then
+  say "App-icoon bouwen uit $APP_ICON"
+  ICONSET="$(mktemp -d)/AppIcon.iconset"
+  mkdir -p "$ICONSET"
+  # The five sizes macOS asks for, each at @1x and @2x. Downscaled from the 1024 master
+  # rather than re-rendered, so every size is the same drawing.
+  for size in 16 32 128 256 512; do
+    sips -z "$size" "$size" "$APP_ICON" --out "$ICONSET/icon_${size}x${size}.png" >/dev/null
+    sips -z "$((size * 2))" "$((size * 2))" "$APP_ICON" \
+         --out "$ICONSET/icon_${size}x${size}@2x.png" >/dev/null
+  done
+  iconutil -c icns "$ICONSET" -o "$APP/Contents/Resources/AppIcon.icns"
+  rm -rf "$(dirname "$ICONSET")"
+else
+  warn "Geen $APP_ICON — de app krijgt het generieke systeemicoon."
+fi
 
 # --- sign ---------------------------------------------------------------------
 

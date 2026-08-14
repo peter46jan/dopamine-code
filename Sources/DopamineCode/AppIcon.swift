@@ -47,6 +47,96 @@ enum AppIcon {
         }
     }
 
+    // MARK: - The Finder / Dock icon
+
+    /// The full-colour app icon: the same mark, on the rounded plate macOS expects.
+    ///
+    /// This is a different job from the menu bar glyph and needs a different drawing. A
+    /// menu bar icon is a template — pure silhouette, one colour, sized for 16 pt. An app
+    /// icon sits in Finder and the Dock next to Apple's own, and anything that does not
+    /// use their plate shape and their proportions reads as a foreign object there.
+    ///
+    /// Until now the bundle shipped no icon at all, so macOS drew its generic placeholder.
+    static func dock(_ state: State, pixels: CGFloat) -> NSImage {
+        NSImage(size: NSSize(width: pixels, height: pixels), flipped: false) { _ in
+            let s = pixels
+
+            // Apple's grid: on a 1024 canvas the plate is 824 across, centred, and the
+            // margin that is left over is what the shadow lives in. Lifted a touch so the
+            // shadow falls below the plate rather than around it.
+            let plateSide = s * 824 / 1024
+            let plate = NSRect(
+                x: (s - plateSide) / 2,
+                y: (s - plateSide) / 2 + s * 0.012,
+                width: plateSide, height: plateSide
+            )
+            let path = squircle(in: plate)
+
+            NSGraphicsContext.saveGraphicsState()
+            let shadow = NSShadow()
+            shadow.shadowColor = NSColor(white: 0, alpha: 0.30)
+            shadow.shadowBlurRadius = s * 0.030
+            shadow.shadowOffset = NSSize(width: 0, height: -s * 0.016)
+            shadow.set()
+            NSColor.black.setFill()
+            path.fill()
+            NSGraphicsContext.restoreGraphicsState()
+
+            // Violet: "dopamine" is the neurotransmitter joke in the name, and violet is
+            // the one hue no other icon in this Dock is using.
+            let gradient = NSGradient(colors: [
+                NSColor(srgbRed: 0.616, green: 0.451, blue: 1.000, alpha: 1),   // #9D73FF
+                NSColor(srgbRed: 0.290, green: 0.129, blue: 0.710, alpha: 1),   // #4A21B5
+            ])
+            gradient?.draw(in: path, angle: -90)
+
+            // A single soft highlight across the top, the way a physical plate catches
+            // light. Clipped to the plate so it cannot bleed over the rounded corners.
+            NSGraphicsContext.saveGraphicsState()
+            path.addClip()
+            NSGradient(colors: [
+                NSColor(white: 1, alpha: 0.20),
+                NSColor(white: 1, alpha: 0.0),
+            ])?.draw(in: NSRect(x: plate.minX, y: plate.midY,
+                                width: plate.width, height: plate.height / 2), angle: -90)
+            NSGraphicsContext.restoreGraphicsState()
+
+            // The mark itself, in white, at the size Apple's own glyphs occupy inside the
+            // plate. `draw` re-derives its level of detail from the side it is given, so
+            // handing it a large rect gets the full laptop rather than the 16 pt slab.
+            let glyphSide = plateSide * 0.62
+            let glyph = NSRect(
+                x: plate.midX - glyphSide / 2,
+                y: plate.midY - glyphSide / 2,
+                width: glyphSide, height: glyphSide
+            )
+            NSColor.white.setFill()
+            NSColor.white.setStroke()
+            draw(state, in: glyph, colourAlreadySet: true)
+            return true
+        }
+    }
+
+    /// Apple's plate is a superellipse, not a rounded rectangle: its corners have no point
+    /// where the curvature jumps from "straight" to "arc". A plain `roundedRect` next to
+    /// the system icons looks subtly pinched at exactly those four points, so this samples
+    /// |x|ⁿ + |y|ⁿ = 1 instead. n = 5 is the match for the macOS plate.
+    private static func squircle(in rect: NSRect, exponent n: CGFloat = 5) -> NSBezierPath {
+        let path = NSBezierPath()
+        let a = rect.width / 2, b = rect.height / 2
+        let cx = rect.midX, cy = rect.midY
+        let steps = 720
+        for i in 0...steps {
+            let t = CGFloat(i) / CGFloat(steps) * 2 * .pi
+            let ct = cos(t), st = sin(t)
+            let x = cx + a * pow(abs(ct), 2 / n) * (ct < 0 ? -1 : 1)
+            let y = cy + b * pow(abs(st), 2 / n) * (st < 0 ? -1 : 1)
+            if i == 0 { path.move(to: NSPoint(x: x, y: y)) } else { path.line(to: NSPoint(x: x, y: y)) }
+        }
+        path.close()
+        return path
+    }
+
     // MARK: - Drawing
 
     /// Everything is described in a 0…1 unit square and scaled, so one description serves

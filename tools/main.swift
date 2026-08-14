@@ -23,6 +23,10 @@ for (state, name) in states {
     for px in [512, 1024] as [CGFloat] {
         png(AppIcon.flat(state, pixels: px), to: "icons/app-\(name)-\(Int(px)).png")
         png(AppIcon.flat(state, pixels: px, onDark: true), to: "icons/app-\(name)-\(Int(px))-donker.png")
+        // The real Finder icon: the mark on Apple's plate. All three states are exported so
+        // the choice can be judged side by side, but only one of them ends up in the bundle
+        // — see APP_ICON in build.sh.
+        png(AppIcon.dock(state, pixels: px), to: "icons/appicon-\(name)-\(Int(px)).png")
     }
 }
 
