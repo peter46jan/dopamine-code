@@ -29,6 +29,10 @@ enum Prefs {
         static let scheduleStartMinute = "scheduleStartMinute"
         static let scheduleEndMinute = "scheduleEndMinute"
         static let scheduleLastArmedWindowStart = "scheduleLastArmedWindowStart"
+        // Fase 4 — ergonomie.
+        static let showCountdownInMenuBar = "showCountdownInMenuBar"
+        static let shortcutKeyCode = "shortcutKeyCode"
+        static let shortcutModifiers = "shortcutModifiers"
     }
 
     /// The app used to be called Wakker, under a different bundle identifier. UserDefaults
@@ -92,6 +96,10 @@ enum Prefs {
             Key.scheduleDays: [2, 3, 4, 5, 6],   // maandag t/m vrijdag (1 = zondag)
             Key.scheduleStartMinute: 9 * 60,
             Key.scheduleEndMinute: 18 * 60,
+            // De aftelling staat standaard AAN: hem zonder het paneel te openen kunnen zien is
+            // de hele reden dat dit punt op de roadmap stond. De sneltoets staat er met opzet
+            // niet bij — zie `shortcutKeyCode`.
+            Key.showCountdownInMenuBar: true,
         ])
     }
 
@@ -298,5 +306,37 @@ enum Prefs {
     static var scheduleLastArmedWindowStart: Date? {
         get { d.object(forKey: Key.scheduleLastArmedWindowStart) as? Date }
         set { d.set(newValue, forKey: Key.scheduleLastArmedWindowStart) }
+    }
+
+    // MARK: - Ergonomie (fase 4)
+
+    /// Of de resterende tijd naast het icoon in de menubalk staat.
+    static var showCountdownInMenuBar: Bool {
+        get { d.bool(forKey: Key.showCountdownInMenuBar) }
+        set { d.set(newValue, forKey: Key.showCountdownInMenuBar) }
+    }
+
+    /// De toets van de globale sneltoets, of `nil` als er geen opgenomen is.
+    ///
+    /// Er wordt bewust géén combinatie meegeleverd. Een standaardsneltoets kan bij de eerste
+    /// start botsen met iets dat je al gebruikt, en zo'n botsing merk je pas als dát andere
+    /// ding niet meer werkt — dan zoek je de oorzaak overal behalve hier.
+    ///
+    /// `object(forKey:)` en niet `integer(forKey:)`: toetscode 0 is de A-toets, en een sleutel
+    /// die er niet is leest als 0. Met `integer` zou "nog geen sneltoets" niet te onderscheiden
+    /// zijn van "⌃⌥⌘A".
+    static var shortcutKeyCode: Int? {
+        get { d.object(forKey: Key.shortcutKeyCode) as? Int }
+        set {
+            if let newValue { d.set(newValue, forKey: Key.shortcutKeyCode) }
+            else { d.removeObject(forKey: Key.shortcutKeyCode) }
+        }
+    }
+
+    /// De ingedrukte hulptoetsen, als `NSEvent.ModifierFlags.rawValue`. Carbon rekent met
+    /// andere getallen; die vertaling staat in `GlobalShortcut`, op één plek.
+    static var shortcutModifiers: Int {
+        get { d.integer(forKey: Key.shortcutModifiers) }
+        set { d.set(newValue, forKey: Key.shortcutModifiers) }
     }
 }

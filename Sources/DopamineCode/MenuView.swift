@@ -12,6 +12,12 @@ struct MenuView: View {
     /// zetten is een systeemaanroep per seconde zolang het paneel openstaat.
     @State private var runningApps: [RunningApps.Item] = []
 
+    /// De gekozen eindtijd bij "Tot", en wat daaruit volgde. Lokaal, want dit is een vraag die
+    /// je stelt en geen instelling die bewaard wordt — wat er van de vraag terechtkwam staat
+    /// daarna in `Prefs.autoOffMinutes`, op de enige plek waar een duur hoort te staan.
+    @State private var untilTime = Date()
+    @State private var untilExplanation: String?
+
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
             header
@@ -241,6 +247,51 @@ struct MenuView: View {
                         .foregroundStyle(.secondary)
                 }
             }
+
+            untilRow
+        }
+    }
+
+    /// "Tot 18:00" naast "voor 4,5 uur".
+    ///
+    /// Je denkt vaker in een eindtijd dan in een duur, maar het blijft dezelfde ene instelling:
+    /// de kloktijd wordt door `setAutoOffUntil` omgerekend naar minuten en gaat door dezelfde
+    /// `setAutoOff` heen als de knoppen hierboven. Er wordt dus nergens een tweede eindtijd
+    /// bewaard, en de tijdslimiet blijft precies één planner houden.
+    ///
+    /// Met een knop en niet bij elke wijziging van de kiezer: elke keer zetten schrijft ook de
+    /// standaardduur voor de vólgende sessie, en dat hoort te gebeuren op het moment dat je het
+    /// vraagt — niet terwijl je nog aan het typen bent.
+    private var untilRow: some View {
+        VStack(alignment: .leading, spacing: 4) {
+            HStack(spacing: 8) {
+                Text("Tot")
+                    .font(.callout)
+                    .foregroundStyle(.secondary)
+                DatePicker("", selection: $untilTime, displayedComponents: .hourAndMinute)
+                    .labelsHidden()
+                    .datePickerStyle(.field)
+                    .controlSize(.small)
+                Button("Zetten") { untilExplanation = model.setAutoOffUntil(untilTime) }
+                    .buttonStyle(.link)
+                    .font(.caption)
+                Spacer()
+            }
+            if let untilExplanation {
+                Text(untilExplanation)
+                    .font(.caption2)
+                    .foregroundStyle(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+        }
+        .onAppear {
+            // Begin bij de eindtijd die er nu staat, zodat de kiezer nooit op een willekeurig
+            // moment in het verleden opent.
+            untilTime = model.deadline
+                ?? Date().addingTimeInterval(Double(model.autoOffMinutes) * 60)
+            // En begin zonder de uitleg van de vorige keer: die ging over een sessie en een
+            // tijdstip die er nu misschien niet meer zijn.
+            untilExplanation = nil
         }
     }
 

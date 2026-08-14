@@ -223,10 +223,47 @@ final class AppModel: ObservableObject {
     // MARK: - Derived
 
     /// The menu bar glyph, drawn from the app's own artwork rather than an SF Symbol.
-    var menuBarIcon: NSImage { menuBarIcon() }
-
+    ///
+    /// Alleen het merk, zonder aftelling: dit is de versie voor het paneel, waar de resterende
+    /// tijd al voluit in een zin staat.
     func menuBarIcon(pointSize: CGFloat = 18) -> NSImage {
         AppIcon.menuBar(iconState, pointSize: pointSize)
+    }
+
+    /// Wat er écht in de menubalk komt te staan: het merk, en ernaast de aftelling.
+    ///
+    /// Gebufferd op (staat, tekst). De scene wordt door de kloktik van `startTicking` elke
+    /// seconde opnieuw geëvalueerd, en zonder deze buffer zou er dus elke seconde een nieuw
+    /// beeld getekend worden terwijl er hooguit één keer per minuut iets aan verandert.
+    private var gebufferdIcoon: (staat: AppIcon.State, aftelling: String?, beeld: NSImage)?
+
+    var menuBarLabel: NSImage {
+        let staat = iconState
+        let aftelling = menuBarCountdown
+        if let gebufferd = gebufferdIcoon, gebufferd.staat == staat, gebufferd.aftelling == aftelling {
+            return gebufferd.beeld
+        }
+        let beeld = AppIcon.menuBar(staat, countdown: aftelling)
+        gebufferdIcoon = (staat, aftelling, beeld)
+        return beeld
+    }
+
+    /// De resterende tijd voor in de menubalk, als "3:15", of `nil`.
+    ///
+    /// Rekent uitsluitend met `deadline` en `now` — de klok die de guardian al bijhoudt. Geen
+    /// eigen timer en geen eigen anker: de duur is midden in een sessie te wijzigen
+    /// (`rescheduleIfRunning`), en een aftelling met een eigen beginpunt zou daar stilletjes
+    /// van wegdrijven.
+    ///
+    /// Alleen bij een echte sessie. Staat de vlag aan zónder sessie, dan is er geen eindtijd en
+    /// loopt er dus ook niets af; een aftelling zou daar precies de leugen zijn die
+    /// `safetyNetLine` in zijn derde tak expres vermijdt. Er staat dan alleen het bliksem-icoon.
+    var menuBarCountdown: String? {
+        guard Prefs.showCountdownInMenuBar, intendedOn, let deadline else { return nil }
+        // Naar boven afronden, net als bij de arming: "0:00" terwijl er nog veertig seconden
+        // staan leest als "voorbij".
+        let minuten = max(0, Int((deadline.timeIntervalSince(now) / 60).rounded(.up)))
+        return "\(minuten / 60):" + String(format: "%02d", minuten % 60)
     }
 
     private var iconState: AppIcon.State {
@@ -390,6 +427,79 @@ final class AppModel: ObservableObject {
         setAutoOff(minutes: autoOffMinutes + delta)
     }
 
+    /// "Tot 18:00" in plaats van "voor 4,5 uur" — dezelfde instelling, anders gezegd.
+    ///
+    /// Uitdrukkelijk géén tweede manier om een eindtijd te bewaren: de gevraagde kloktijd wordt
+    /// omgerekend naar minuten en gaat door `setAutoOff(minutes:)` heen, zodat
+    /// `Prefs.autoOffMinutes` en `rescheduleIfRunning` de enige eigenaars van de eindtijd
+    /// blijven. Een opgeslagen absolute eindtijd zou een tweede planner naast de bestaande zijn,
+    /// en dan is "wanneer stopt hij" niet meer met zekerheid te beantwoorden.
+    ///
+    /// Het anker is `sessionStart`, niet nu. `deadline` is start + duur, dus vanaf nu rekenen
+    /// tijdens een lopende sessie levert een eindtijd die precies zo veel te vroeg valt als de
+    /// sessie al gelopen heeft: begonnen om 14:00, om 15:00 "tot 18:00" gekozen, en hij stopt
+    /// om 17:00.
+    ///
+    /// Geeft de zin terug die het paneel laat zien — inclusief wat de klem van 5 minuten tot
+    /// 24 uur ervan gemaakt heeft, want een andere eindtijd tonen dan de gevraagde zonder dat
+    /// te zeggen is precies het soort stilte dat deze app niet hoort te hebben.
+    @discardableResult
+    func setAutoOffUntil(_ tijdstip: Date) -> String {
+        let nu = Date()
+        let anker = sessionStart ?? nu
+        let doel = Self.eerstvolgende(kloktijdVan: tijdstip, na: nu)
+        let gevraagdeMinuten = Int((doel.timeIntervalSince(anker) / 60).rounded())
+        setAutoOff(minutes: gevraagdeMinuten)
+
+        // Teruglezen in plaats van aannemen: `setAutoOff` schrijft via `Prefs.autoOffMinutes`,
+        // en die klemt. Dat is dezelfde reden waarom `setAutoOff` zelf ook terugleest.
+        let werkelijkeMinuten = autoOffMinutes
+        let geklemd = werkelijkeMinuten != gevraagdeMinuten
+        let klemZin = gevraagdeMinuten > werkelijkeMinuten
+            ? "Langer dan 24 uur kan niet."
+            : "Korter dan 5 minuten kan niet."
+        let gevraagdeKlok = Self.clockText(doel)
+
+        // Loopt er een sessie, dan is `deadline` het enige eerlijke antwoord — en niet de som
+        // hierboven. Er kan een bovengrens overheen liggen (het einde van een schemavenster) die
+        // eerder valt dan de duur, en dan zou "stopt om 18:00" een uur te laat zijn.
+        if intendedOn, let echteEinde = deadline {
+            let echteKlok = Self.clockText(echteEinde)
+            if geklemd {
+                return "\(klemZin) Deze sessie stopt om \(echteKlok), "
+                    + "\(Self.durationText(werkelijkeMinuten)) na het aanzetten."
+            }
+            // Een minuut speling: de eindtijd is op de seconde nauwkeurig, de kiezer niet.
+            if abs(echteEinde.timeIntervalSince(doel)) >= 60 {
+                return "Deze sessie stopt al eerder, om \(echteKlok): daar ligt een grens "
+                    + "overheen die hiermee niet op te schuiven is."
+            }
+            return "Deze sessie stopt om \(echteKlok) — \(Self.durationText(werkelijkeMinuten)) "
+                + "na het aanzetten."
+        }
+
+        // Zonder lopende sessie is er nog geen anker, dus wordt het een duur en geen tijdstip.
+        // Dat hardop zeggen: zet je hem een half uur later aan, dan schuift het einde mee.
+        let staart = "De duur staat nu op \(Self.durationText(werkelijkeMinuten)). Zet je het "
+            + "wakker houden nú aan, dan stopt het om "
+            + "\(Self.clockText(nu.addingTimeInterval(Double(werkelijkeMinuten) * 60)))"
+            + "; zet je het later aan, dan schuift het einde mee."
+        return geklemd ? "\(klemZin) \(staart)" : "Tot \(gevraagdeKlok). \(staart)"
+    }
+
+    /// Het eerstvolgende moment ná nu met dit uur en deze minuut.
+    ///
+    /// "Tot 02:00" om 23:00 rolt dus door naar morgen — dezelfde regel die de opdrachtregel bij
+    /// `--until` aanhoudt, want een tijdstip in het verleden weigeren is alleen maar verwarrend.
+    private static func eerstvolgende(kloktijdVan tijdstip: Date, na nu: Date) -> Date {
+        let kalender = Calendar.current
+        let onderdelen = kalender.dateComponents([.hour, .minute], from: tijdstip)
+        // `nextDate` slaat het moment over dat exact gelijk is aan `nu`, en dat klopt: "tot
+        // 15:00" om precies 15:00 gaat over morgen, niet over nul minuten.
+        return kalender.nextDate(after: nu, matching: onderdelen, matchingPolicy: .nextTime)
+            ?? nu.addingTimeInterval(60)
+    }
+
     /// One line in the menu saying what will actually happen, so the behaviour is legible
     /// without opening Settings.
     var behaviourSummary: String {
@@ -494,6 +604,10 @@ final class AppModel: ObservableObject {
         }
         server.start()
         controlServer = server
+
+        // De sneltoets. Standaard is er geen, dus dit is meestal een lege registratie; lukt het
+        // wél niet, dan staat dat meteen in het logboek en in Instellingen.
+        applyShortcut()
 
         installSignalHandlers()
         startTicking()
@@ -1425,6 +1539,101 @@ final class AppModel: ObservableObject {
             }
         }
     }
+
+    // MARK: - De sneltoets
+
+    private var shortcut: GlobalShortcut?
+
+    /// De sneltoets zoals hij nu staat, of `nil` als er geen opgenomen is.
+    @Published private(set) var shortcutOmschrijving: String?
+    /// Wat er mis is met de sneltoets. Nooit stil: een combinatie die niet geregistreerd kon
+    /// worden doet niets, en dat is van buitenaf niet te onderscheiden van een combinatie die
+    /// je verkeerd onthouden hebt.
+    @Published private(set) var shortcutProbleem: String?
+
+    /// Zet de sneltoets zoals hij in de instellingen staat. Bij het starten en na elke wijziging.
+    func applyShortcut() {
+        let toets = shortcut ?? GlobalShortcut()
+        shortcut = toets
+        // `max(0, …)` omdat dit uit UserDefaults komt: een met de hand bewerkte of beschadigde
+        // waarde mag geen crash opleveren in een functie die bij elke start draait.
+        let uitkomst = toets.apply(keyCode: Prefs.shortcutKeyCode,
+                                   modifierFlags: UInt(max(0, Prefs.shortcutModifiers))) { [weak self] in
+            // De Carbon-handler draait op de hoofdthread, maar dat weet de compiler niet.
+            Task { @MainActor in self?.toggleFromShortcut() }
+        }
+        switch uitkomst {
+        case .gezet(let combinatie):
+            shortcutOmschrijving = combinatie
+            shortcutProbleem = nil
+            EventLog.shared.info("Sneltoets \(combinatie) staat klaar.")
+        case .geen:
+            shortcutOmschrijving = nil
+            shortcutProbleem = nil
+        case .mislukt(let waarom):
+            shortcutOmschrijving = nil
+            shortcutProbleem = waarom
+            EventLog.shared.error("Sneltoets werkt niet: \(waarom)")
+        }
+    }
+
+    /// Neemt een nieuwe combinatie op, of wist hem als `keyCode` nil is.
+    func setShortcut(keyCode: Int?, modifierFlags: UInt) {
+        Prefs.shortcutKeyCode = keyCode
+        Prefs.shortcutModifiers = Int(modifierFlags)
+        applyShortcut()
+    }
+
+    /// De sneltoets doet precies hetzelfde als de schakelaar, langs precies dezelfde weg.
+    ///
+    /// Geen eigen aan/uit-stand: hij leest `intendedOn` op het moment van indrukken. Een
+    /// sneltoets die zelf onthoudt of hij "aan" staat loopt uit de pas met de kernel zodra een
+    /// vangnet een sessie beëindigt — en dan zet de eerste druk daarna niets aan, maar iets uit
+    /// dat al uit was. Om dezelfde reden staat hier geen `SleepFlag` en geen eigen controle:
+    /// de accugrens, de temperatuurbewaking en de wachtwoordvrijstelling zitten in `activate`,
+    /// en daar hoort deze ingang net zo goed langs als alle andere.
+    func toggleFromShortcut() {
+        // `setKeepAwake` keert hier stil terug. Bij de schakelaar mag dat — die staat dan
+        // zichtbaar uitgeschakeld in het paneel waar je net op klikte. Bij een sneltoets met
+        // het paneel dicht ziet niemand iets, en dan is stilte precies de verkeerde uitkomst.
+        guard !busy else {
+            EventLog.shared.info("Sneltoets genegeerd: er was net iets anders met de slaapblokkade bezig.")
+            Feedback.failed()
+            return
+        }
+        let aanzetten = !intendedOn
+        Task {
+            guard aanzetten else {
+                _ = await stopSession(reason: "sneltoets", allowPrompt: true)
+                return
+            }
+            switch await startSession(SessionRequest(trigger: .sneltoets)) {
+            case .gestart:
+                break
+            case .liepAl:
+                EventLog.shared.info("Sneltoets: er liep al een sessie; er is niets veranderd.")
+                Feedback.failed()
+            case .geweigerd(let reden):
+                // Bewust géén melding: meldingen gaan over wat er gebeurt terwijl je wég bent,
+                // en er zijn er al zes. Je staat hier aan het toetsenbord. Het geluid komt van
+                // `activate` zelf — elke weigering daar speelt `Feedback.failed()` — dus hier
+                // alleen de logregel, met de ingang erbij zodat achteraf te zien is dat het de
+                // sneltoets was en niet de schakelaar.
+                EventLog.shared.warn("Sneltoets: aanzetten geweigerd — \(reden)")
+            case .bezet:
+                EventLog.shared.info("Sneltoets: er was net iets anders met de slaapblokkade bezig.")
+                Feedback.failed()
+            }
+        }
+    }
+
+    /// Hoe laat de lopende sessie begon.
+    ///
+    /// Alleen om in de geschiedenis de sessie die nú loopt te herkennen: die staat in het
+    /// logboek ook zonder afsluitregel, en zonder dit zou hij daar als "de app is weggevallen"
+    /// verschijnen terwijl hij gewoon draait. De geschiedenis leest het logboek; of er iets
+    /// loopt komt hiervandaan.
+    var sessionStartedAt: Date? { sessionStart }
 
     /// De enige publieke manier om een sessie te starten — voor de schakelaar, de
     /// opdrachtregel en alles wat er nog bij komt.
@@ -2491,6 +2700,8 @@ final class AppModel: ObservableObject {
         controlServer = nil
         appTrigger?.stop()
         appTrigger = nil
+        shortcut?.stop()
+        shortcut = nil
         clamshell?.stop()
         powerMonitor?.stop()
         sleepWatch?.stop()

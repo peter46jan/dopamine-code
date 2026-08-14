@@ -25,10 +25,36 @@ enum AppIcon {
     // MARK: - Public
 
     /// A template image for the menu bar, sized in points.
-    static func menuBar(_ state: State, pointSize: CGFloat = 18) -> NSImage {
-        let image = NSImage(size: NSSize(width: pointSize, height: pointSize), flipped: false) { rect in
-            draw(state, in: rect)
-            return true
+    ///
+    /// Met `countdown` staat de resterende tijd rechts van het merk, in hetzelfde beeld. Dat
+    /// moet één afbeelding zijn en geen tweede item: een `MenuBarExtra` heeft één label, en
+    /// twee losse items in de menubalk zouden apart aan te klikken zijn en apart kunnen
+    /// verspringen. De cijfers staan in een monospaced font, want een breedte die per minuut
+    /// verandert schuift alles wat er links van hem staat heen en weer.
+    static func menuBar(_ state: State, pointSize: CGFloat = 18, countdown: String? = nil) -> NSImage {
+        let image: NSImage
+        if let countdown, !countdown.isEmpty {
+            let font = NSFont.monospacedDigitSystemFont(ofSize: pointSize * 0.62, weight: .regular)
+            // Zwart, net als het merk zelf: `isTemplate` gooit de kleur toch weg en laat de
+            // menubalk zelf bepalen wat het wordt — wit op een donkere balk, zwart op een lichte.
+            let opmaak: [NSAttributedString.Key: Any] = [.font: font, .foregroundColor: NSColor.black]
+            let tekst = countdown as NSString
+            let afmeting = tekst.size(withAttributes: opmaak)
+            let tussenruimte = pointSize * 0.18
+            let breedte = pointSize + tussenruimte + ceil(afmeting.width)
+            image = NSImage(size: NSSize(width: breedte, height: pointSize), flipped: false) { rect in
+                draw(state, in: NSRect(x: rect.minX, y: rect.minY,
+                                       width: pointSize, height: pointSize))
+                tekst.draw(at: NSPoint(x: rect.minX + pointSize + tussenruimte,
+                                       y: rect.midY - afmeting.height / 2),
+                           withAttributes: opmaak)
+                return true
+            }
+        } else {
+            image = NSImage(size: NSSize(width: pointSize, height: pointSize), flipped: false) { rect in
+                draw(state, in: rect)
+                return true
+            }
         }
         // Without this the icon keeps its literal black and vanishes on a dark menu bar.
         image.isTemplate = true

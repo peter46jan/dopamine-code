@@ -148,6 +148,8 @@ inlogscherm blijven hangen.
 | `LidArm.swift` | de eenmalige "ga aan zodra ik de klep dichtdoe", met een geldigheid van vijf minuten |
 | `ScheduleWindow.swift` | puur datumrekenwerk: valt dit moment in het schemavenster, en wanneer begon dat |
 | `AppTriggerWatch.swift` | merkt op dat een gekozen app begint of stopt; stoot alleen de guardian aan |
+| `GlobalShortcut.swift` | de globale sneltoets via Carbon; houdt geen enkele stand bij en roept één closure aan |
+| `SessionHistory.swift` | leest het logboek terug tot een lijst sessies; start en stopt niets |
 | `ControlServer.swift` | luistert op de socket waar de `dopamine`-opdrachtregel mee praat |
 | `Sources/Shared/ControlProtocol.swift` | het berichtformaat, meegecompileerd in de app én in de CLI |
 | `Sources/dopamine/main.swift` | de opdrachtregel; schakelt zelf niets, vraagt de app om iets te doen |
@@ -243,6 +245,44 @@ Een paar keuzes die verder niet vanzelf spreken:
   herhaald.
 - **Geluid, niet knipperen, als bevestiging.** De spec bood beide aan. Met de klep dicht
   is knipperende toetsenbordverlichting per definitie onzichtbaar; geluid niet.
+
+### De sneltoets, de aftelling en de geschiedenis
+
+Fase 4 voegde drie dingen aan de bediening toe en één aan het terugkijken. Wat ze gemeen
+hebben: geen van vieren houdt iets bij.
+
+**De sneltoets** stel je zelf in bij Instellingen → Algemeen; er wordt er geen meegeleverd. Een
+standaardcombinatie kan bij de eerste start botsen met iets dat je al gebruikt, en zo'n botsing
+merk je pas als dát andere ding niet meer werkt. Hij loopt via Carbon's `RegisterEventHotKey` en
+niet via `NSEvent.addGlobalMonitorForEvents`: die tweede leest alle toetsaanslagen van het hele
+systeem mee en vraagt daarom Toegankelijkheid, en die toestemming staat op deze Mac uit. Carbon
+vraagt niets en wordt automatisch meegelinkt — `build.sh` hoefde er niet voor aangepast te
+worden. Bij het indrukken leest hij `intendedOn` en gaat daarna langs precies dezelfde weg als
+de schakelaar: dezelfde tijdslimiet, accugrens, temperatuurbewaking en controle op de
+wachtwoordvrijstelling. Gaat het niet, dan hoor je het foutgeluid en staat het in het logboek;
+een melding komt er niet, want je staat op dat moment aan het toetsenbord.
+
+**De aftelling** in de menubalk (`3:15`, standaard aan, uit te zetten bij Instellingen →
+Algemeen) rekent met dezelfde eindtijd waar de tijdslimiet mee rekent — geen eigen timer, geen
+eigen beginpunt. Verander je de duur midden in een sessie, dan verspringt hij mee. Hij
+verschijnt alleen als er een sessie loopt: staat de blokkade aan zónder sessie, dan loopt er
+niets af, en een getal zou daar een belofte doen die niemand waarmaakt. Je ziet dan alleen het
+bliksem-icoon, dat precies dát zegt.
+
+**"Tot 18:00"** in het paneel is dezelfde instelling als de duur, anders gezegd. De kloktijd
+wordt omgerekend naar minuten en gaat door dezelfde weg als de duurknoppen, zodat er nergens een
+tweede eindtijd bewaard wordt. Tijdens een lopende sessie wordt er gerekend vanaf het moment dat
+je aanzette en niet vanaf nu — anders zou een sessie die om 14:00 begon en waarvoor je om 15:00
+"tot 18:00" kiest, om 17:00 stoppen. Vraag je meer dan 24 uur, dan wordt het geklemd en zegt het
+paneel welke eindtijd het dán wordt. En omdat het de gewone duurinstelling schrijft, blijft die
+onronde duur ook voor de volgende sessie staan.
+
+**De geschiedenis** (Instellingen → Geschiedenis) is het logboek, leesbaar gemaakt. Er wordt
+niets apart bijgehouden en er staat geen enkele knop die iets aan- of uitzet. Sessies waarvan
+het einde niet in het logboek staat verdwijnen niet maar krijgen een eigen regel: dat is het
+geval waarin de app is weggevallen — precies waar het vangnet uit fase 2 voor bestaat. Of er
+op dit moment iets loopt komt níet uit die tekst maar uit de app zelf; het logboek weet pas iets
+over een einde als dat einde er is.
 
 ---
 
@@ -592,6 +632,25 @@ te zeggen, en de agent staat er dan wél maar draait nooit. Aan `launchctl print
 zien: zonder de regel `run interval` is er geen tijdklok. De app schrijft de plist via
 `PropertyListSerialization` uit een Swift-dictionary, dus met echte types — gecontroleerd met
 `plutil -p`.
+
+**Dat `RegisterEventHotKey` werkt zonder Toegankelijkheid is gemeten; dat de sneltoets ook
+afgaat terwijl een ándere app voor staat, niet.** Los nagebouwd met exact de `swiftc`-regel uit
+`build.sh`: Carbon linkt automatisch mee, `InstallEventHandler` geeft 0, `RegisterEventHotKey`
+geeft 0 en levert een geldige referentie op, zonder enig toestemmingsvenster. Wat daarmee nog
+niet vaststaat is het geval waar het om gaat — je zit in Xcode, je drukt de combinatie, en
+Dopamine Code (een menubalk-app zonder Dock-icoon) hoort hem. Dat is pas te zien na
+installeren, en dat mocht tijdens het bouwen van deze fase niet: er liep een echte sessie vanuit
+`/Applications`, en een tweede exemplaar sluit zichzelf meteen af. Blijkt hij niet af te gaan,
+dan staat het in het logboek: `Sneltoets ⌃⌥⌘D staat klaar.` betekent dat de registratie gelukt
+is, en dan ligt het niet aan de registratie.
+
+**De menubalk-aftelling en de twee nieuwe panelen zijn niet visueel gecontroleerd.** Om dezelfde
+reden. Wat wél nagerekend is: de afbeelding zelf (los gerenderd — 46 pt breed bij `3:15`, 53 pt
+bij `12:00`, template-vlag aan, aftelling leesbaar naast het merk), en de rekensom achter "tot
+18:00" met vijf gevallen, waaronder het geval dat ertoe doet: sessie om 14:00 begonnen, om 15:00
+"tot 18:00" gekozen, uitkomst 18:00. De parser van de geschiedenis is tegen het échte logboek
+van deze Mac gedraaid: zes sessies, waarvan die van 08:59:51 correct als "geen afsluitregel"
+verschijnt.
 
 ---
 

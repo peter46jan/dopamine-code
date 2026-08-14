@@ -301,7 +301,7 @@ te beantwoorden is zonder de app te openen.
 
 ---
 
-## Fase 4 — Ergonomie
+## Fase 4 — Ergonomie · ✅ gedaan 14 augustus 2026
 
 Klein, los van elkaar te doen, en pas de moeite waard als de rest staat.
 
@@ -311,7 +311,77 @@ Klein, los van elkaar te doen, en pas de moeite waard als de rest staat.
 | **"Tot 18:00" naast "voor 4,5 uur"** | Amphetamine | Je denkt vaker in eindtijd dan in duur. De CLI krijgt dit in 1.2 al; de UI loopt dan achter |
 | **Aftelling in de menubalk** | Amphetamine | Resterende tijd zonder het paneel te openen |
 | **Sessiegeschiedenis in de app** | Amphetamine (statistieken) | Het logboek heeft alles al; dit is er een leesbare weergave van |
-| **Focus Filters** | Coca | Sessie volgt een macOS-focus |
+| ~~**Focus Filters**~~ | Coca | Vervallen — zie hieronder |
+
+**Gedaan, op Focus Filters na.** Vier van de vijf punten kosten geen enkele extra toestemming
+en geen enkele externe bibliotheek. Het vijfde kost allebei iets wat deze app niet wil, en is
+daarom doorgestreept in plaats van half gebouwd.
+
+**De sneltoets loopt via Carbon's `RegisterEventHotKey`, niet via
+`NSEvent.addGlobalMonitorForEvents`.** Die tweede leest álle toetsaanslagen van het hele
+systeem mee en vraagt daarom Toegankelijkheid — het recht dat op deze Mac uit staat en dat elke
+start in het logboek terugkomt als `gebeurtenissen posten toegestaan: false`. Carbon vraagt
+niets: je zegt macOS wélke combinatie je wilt en je hoort alleen díe. Gemeten met exact de
+`swiftc`-regel die al in `build.sh` stond: Carbon wordt automatisch meegelinkt (`otool -L` noemt
+hem), registreren geeft status 0 en er komt geen toestemmingsvenster aan te pas. `build.sh` is
+dus niet aangeraakt. Er wordt géén combinatie meegeleverd — een standaardsneltoets kan bij de
+eerste start botsen met iets dat je al gebruikt, en dat merk je pas als dát andere ding niet
+meer werkt. Opnemen gebeurt met een lokale toetsbewaking, die alleen ziet wat er in het venster
+Instellingen gebeurt en daarom ook niets vraagt.
+
+**De sneltoets is één nieuwe ingang, geen tweede schakelaar.** `GlobalShortcut.swift` houdt geen
+aan/uit-stand bij, kent `SleepFlag` niet en beslist niets: het roept één closure aan.
+`toggleFromShortcut()` leest `intendedOn` op het moment van indrukken en gaat daarna langs
+dezelfde `startSession`/`stopSession` als het paneel — inclusief accugrens, temperatuurbewaking
+en de controle op de wachtwoordvrijstelling. Een sneltoets die zelf onthoudt of hij "aan" staat
+loopt uit de pas met de kernel zodra een vangnet ingrijpt, en dan zet de eerste druk daarna
+niets aan maar iets uit dat al uit was. Een weigering geeft een logregel plus het foutgeluid en
+uitdrukkelijk géén melding: er zijn er zes, ze gaan over wat er gebeurt terwijl je wég bent, en
+bij een sneltoets sta je aan het toetsenbord.
+
+**De aftelling heeft geen eigen klok en geen eigen anker.** Hij rekent met `deadline` en `now`,
+die de guardian al bijhoudt, en staat in de vorm `3:15` met monospaced cijfers naast het icoon —
+alles wat van breedte wisselt laat de hele menubalk om de minuut verspringen. Het beeld wordt
+gebufferd op (icoonstaat, tekst), want de scene wordt door de kloktik elke seconde opnieuw
+geëvalueerd terwijl er hooguit één keer per minuut iets verandert. Hij verschijnt alleen bij een
+echte sessie: staat de vlag aan zónder sessie, dan loopt er niets af en zou een aftelling
+precies de belofte doen die `safetyNetLine` in zijn derde tak expres vermijdt. Daar blijft het
+bliksem-icoon alleen staan.
+
+**"Tot 18:00" is dezelfde ene instelling, anders gezegd.** De gekozen kloktijd wordt omgerekend
+naar minuten en gaat door `setAutoOff(minutes:)` heen, zodat `Prefs.autoOffMinutes` en
+`rescheduleIfRunning()` de enige eigenaars van de eindtijd blijven; een opgeslagen absolute
+eindtijd zou een tweede planner naast de bestaande zijn. Eén valstrik zit erin en die is
+vastgelegd: `deadline` is *sessiestart + duur*, dus tijdens een lopende sessie wordt er vanaf de
+start gerekend en niet vanaf nu. Begonnen om 14:00, om 15:00 "tot 18:00" gekozen, en het wordt
+18:00 — vanaf nu rekenen had er 17:00 van gemaakt. Komt de gevraagde eindtijd boven de klem van
+24 uur uit, dan wordt hij geklemd en zegt het paneel in gewone taal welke eindtijd het dán is.
+Dat de opgeslagen standaardduur daarmee een onrond getal wordt (271 minuten) is geaccepteerd met
+een bijschrift: een tweede, niet-opgeslagen duurwaarde zou opnieuw een tweede planner zijn.
+
+**De sessiegeschiedenis is strikt het logboek, leesbaar gemaakt.** `SessionHistory.swift`
+importeert alleen Foundation, kent `AppModel` niet en start of stopt niets. Hij zoekt op precies
+de markeringen waar `verify.sh` ook op grept, in beide spellingen — de schakelaar heette tot
+14 augustus 2026 "Blijf actief" — want de parser past zich aan het logboek aan en nooit
+andersom. Sessies zonder afsluitregel verdwijnen niet maar krijgen een eigen zin: dat is het gat
+waar het vangnet uit fase 2 voor bestaat, hier gratis in beeld. Getest tegen het echte logboek
+van deze Mac: zes sessies, waarvan die van 08:59:51 zichtbaar zónder einde omdat een SIGTERM via
+`exit(0)` gaat en `applicationWillTerminate` dan niet draait. Of er nú iets loopt komt níét uit
+de tekst maar uit `intendedOn` en `sessionStart` — een parser die een openstaande AAN-regel als
+"loopt nog" uitlegt, is een tweede idee van "er loopt een sessie", gebaseerd op tekst in plaats
+van op de kernel.
+
+**Focus Filters is vervallen, en dat is een keuze en geen vergeetpunt.** Het vraagt AppIntents
+plus een `Metadata.appintents`-bundel die alleen ontstaat via Xcodes "Extract App
+Intents"-stap. De processor daarvoor (`appintentsmetadataprocessor`) staat wel op deze Mac, in
+de XcodeDefault-toolchain, maar wordt ongedocumenteerd aangestuurd en vraagt const-values-
+extractie in de compilatieregel. Dat is een afhankelijkheid van Xcodes buildsysteem naast de ene
+`swiftc`-regel waar dit project op staat, en de faalwijze is stil: de app compileert gewoon, maar
+het filter verschijnt niet in Systeeminstellingen en niemand ziet waarom. De route eromheen —
+`~/Library/DoNotDisturb/DB/` uitlezen — is privéstaat van macOS en zou een tweede waarheid over
+de focus opleveren; uitdrukkelijk afgewezen. Bovendien: "sessie volgt een focus" is functioneel
+een trigger en hoort dus bij fase 3, met de flankbewaking en `evaluateTriggers()` die daar al
+staan. Komt het er ooit, dan hoort het daar en niet hier.
 
 ---
 

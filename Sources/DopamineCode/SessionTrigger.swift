@@ -18,6 +18,8 @@ enum SessionTrigger: Equatable {
     case app(bundleID: String, naam: String)
     /// Het ingestelde venster ging open.
     case schema(omschrijving: String)
+    /// De globale sneltoets is ingedrukt.
+    case sneltoets
 
     /// Wat er in het paneel staat, in gewone taal. Met een hoofdletter aan het begin is het
     /// ook los een zin, en dat is precies hoe het paneel hem gebruikt.
@@ -28,6 +30,7 @@ enum SessionTrigger: Equatable {
         case .klepArming: return "aangezet doordat je de klep dichtdeed"
         case .app(_, let naam): return "aangezet doordat \(naam) ging draaien"
         case .schema(let omschrijving): return "aangezet door het schema (\(omschrijving))"
+        case .sneltoets: return "met de sneltoets aangezet"
         }
     }
 
@@ -39,6 +42,7 @@ enum SessionTrigger: Equatable {
         case .klepArming: return "klep-arming"
         case .app(_, let naam): return "app \(naam)"
         case .schema: return "schema"
+        case .sneltoets: return "sneltoets"
         }
     }
 
@@ -49,9 +53,10 @@ enum SessionTrigger: Equatable {
     /// dat is een script dat drie minuten stilstaat zonder te zeggen waarom. Een trigger is
     /// het al helemaal niet: die gaat af om 09:00 terwijl jij in de trein zit, of op het
     /// moment dat de klep net dicht is en het scherm op slot staat.
+    /// De sneltoets mag het wél: je hebt er net drie toetsen voor ingedrukt, dus je zit er.
     var mayPrompt: Bool {
         switch self {
-        case .schakelaar: return true
+        case .schakelaar, .sneltoets: return true
         case .cli, .klepArming, .app, .schema: return false
         }
     }
@@ -64,7 +69,7 @@ enum SessionTrigger: Equatable {
     /// is stil blijven precies de fout die harde regel 3 verbiedt.
     var isAutomatisch: Bool {
         switch self {
-        case .schakelaar, .cli: return false
+        case .schakelaar, .cli, .sneltoets: return false
         case .klepArming, .app, .schema: return true
         }
     }

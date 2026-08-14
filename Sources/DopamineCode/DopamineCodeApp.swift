@@ -31,7 +31,9 @@ struct DopamineCodeApp: App {
         } label: {
             // The NSImage is marked isTemplate, which is what earns the same automatic
             // menu bar vibrancy and light/dark inversion an SF Symbol would get.
-            Image(nsImage: model.menuBarIcon)
+            // Het beeld bevat ook de aftelling; het model buffert het, want deze scene wordt
+            // door de kloktik elke seconde opnieuw geëvalueerd.
+            Image(nsImage: model.menuBarLabel)
         }
         // Not .menu: menu style drops non-text views and does not re-render on open,
         // which rules out a live countdown.

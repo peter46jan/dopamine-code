@@ -69,16 +69,30 @@ struct SettingsView: View {
     /// kloktik van het model elke seconde opnieuw geëvalueerd.
     @State private var pickableApps: [RunningApps.Item] = []
 
+    // Ergonomie (fase 4).
+    @State private var countdown = Prefs.showCountdownInMenuBar
+    /// Loopt er een opname van een sneltoets? Zolang die loopt slikt dit venster elke
+    /// toetsaanslag op — daarom hoort er altijd een zichtbaar einde aan te zitten.
+    @State private var recording = false
+    @State private var recordingMonitor: Any?
+    /// De sessiegeschiedenis, één keer gelezen bij het openen van het tabblad. `nil` betekent
+    /// "nog niet gelezen"; een leeg lijstje betekent iets heel anders en mag daar niet op lijken.
+    @State private var history: SessionHistory?
+
     var body: some View {
         TabView {
             general.tabItem { Label("Algemeen", systemImage: "gearshape") }
             safety.tabItem { Label("Vanzelf stoppen", systemImage: "shield") }
             diagnosticsTab.tabItem { Label("Diagnose", systemImage: "stethoscope") }
             triggers.tabItem { Label("Zelf aanzetten", systemImage: "wand.and.stars") }
+            historyTab.tabItem { Label("Geschiedenis", systemImage: "clock.arrow.circlepath") }
         }
         .frame(width: 480, height: 380)
         .overlay(alignment: .bottom) { messageBar }
         .onDisappear {
+            // Een opname die blijft hangen zou elke toetsaanslag in dit venster opeten zodra het
+            // opnieuw geopend wordt.
+            stopRecording()
             // Coming back from the settings window must not leave a Dock icon behind.
             NSApp.setActivationPolicy(.accessory)
         }
@@ -149,7 +163,20 @@ struct SettingsView: View {
                      + "klep dicht is.")
                     .font(.caption).foregroundStyle(.secondary)
                     .fixedSize(horizontal: false, vertical: true)
+
+                Toggle("Resterende tijd naast het icoon in de menubalk", isOn: $countdown)
+                    .onChange(of: countdown) { Prefs.showCountdownInMenuBar = $0 }
+                Text("Dan staat er bijvoorbeeld \"3:15\" naast het icoon: nog drie uur en vijftien "
+                     + "minuten. Het getal komt van dezelfde eindtijd waar de tijdslimiet mee "
+                     + "rekent, dus het loopt nooit uit de pas met wat er echt gaat gebeuren. Het "
+                     + "verschijnt alleen als er een sessie loopt — staat de Mac wakker zonder dat "
+                     + "er iets loopt, dan telt er niets af en zou een getal daar een belofte doen "
+                     + "die niemand waarmaakt.")
+                    .font(.caption).foregroundStyle(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
             }
+
+            shortcutSection
 
             Section("Opstarten") {
                 Toggle("Dopamine Code starten zodra ik inlog", isOn: $launchAtLogin)
@@ -192,6 +219,82 @@ struct SettingsView: View {
                 launchAtLogin = actual
             }
         }
+    }
+
+    // MARK: - Sneltoets
+
+    /// Aan en uit zonder de menubalk aan te klikken.
+    ///
+    /// Er wordt geen combinatie meegeleverd: die kan bij de eerste start botsen met iets dat je
+    /// al gebruikt, en zo'n botsing merk je pas als dát andere ding niet meer werkt. Opnemen
+    /// gebeurt met een lokale toetsbewaking — die ziet alleen wat er in dít venster gebeurt en
+    /// vraagt daarom geen enkel recht. De sneltoets zelf loopt via Carbon; zie `GlobalShortcut`.
+    private var shortcutSection: some View {
+        Section("Sneltoets") {
+            LabeledContent("Aan en uit met") {
+                HStack(spacing: 8) {
+                    Text(recording ? "Druk de toetsen…" : (model.shortcutOmschrijving ?? "geen"))
+                        .foregroundStyle(recording || model.shortcutOmschrijving == nil
+                                         ? Color.secondary : Color.primary)
+                        .frame(minWidth: 100, alignment: .leading)
+                    Button(recording ? "Afbreken" : "Opnemen…") {
+                        if recording { stopRecording() } else { startRecording() }
+                    }
+                    .controlSize(.small)
+                    Button("Wissen") {
+                        model.setShortcut(keyCode: nil, modifierFlags: 0)
+                    }
+                    .controlSize(.small)
+                    .disabled(model.shortcutOmschrijving == nil && model.shortcutProbleem == nil)
+                }
+            }
+
+            if let probleem = model.shortcutProbleem {
+                Label(probleem, systemImage: "exclamationmark.triangle.fill")
+                    .font(.caption).foregroundStyle(.orange)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+
+            Text("De sneltoets doet precies hetzelfde als de schakelaar in het paneel, en loopt "
+                 + "langs precies dezelfde controles: is de accu te leeg, is de Mac te warm, of "
+                 + "ontbreekt de wachtwoordvrijstelling, dan gaat hij net zo goed niet aan. Je "
+                 + "hoort dan het foutgeluid en het staat in het logboek; een melding krijg je "
+                 + "niet, want je staat op dat moment aan het toetsenbord.")
+                .font(.caption).foregroundStyle(.secondary)
+                .fixedSize(horizontal: false, vertical: true)
+            Text("Neem een combinatie op met ⌘, ⌥ of ⌃ erin. Zonder zo'n toets zou de sneltoets "
+                 + "die toets in élke app opslokken. Esc breekt het opnemen af.")
+                .font(.caption).foregroundStyle(.secondary)
+                .fixedSize(horizontal: false, vertical: true)
+        }
+    }
+
+    /// Vangt één toetsaanslag op, alleen in dit venster.
+    ///
+    /// `addLocalMonitorForEvents` ziet uitsluitend gebeurtenissen die voor deze app bestemd
+    /// zijn en heeft daarom geen Toegankelijkheid nodig — in tegenstelling tot de globale
+    /// variant, die dat wél vraagt en waarvoor de toestemming op deze Mac uit staat.
+    private func startRecording() {
+        stopRecording()
+        recording = true
+        recordingMonitor = NSEvent.addLocalMonitorForEvents(matching: .keyDown) { event in
+            if Int(event.keyCode) == GlobalShortcut.escapeKeyCode {
+                stopRecording()
+                return nil
+            }
+            model.setShortcut(keyCode: Int(event.keyCode),
+                              modifierFlags: GlobalShortcut.schoon(event.modifierFlags).rawValue)
+            stopRecording()
+            // `nil` teruggeven: anders komt de toetsaanslag óók nog in het venster terecht en
+            // springt de knop waar de focus net op stond mee.
+            return nil
+        }
+    }
+
+    private func stopRecording() {
+        if let recordingMonitor { NSEvent.removeMonitor(recordingMonitor) }
+        recordingMonitor = nil
+        recording = false
     }
 
     // MARK: - Safety net
@@ -641,4 +744,149 @@ struct SettingsView: View {
         model.refreshGrant()
         Task { diagnostics = await Diagnostics.collect(model: model) }
     }
+
+    // MARK: - Geschiedenis
+
+    /// Wat er is geweest, gelezen uit het logboek.
+    ///
+    /// Bewust een apart tabblad naast Diagnose: Diagnose gaat over de toestand van nú,
+    /// geschiedenis over wat er achter je ligt. En bewust zónder één knop die iets aan- of
+    /// uitzet: dit is een verslag, geen bediening.
+    private var historyTab: some View {
+        Form {
+            Section("De laatste sessies") {
+                if let history {
+                    if history.sessies.isEmpty {
+                        Text("Er staat geen enkele sessie in het logboek.")
+                            .font(.caption).foregroundStyle(.secondary)
+                    } else {
+                        ForEach(history.sessies) { sessie in historyRow(sessie) }
+                    }
+                } else {
+                    Text("Bezig met lezen…")
+                        .font(.caption).foregroundStyle(.secondary)
+                }
+            }
+
+            Section("Waar dit vandaan komt") {
+                if let history {
+                    // Het aantal gelezen regels staat er zodat een leeg lijstje niet hetzelfde
+                    // lijkt als "je hebt de app nog nooit aangezet". Nul regels betekent dat er
+                    // niets te lezen viel; vierduizend regels zonder sessies betekent iets anders.
+                    LabeledContent("Gelezen regels", value: "\(history.gelezenRegels)")
+                    if history.zonderAfsluitregel > 0 {
+                        LabeledContent("Zonder afsluitregel", value: "\(history.zonderAfsluitregel)")
+                        Text("Van die sessies staat het einde niet in het logboek. Een sessie die "
+                             + "op dit moment nog loopt telt daarin mee — daarvan is het einde er "
+                             + "nog niet.")
+                            .font(.caption).foregroundStyle(.secondary)
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
+                    if history.zonderBegin > 0 {
+                        LabeledContent("Einde zonder begin", value: "\(history.zonderBegin)")
+                        Text("Van die sessies is het begin uit het logboek gerold; er staan alleen "
+                             + "nog regels over het einde.")
+                            .font(.caption).foregroundStyle(.secondary)
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
+                    if let leesfout = history.leesfout {
+                        Label(leesfout, systemImage: "exclamationmark.triangle.fill")
+                            .font(.caption).foregroundStyle(.orange)
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
+                }
+                Text("Dit is het logboek, leesbaar gemaakt — er wordt niets apart bijgehouden. "
+                     + "Het logboek rolt om na een megabyte; wat ouder is dan het archief ernaast "
+                     + "staat er niet meer in. Loopt er nu een sessie, dan komt die regel niet uit "
+                     + "het logboek maar uit de app zelf: in het logboek staat pas iets over het "
+                     + "einde als het einde er is.")
+                    .font(.caption).foregroundStyle(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
+                Button("Opnieuw lezen") { loadHistory() }
+                    .controlSize(.small)
+            }
+        }
+        .formStyle(.grouped)
+        .onAppear { loadHistory() }
+    }
+
+    private func historyRow(_ sessie: SessionHistory.Sessie) -> some View {
+        // Of dit de sessie is die nú loopt komt uit het model en niet uit de tekst in het
+        // logboek: een sessie zonder afsluitregel kan net zo goed een app zijn die is
+        // weggevallen, en dat verschil is nou juist het punt. De marge is er omdat het logboek
+        // op hele seconden schrijft.
+        let loopt = model.intendedOn && sessie.eind == nil
+            && (model.sessionStartedAt.map { abs($0.timeIntervalSince(sessie.begin)) < 5 } ?? false)
+        return VStack(alignment: .leading, spacing: 2) {
+            HStack(spacing: 6) {
+                Text(Self.dagTijd.string(from: sessie.begin))
+                    .font(.callout.weight(.medium)).monospacedDigit()
+                Text("→").foregroundStyle(.secondary)
+                if let eind = sessie.eind {
+                    Text(Self.tijd.string(from: eind)).font(.callout).monospacedDigit()
+                } else if loopt {
+                    Text("loopt nog").font(.callout).foregroundStyle(Color.accentColor)
+                } else {
+                    Text("onbekend").font(.callout).foregroundStyle(.orange)
+                }
+                if let gedraaid = sessie.gedraaid {
+                    Text("· \(gedraaid)").font(.callout).foregroundStyle(.secondary).monospacedDigit()
+                }
+                Spacer()
+            }
+            if let zin = historyDetail(sessie, loopt: loopt) {
+                Text(zin)
+                    .font(.caption).foregroundStyle(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+            if sessie.beloofdeNietGehaald {
+                Label("De Mac heeft tijdens deze sessie tóch geslapen.",
+                      systemImage: "exclamationmark.octagon.fill")
+                    .font(.caption).foregroundStyle(.red)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+        }
+        .padding(.vertical, 2)
+    }
+
+    private func historyDetail(_ sessie: SessionHistory.Sessie, loopt: Bool) -> String? {
+        var delen: [String] = []
+        if let trigger = sessie.trigger { delen.append("gestart via de \(trigger)") }
+        if let vangnet = sessie.vangnet {
+            delen.append("een vangnet greep in: \(vangnet)")
+        } else if let reden = sessie.reden {
+            delen.append("gestopt: \(reden)")
+        }
+        delen.append(contentsOf: sessie.bijzonderheden)
+        if sessie.eind == nil && !loopt {
+            // Dit is het gat waar het vangnet uit fase 2 voor bestaat, en het hoort met zoveel
+            // woorden in beeld te staan in plaats van als een lege regel.
+            delen.append("geen afsluitregel — de app is weggevallen of vervangen, dus het einde "
+                         + "staat niet in het logboek")
+        }
+        return delen.isEmpty ? nil : delen.joined(separator: " · ")
+    }
+
+    /// Naast de hoofdthread lezen, net als `Diagnostics.collect`: dit opent twee bestanden en
+    /// loopt er regel voor regel doorheen, en op de hoofdthread staat ondertussen de guardian stil.
+    private func loadHistory() {
+        let pad = EventLog.shared.logPath
+        Task {
+            history = await Task.detached(priority: .utility) {
+                SessionHistory.lees(logboek: URL(fileURLWithPath: pad))
+            }.value
+        }
+    }
+
+    private static let dagTijd: DateFormatter = {
+        let f = DateFormatter()
+        f.setLocalizedDateFormatFromTemplate("d MMM HH:mm")
+        return f
+    }()
+
+    private static let tijd: DateFormatter = {
+        let f = DateFormatter()
+        f.dateFormat = "HH:mm"
+        return f
+    }()
 }
