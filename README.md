@@ -138,6 +138,7 @@ inlogscherm blijven hangen.
 | `ClamshellMonitor.swift` | klepstand via `kIOPMMessageClamshellStateChange` |
 | `NetworkMonitor.swift` | `NWPathMonitor` plus een captive-portal-controle |
 | `LaunchAtLogin.swift` | `SMAppService`, met LaunchAgent als terugval |
+| `RestartGuard.swift` | de wachter die de app terughaalt als hij wegvalt met de blokkade aan |
 | `EventLog.swift` | het logboek waarmee een sessie van vannacht morgen nog te beoordelen is |
 | `ConflictWatch.swift` | merkt op dat Amphetamine meedraait |
 | `ScreenState.swift` | of het inlogvenster voor staat, zodat er nooit een dialoog achter blijft hangen |
@@ -418,7 +419,8 @@ Wat het script controleert:
 | Vergeten uit te zetten | Zet de timer in de instellingen op 5 of 30 minuten, wacht die af, controleer met `./verify.sh --report` dat `SleepDisabled false` is |
 | Batterij onder de grens | Grens tijdelijk op bijvoorbeeld 60% zetten, stekker eruit, wachten |
 | Sudoers ontbreekt of is geblokkeerd | `sudo rm /etc/sudoers.d/dopamine-code-disablesleep`, dan schakelen: er hoort een beheerdersprompt te komen, geen stilte |
-| App geforceerd afsluiten met de vlag aan | `kill -9 $(pgrep -x Dopamine Code)` terwijl "Mac wakker houden" aan staat, dan de app starten: de vlag hoort opgeruimd te worden |
+| App geforceerd afsluiten met de vlag aan | `./verify.sh --killtest` terwijl "Mac wakker houden" aan staat. De app wordt met `kill -9` afgeschoten; het vangnet hoort hem binnen twee minuten terug te halen, waarna de blokkade vanzelf opgeruimd wordt. Zonder vangnet blijft de vlag staan tot je de app zelf start |
+| Netjes stoppen lokt geen herstart uit | "Mac wakker houden" uitzetten, dan de app afsluiten via Stop. Twee minuten wachten: er hoort niets terug te komen, en het logboek noemt geen enkele vangnetregel |
 | macOS-update | `./verify.sh` opnieuw draaien. Sudoers-regel en toestemming overleven een update meestal, maar de private symbolen uit `CoreBrightness` en `login.framework` zijn precies wat Apple ongemerkt kan wijzigen |
 
 ---
@@ -504,6 +506,36 @@ nu wel onderscheid tussen "al geregistreerd" (geen fout), "door de gebruiker gew
 Mac wakker houdt. De app merkt het op en biedt aan Amphetamine af te sluiten. Doe dat vóór
 de eerste echte test, anders bewijst die niets.
 
+**Of `open` werkt vanuit een launchd-agent met een vergrendeld scherm en de klep dicht, is
+niet gemeten.** Dat is precies het geval waarvoor het vangnet uit fase 2 gebouwd is, dus
+zolang dat niet gemeten is, is het vangnet er alleen bewezen bij als je erbij zit.
+Terugvalroute is ingebouwd: is de app 55 seconden na `open` nog niet terug, dan start de
+wachter de binary rechtstreeks met `posix_spawn` (met een eigen sessie, zodat launchd hem niet
+meteen weer opruimt) en schrijft daar een WARN-regel bij. Aantonen gaat met
+`./verify.sh --killtest`, één keer met het scherm ontgrendeld en één keer met de klep dicht en
+het scherm vergrendeld. Die tweede run is het enige echte bewijs.
+
+**De wachterronde zelf is wél gemeten.** Handmatig aangeroepen tijdens een lopende sessie:
+0,4 seconde, conclusie "de app draait", geen enkele schrijfactie, en het eigen proces correct
+uit `pgrep -x DopamineCode` gefilterd. Dat laatste is de stilste manier waarop dit vangnet
+nooit af zou gaan: de wachter ís dezelfde binary als de app. Met een kopie die zichzelf als
+enige DopamineCode-proces zag, liep de hele beslisketen ook af: één bevestiging, twee
+bevestigingen, en toen de handtekeningcontrole die een aangetaste bundel weigerde te starten.
+
+**Dat launchd een agent van 30 seconden ook echt elke 30 seconden draait met de klep dicht,
+het scherm vergrendeld en de Mac op accu, is gemeten.** Met precies de plist die
+`RestartGuard` schrijft, in `~/Library/LaunchAgents`: `run interval = 30 seconds`, en drie
+runs in 75 seconden. Dat is de aanname waar dit hele vangnet op rust, dus die hoorde niet
+ongemeten te blijven.
+
+Eén valkuil daarbij, gevonden doordat de eerste drie metingen niets deden: in de oude
+ASCII-plistvorm (`{ "RunAtLoad" = true; }`) bestaan geen booleans en geen getallen. `plutil`
+maakt daar de strings `"true"` en `"30"` van, launchd negeert beide sleutels zonder één woord
+te zeggen, en de agent staat er dan wél maar draait nooit. Aan `launchctl print` is het te
+zien: zonder de regel `run interval` is er geen tijdklok. De app schrijft de plist via
+`PropertyListSerialization` uit een Swift-dictionary, dus met echte types — gecontroleerd met
+`plutil -p`.
+
 ---
 
 ## Als er iets vastloopt
@@ -517,8 +549,21 @@ ioreg -r -d 1 -c IOPMrootDomain | grep SleepDisabled     # moet "No" zijn
 ```
 
 De app ruimt dit bij elke start zelf op, vangt `SIGTERM`, `SIGINT` en `SIGHUP` af, en
-reageert op `willPowerOffNotification`. Alleen `SIGKILL` is niet af te vangen — daarvoor
-is de opruiming bij het starten er.
+reageert op `willPowerOffNotification`. `SIGKILL` is niet af te vangen — daarvoor is er sinds
+fase 2 een wachter: een LaunchAgent (`com.peter46jan.dopaminecode.watchdog`) die elke 30
+seconden dezelfde binary start met `--vangnet`. Die leest de kernel, kijkt of er nog een app
+draait, en start de app opnieuw als de blokkade aan staat zonder app. De app ruimt dan bij
+het starten op wat er hangen bleef.
+
+De wachter schrijft de vlag nooit zelf en houdt geen sessie bij; hij beslist op de kernel en
+op proces-aanwezigheid. Een nette afsluiting laat een markering achter
+(`~/Library/Application Support/Dopamine Code/afsluiting.json`) met de stand van de blokkade:
+stond die netjes uit, dan komt de app niet terug. Stond hij nog aan, dan komt hij na twee
+minuten tóch terug — zonder app is er geen tijdslimiet, geen accugrens en geen
+temperatuurbewaking meer, en dat weegt zwaarder dan "gestopt is gestopt".
+
+Of de wachter nog kijkt zie je in `./verify.sh --report` en in Instellingen → Diagnose, met
+een knop om hem te herstellen. Uitzetten kan niet, net als bij de temperatuurbewaking.
 
 Het logboek staat in `~/Library/Logs/Dopamine Code/dopamine-code.log` en roteert vanzelf boven een
 megabyte.

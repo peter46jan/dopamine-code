@@ -1,7 +1,12 @@
 import Foundation
 import UserNotifications
 
-/// Notifications for the four things that happen while nobody is looking.
+/// Notifications for the six things that happen while nobody is looking.
+///
+/// Zes is het eindaantal van de vier fases; niet alle cases hoeven al te bestaan terwijl er
+/// aan gebouwd wordt. Er komt er bewust géén bij voor een geslaagde automatische start of een
+/// geweigerde sneltoets: vier nachtelijke meldingen die ertoe doen verwateren als er zes
+/// bijkomen die dat niet doen. Daar zijn het logboek en het paneel voor.
 ///
 /// Until now the only channel for these was `NSSound`, and the entire premise of this app is
 /// a shut lid in an empty room — so at 03:12 a safety net would fire and the app would play
@@ -13,7 +18,7 @@ import UserNotifications
 /// a locked screen push the safety net out — a net that exists precisely for the case where
 /// nobody is present to make that judgement. A notification here reports; it never acts.
 ///
-/// Every call is fire-and-forget. Three of the four sites are inside `attemptRelease` and
+/// Every call is fire-and-forget. Three of the call sites are inside `attemptRelease` and
 /// `forceRelease`, the most delicate path in the app; nothing there may ever wait on a
 /// notification being delivered.
 enum Notify {
@@ -27,6 +32,9 @@ enum Notify {
         case thermalCritical
         /// The Mac slept while we were holding it awake. The promise did not hold.
         case macSlept
+        /// De app was weggevallen (kill -9, een crash) terwijl de Mac wakker gehouden werd,
+        /// en het vangnet heeft hem teruggehaald.
+        case restartedAfterLoss
 
         var title: String {
             switch self {
@@ -34,6 +42,7 @@ enum Notify {
             case .releaseFailed: return "De Mac kan niet gaan slapen"
             case .thermalCritical: return "De Mac is te warm geworden"
             case .macSlept: return "De Mac heeft tóch geslapen"
+            case .restartedAfterLoss: return "Dopamine Code was weggevallen"
             }
         }
 

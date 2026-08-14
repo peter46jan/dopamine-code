@@ -2,7 +2,23 @@ import AppKit
 import SwiftUI
 import UserNotifications
 
+/// De ingang van het proces.
+///
+/// Waarom dit niet gewoon `@main` op `DopamineCodeApp` is: dezelfde binary is ook de wachter
+/// uit `RestartGuard`. Die wordt elke 30 seconden door launchd gestart, kijkt naar de kernel
+/// en verdwijnt weer — en mag daarbij géén `NSApplication` optuigen. Een tweede exemplaar van
+/// deze app in de menubalk, twee keer per minuut, zou precies de dubbele guardian opleveren
+/// die `terminateIfAlreadyRunning` hieronder moet voorkomen.
 @main
+enum DopamineCodeEntry {
+    @MainActor static func main() {
+        if RestartGuard.shouldRunAsWatchdog {
+            RestartGuard.runWatchdogAndExit()
+        }
+        DopamineCodeApp.main()
+    }
+}
+
 struct DopamineCodeApp: App {
 
     @NSApplicationDelegateAdaptor(AppDelegate.self) private var delegate

@@ -366,6 +366,20 @@ final class AppModel: ObservableObject {
         EventLog.shared.rotateIfNeeded()
         EventLog.shared.info("Dopamine Code gestart (\(Bundle.main.bundleURL.path)).")
 
+        // Wat de vorige afsluiting achterliet, meteen lezen en meteen weggooien: vanaf nu
+        // betekent "geen markering" weer wat het moet betekenen, namelijk dat deze app niet
+        // netjes is afgesloten. Zonder die regel zou het vangnet na een kill -9 denken dat het
+        // afsluiten van gisteravond nog liep.
+        if let vorige = RestartGuard.clearExitMarkerAtStartup() {
+            EventLog.shared.info(vorige)
+        }
+        if RestartGuard.broughtBackByWatchdog {
+            EventLog.shared.error(
+                "Deze start komt van het vangnet: de app was weggevallen terwijl de Mac wakker "
+                + "gehouden werd."
+            )
+        }
+
         refreshBacklight()
         Task { conflict = await ConflictWatch.current() }
 
@@ -411,8 +425,38 @@ final class AppModel: ObservableObject {
         startGuardian()
 
         Task { await self.refreshGrantAsync() }
-        Task { await self.clearStaleFlagAtStartup() }
+        Task {
+            await self.clearStaleFlagAtStartup()
+            // Ná het opruimen, want de zin moet kunnen zeggen óf het opruimen gelukt is.
+            self.announceWatchdogRestartIfNeeded()
+        }
+        // Bewust bij elke start, niet alleen de eerste keer: een plist die iemand weggooit of
+        // een bundel die verhuist moet zichzelf herstellen. `launchctl` erbij, dus naast de
+        // hoofdthread — die draait de guardian.
+        Task.detached(priority: .utility) { RestartGuard.ensureInstalled() }
         logEnvironment()
+    }
+
+    /// Zegt hardop dat de app was weggevallen en door het vangnet is teruggehaald.
+    ///
+    /// Nooit stil terugkomen alsof er niets was: de app is met `kill -9` of door een crash
+    /// verdwenen terwijl de Mac wakker gehouden werd, en dat is precies het soort gebeurtenis
+    /// dat 's nachts gebeurt en waar de gebruiker de volgende ochtend van moet weten.
+    private func announceWatchdogRestartIfNeeded() {
+        guard RestartGuard.broughtBackByWatchdog else { return }
+        let opgeruimd = kernelFlag == false
+        let staart = opgeruimd
+            ? "De slaapblokkade is opgeruimd; de Mac mag weer slapen."
+            : "De slaapblokkade staat nog aan — de Mac kan nu niet slapen."
+        let zin = "Dopamine Code was weggevallen terwijl de Mac wakker gehouden werd. " + staart
+        EventLog.shared.error(zin)
+        lastMessage = zin
+        // Met de klok erin, net als bij `sessionEnded`: dit gebeurt 's nachts en "zojuist" zegt
+        // 's ochtends niets meer.
+        let clock = DateFormatter()
+        clock.dateFormat = "HH:mm"
+        Notify.post(.restartedAfterLoss,
+                    "Om \(clock.string(from: Date())) teruggehaald door het vangnet. " + staart)
     }
 
     /// Recorded once per launch so that a failure after a macOS update can be traced to
@@ -502,6 +546,11 @@ final class AppModel: ObservableObject {
                 // volgende `dopamine`-aanroep ECONNREFUSED — dat wordt netjes gemeld als
                 // "de app draait niet", maar het bestand hoort hier weg te zijn.
                 ControlServer.removeSocketFile()
+                // Ná de poging hierboven, zodat de markering de échte stand van de blokkade
+                // bevat. Hierop besluit het vangnet of dit afsluiten was of wegvallen; een
+                // markering die vóór het terugzetten geschreven wordt, liegt in het enige
+                // geval dat ertoe doet.
+                RestartGuard.recordDeliberateExit(reason: "signaal \(signalNumber)")
                 // Wachten tot het logboek echt geschreven is: `exit(0)` gooit weg wat er nog
                 // in de wachtrij staat, en dat zijn juist de regels die vertellen waarom de
                 // app wegging.
@@ -521,7 +570,10 @@ final class AppModel: ObservableObject {
             // both an unreadable property and a write powerd had not applied yet (measured
             // 250 ms) as "nothing to do" — on the one path that runs as the machine powers
             // off, where nothing runs after it to notice.
-            guard SleepFlag.read() != false else { return }
+            guard SleepFlag.read() != false else {
+                RestartGuard.recordDeliberateExit(reason: "systeem gaat uit")
+                return
+            }
             EventLog.shared.warn("Systeem gaat uit met vlag aan — terugzetten naar 0.")
             let outcome = SleepFlag.set(false, allowPrompt: false)
             if case .verified = outcome {
@@ -530,6 +582,7 @@ final class AppModel: ObservableObject {
                 EventLog.shared.error("Vlag kon vóór het uitschakelen NIET teruggezet worden. "
                                       + "Herstel na de herstart: sudo pmset -a disablesleep 0")
             }
+            RestartGuard.recordDeliberateExit(reason: "systeem gaat uit")
         }
     }
 
@@ -741,6 +794,31 @@ final class AppModel: ObservableObject {
         parts.append("warmte \(thermal.label)")
         if let remaining = remainingText { parts.append(remaining) }
         EventLog.shared.info("Hartslag: " + parts.joined(separator: ", ") + ".")
+        checkRestartGuardIsAwake()
+    }
+
+    /// Zodat deze waarschuwing één keer per keer dat de app draait komt, en niet elk kwartier.
+    private var warnedAboutStaleGuard = false
+
+    /// Kijkt of het vangnet nog kijkt.
+    ///
+    /// Het vangnet is een LaunchAgent, en die kan uitgezet worden bij Systeeminstellingen →
+    /// Algemeen → Inloggen en extensies, of hij kan nooit geladen zijn. Dan is hij er stil niet
+    /// meer, en dat is erger dan geen vangnet: iedereen denkt dan dat het gat van fase 2 dicht
+    /// is. Deze regel hangt bewust aan de hartslag, dus hij komt alleen langs terwijl de Mac
+    /// daadwerkelijk wakker gehouden wordt — precies wanneer het uitmaakt.
+    private func checkRestartGuardIsAwake() {
+        guard !warnedAboutStaleGuard else { return }
+        let leeftijd = RestartGuard.timeSinceLastRound()
+        guard leeftijd.map({ $0 > 300 }) ?? true else { return }
+        warnedAboutStaleGuard = true
+        let hoelang = leeftijd.map { "al \(Int($0 / 60)) minuten" } ?? "nog nooit"
+        EventLog.shared.warn(
+            "Het vangnet heeft \(hoelang) gekeken. Zolang dat zo blijft, blijft de Mac wakker als "
+            + "Dopamine Code hard afgeschoten wordt. Kijk bij Systeeminstellingen → Algemeen → "
+            + "Inloggen en extensies of Dopamine Code op de achtergrond mag draaien, of gebruik "
+            + "'Vangnet herstellen' bij Instellingen → Diagnose."
+        )
     }
 
     /// Whether any safety net says the flag should come off right now.
@@ -1873,6 +1951,17 @@ final class AppModel: ObservableObject {
         }
     }
 
+    /// De knop in Diagnose. Schrijft de plist opnieuw en laadt hem opnieuw, ook als de inhoud
+    /// klopt — want "de plist staat er" en "launchd kijkt ook echt" zijn twee dingen.
+    func repairRestartGuard() {
+        Task {
+            let zin = await Task.detached(priority: .userInitiated) {
+                RestartGuard.ensureInstalled(force: true)
+            }.value
+            lastMessage = "Vangnet als de app wegvalt: \(zin)"
+        }
+    }
+
     /// Applies a changed timer duration to a session that is already running.
     ///
     /// Anchored on when the session started, not on now — otherwise shortening the limit
@@ -1970,6 +2059,12 @@ final class AppModel: ObservableObject {
         sleepWatch?.stop()
         guardianTimer?.invalidate()
         tickTimer?.invalidate()
+        // Als allerlaatste feit vóór de logregel: `shutdown()` heeft zijn pogingen gehad, dus
+        // pas hier staat er in de markering wat de kernel écht zegt. Stond de blokkade netjes
+        // uit, dan haalt het vangnet deze app nooit meer terug; stond hij nog aan, dan komt hij
+        // na twee minuten tóch — want zonder app is er geen tijdslimiet, geen accugrens en geen
+        // temperatuurbewaking meer.
+        RestartGuard.recordDeliberateExit(reason: "afgesloten")
         EventLog.shared.info("Dopamine Code afgesloten.")
         EventLog.shared.flush()
     }

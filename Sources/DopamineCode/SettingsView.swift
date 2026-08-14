@@ -19,6 +19,7 @@ struct Diagnostics {
     var loginMechanism = "—"
     var thermal = "—"
     var cpuLimit = "—"
+    var restartGuard = "—"
 
     static func collect(model: AppModel) async -> Diagnostics {
         var d = Diagnostics()
@@ -29,6 +30,8 @@ struct Diagnostics {
         d.thermal = await model.thermal.label
         d.lockDelay = await ScreenLock.lockDelayDescription() ?? "onbekend"
         d.cpuLimit = await ThermalWatch.cpuSpeedLimit().map { "\($0)%" } ?? "onbekend"
+        // Draait `launchctl print`, dus net als de regel hieronder naast de hoofdthread.
+        d.restartGuard = await Task.detached { RestartGuard.statusSentence() }.value
         d.loginMechanism = await Task.detached {
             switch LaunchAtLogin.currentMechanism() {
             case .serviceManagement: return "macOS-inlogitem (SMAppService)"
@@ -355,6 +358,23 @@ struct SettingsView: View {
                     .font(.caption).foregroundStyle(.secondary)
                     .fixedSize(horizontal: false, vertical: true)
                 Button("Opnieuw uitlezen") { refresh() }
+                    .controlSize(.small)
+            }
+
+            Section("Vangnet als de app wegvalt") {
+                LabeledContent("Wachter", value: diagnostics.restartGuard)
+                Text("Wordt Dopamine Code hard afgeschoten — kill -9, of een crash — dan is er "
+                     + "geen enkele kans meer om de slaapblokkade terug te zetten, en blijft de "
+                     + "Mac wakker tot de accu leeg is. Daarom kijkt er elke 30 seconden een "
+                     + "kleine wachter of de blokkade aan staat zonder dat de app nog draait; "
+                     + "in dat geval start hij de app opnieuw, die het dan zelf opruimt. Hij "
+                     + "schakelt zelf nooit iets, en na een gewone Stop komt hij niet terug.")
+                    .font(.caption).foregroundStyle(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
+                Text("Dit gaat vanzelf en is niet uit te zetten — net als de temperatuurbewaking.")
+                    .font(.caption).foregroundStyle(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
+                Button("Vangnet herstellen") { model.repairRestartGuard() }
                     .controlSize(.small)
             }
 

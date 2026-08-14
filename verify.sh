@@ -1,13 +1,17 @@
 #!/bin/bash
 #
 # Verifies the parts of Dopamine Code that cannot be tested without your password, plus the
-# ones that change what is on screen. Nothing here is destructive: every flag it sets
-# it also puts back.
+# ones that change what is on screen. Nothing in the standard round is destructive: every
+# flag it sets it also puts back. De enige uitzondering is --killtest, die je expliciet moet
+# aanroepen en die eerst om toestemming vraagt.
 #
 #   ./verify.sh            run everything, asking before each step that needs consent
 #   ./verify.sh --flag     only the disablesleep round trip (the critical one)
 #   ./verify.sh --display  only the display-sleep test
 #   ./verify.sh --report   read-only status report, no password, no side effects
+#   ./verify.sh --killtest schiet de app hard af tijdens een lopende sessie en kijkt of het
+#                          vangnet de slaapblokkade binnen twee minuten opruimt. Beëindigt de
+#                          sessie die op dat moment loopt — draai hem bewust.
 #   ./verify.sh --after    after a real lid-closed run: did the Mac sleep anyway?
 #                          Windows on the last session in the app's own log. Both bounds
 #                          can be given by hand:
@@ -95,6 +99,47 @@ json_field() {
   printf '%s' "$1" | plutil -extract "$2" raw -o - - 2>/dev/null
 }
 
+WATCHDOG_LABEL="com.peter46jan.dopaminecode.watchdog"
+WATCHDOG_STATE="$HOME/Library/Application Support/Dopamine Code/vangnet-status.json"
+
+# De pids van draaiende exemplaren van de app, zónder de wachter.
+#
+# De wachter is dezelfde binary met het argument --vangnet, dus `pgrep -x DopamineCode` vindt
+# hem ook — elke 30 seconden even. Zonder dat filter zou "de app is teruggekomen" al waar zijn
+# omdat er toevallig een wachterronde liep. Let op de spaties in het patroon: een teruggehaalde
+# app draait met --vangnet-herstart, en dat is géén wachter.
+app_pids() {
+  local pid args
+  for pid in $(pgrep -x DopamineCode 2>/dev/null); do
+    args=" $(ps -o args= -p "$pid" 2>/dev/null) "
+    case "$args" in
+      *" --vangnet "*) ;;
+      *) printf '%s ' "$pid" ;;
+    esac
+  done
+}
+
+# Eén regel over het vangnet uit fase 2: is de wachter geladen, en wanneer keek hij voor het
+# laatst? Een vangnet dat stil niet meer draait is erger dan geen vangnet, dus het hoort in
+# het statusoverzicht en niet alleen in het logboek.
+watchdog_line() {
+  local staat="NIET geladen" laatste melding epoch nu
+  launchctl print "gui/$(id -u)/$WATCHDOG_LABEL" >/dev/null 2>&1 && staat="geladen"
+  if [ -f "$WATCHDOG_STATE" ]; then
+    laatste="$(plutil -extract laatsteRonde raw -o - "$WATCHDOG_STATE" 2>/dev/null || true)"
+    melding="$(plutil -extract laatsteMelding raw -o - "$WATCHDOG_STATE" 2>/dev/null || true)"
+    if [ -n "${laatste:-}" ]; then
+      epoch="$(date -j -u -f '%Y-%m-%dT%H:%M:%SZ' "$laatste" +%s 2>/dev/null || true)"
+      nu="$(date -u +%s)"
+      [ -n "${epoch:-}" ] && staat="$staat, keek $((nu - epoch)) s geleden"
+    fi
+    [ -n "${melding:-}" ] && staat="$staat — $melding"
+  else
+    staat="$staat, nog niet gekeken"
+  fi
+  printf '%s' "$staat"
+}
+
 # --------------------------------------------------------------------------------------
 
 report() {
@@ -115,6 +160,7 @@ report() {
   fi
 
   printf '  App draait       %s\n' "$(pgrep -x DopamineCode >/dev/null && echo ja || echo nee)"
+  printf '  Herstart-vangnet %s\n' "$(watchdog_line)"
 
   # Wat de app zelf zegt, náást de kernelregel hierboven — nooit in plaats daarvan. Het
   # verschil tussen die twee is precies waar deze app voor bestaat, dus ze staan hier onder
@@ -408,6 +454,36 @@ test_cli_purity() {
   fi
 }
 
+# De tegenhanger van test_cli_purity, voor het vangnet uit fase 2.
+#
+# De wachter draait als dezelfde binary als de app en heeft dus dezelfde
+# wachtwoordvrijstelling binnen handbereik: "even zelf op 0 zetten" is technisch mogelijk. Dat
+# zou een tweede schrijver zijn zonder enige kennis van wat er loopt, die een gewilde sessie
+# kan beëindigen. Hij mag daarom uitsluitend lezen, en dat is met één grep aan te tonen.
+test_watchdog_purity() {
+  section "8. Blijft de wachter van de kernelvlag af?"
+
+  local f="$PROJECT_DIR/Sources/DopamineCode/RestartGuard.swift"
+  if [ ! -f "$f" ]; then
+    skip "RestartGuard.swift niet gevonden."
+    return
+  fi
+
+  if grep -qE 'SleepFlag\.set|pmset|disablesleep' "$f"; then
+    fail "RestartGuard.swift noemt het schrijfpad. De wachter hoort alleen SleepFlag.read() te gebruiken."
+  else
+    pass "RestartGuard.swift raakt het schrijfpad nergens aan."
+  fi
+
+  # Geen tweede boekhouding over "loopt er een sessie": dat is precies het defect waar de
+  # guardian uit voortkomt.
+  if grep -qE 'intendedOn|sessionStart|deadline' "$f"; then
+    fail "RestartGuard.swift houdt sessiestand bij; dat hoort alleen in AppModel te staan."
+  else
+    pass "RestartGuard.swift houdt geen enkele sessiestand bij."
+  fi
+}
+
 test_lock() {
   section "6. Vergrendelmechanisme aanwezig?"
   if dyld_info -exports /System/Library/PrivateFrameworks/login.framework/Versions/A/login 2>/dev/null \
@@ -580,8 +656,77 @@ test_afterwards() {
     ' | tail -60 | sed 's/^/    /' || echo "    (geen logboek op $log)"
 }
 
+# --------------------------------------------------------------------------------------
+
+# De enige controle in dit script die iets kapotmaakt, en daarom niet in de standaardronde.
+#
+# `SIGKILL` is per definitie niet af te vangen: de app krijgt geen enkele kans om de
+# slaapblokkade terug te zetten. Wat er daarna gebeurt moet dus van buiten de app komen, en dat
+# is precies wat hier gemeten wordt. Zonder deze test is het vangnet uit fase 2 een bewering.
+test_killtest() {
+  section "Vangnet: overleeft de slaapblokkade een kill -9?"
+
+  local draaiend
+  draaiend="$(app_pids)"
+  if [ -z "${draaiend// /}" ]; then
+    fail "Dopamine Code draait niet; er valt niets af te schieten."
+    return
+  fi
+  if [ "$(read_flag)" != "true" ]; then
+    fail "De slaapblokkade staat niet aan. Zet 'Mac wakker houden' eerst aan — zonder lopende sessie meet dit niets."
+    return
+  fi
+
+  echo "  Dit schiet Dopamine Code hard af (kill -9) terwijl de Mac wakker gehouden wordt."
+  echo "  De sessie die nu loopt is daarmee voorbij. Dat is precies wat er getest wordt:"
+  echo "  het vangnet hoort de app binnen twee minuten terug te halen, waarna die de"
+  echo "  slaapblokkade bij het starten opruimt."
+  if ! ask "Doorgaan?"; then
+    skip "Afgebroken; er is niets afgeschoten."
+    return
+  fi
+
+  local begin=$SECONDS
+  pkill -9 -x DopamineCode || { fail "kill -9 mislukte."; return; }
+  echo "  Afgeschoten: $draaiend"
+
+  local verstreken=0
+  while [ $((SECONDS - begin)) -lt 180 ]; do
+    [ "$(read_flag)" = "false" ] && break
+    sleep 1
+  done
+  verstreken=$((SECONDS - begin))
+
+  if [ "$(read_flag)" = "false" ]; then
+    pass "De slaapblokkade stond na ${verstreken}s weer op 0."
+    if [ "$verstreken" -le 120 ]; then
+      pass "Binnen de belofte van twee minuten."
+    else
+      fail "Buiten de belofte van twee minuten (${verstreken}s)."
+    fi
+  else
+    fail "De slaapblokkade staat na ${verstreken}s nog steeds aan."
+    echo "       Zet hem zelf terug: sudo pmset -a disablesleep 0"
+  fi
+
+  local terug
+  terug="$(app_pids)"
+  if [ -n "${terug// /}" ]; then
+    pass "Dopamine Code draait weer (pid ${terug% })."
+  else
+    fail "Dopamine Code is niet teruggekomen. Kijk in Instellingen → Diagnose of de wachter geladen is."
+  fi
+
+  echo
+  printf '  Vangnet nu:      %s\n' "$(watchdog_line)"
+  echo "  De laatste regels uit het logboek:"
+  tail -14 "$HOME/Library/Logs/Dopamine Code/dopamine-code.log" 2>/dev/null | sed 's/^/    /'
+}
+
 case "${1:-}" in
   --report)  report; exit 0 ;;
+  # Niet in de standaardronde: de kop bovenaan belooft dat die niets kapotmaakt.
+  --killtest) test_killtest; exit "$FAILURES" ;;
   # Return the real count, not 0. This is the one check that judges the core promise, and
   # exiting 0 after printing "de Mac is door dichtklappen gaan slapen" makes a failure
   # machine-indistinguishable from a pass — in a wrapper, a cron line, or a plain `&& echo ok`.
@@ -596,6 +741,7 @@ case "${1:-}" in
     test_backlight
     test_lock
     test_cli_purity
+    test_watchdog_purity
     test_display
     ;;
 esac

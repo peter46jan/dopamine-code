@@ -155,7 +155,7 @@ terugval — na een sessie is de app vaak herstart en weet hij niets meer.
 
 ---
 
-## Fase 2 — Het gat dat er nu nog in zit
+## Fase 2 — Het gat dat er nu nog in zit · ✅ gedaan 14 augustus 2026
 
 Dit staat vóór de triggers omdat het klein is en omdat het de enige manier is waarop deze
 app nog steeds de fout kan maken die hij nooit mag maken.
@@ -166,19 +166,59 @@ weg, de vlag staat op 1, en niets ruimt hem op tot de app weer start. Zet je in 
 toestand de klep dicht en loop je weg, dan blijft de Mac wakker tot de accu leeg is, met
 alle drie de vangnetten dood.
 
-Twee routes, en de keuze is nog niet gemaakt:
+Twee routes stonden tegenover elkaar:
 
 | | Voordeel | Nadeel |
 |---|---|---|
 | **LaunchAgent die de app herstart** | Alles blijft in één proces; de app ruimt de vlag bij het starten al op | Herstart een app die de gebruiker misschien bewust gekilld heeft |
 | **LaunchDaemon die alleen de vlag opruimt** | Doet precies één ding, kan niets anders kapotmaken | Tweede privileged component erbij, en die moet weten wanneer "geen app" normaal is |
 
-De tweede is eerlijker tegenover het ontwerp — één ding doen en verder niets — maar vraagt
-een regel die onderscheidt tussen "de app is net afgesloten" en "de app is weggevallen".
-
 **Klaar als:** `kill -9` op de app tijdens een lopende sessie leidt binnen een afgesproken
 venster tot `SleepDisabled = 0`, aantoonbaar met `verify.sh`, zonder dat een normale
 afsluiting via Stop een herstart uitlokt.
+
+**Gedaan — het is de LaunchAgent geworden.** De doorslag gaf niet het aantal regels code maar
+wie er mag beslissen. Een daemon die zelf de vlag opruimt is een tweede schrijver zonder enige
+kennis van wat er loopt: hij zou een gewilde sessie kunnen beëindigen omdat de app net even
+niet reageerde, en hij zou als root moeten draaien. De agent hergebruikt in plaats daarvan het
+bestaande, bewezen pad — de app terugbrengen en `clearStaleFlagAtStartup()` zijn werk laten
+doen — en er blijft precies één schrijver. `RestartGuard.swift` bevat dan ook geen enkele
+aanroep die de vlag zet; `verify.sh` grept daar sinds fase 1 op.
+
+Het is uitdrukkelijk géén `KeepAlive` op de app zelf. `KeepAlive` werkt alleen voor processen
+die launchd zélf gestart heeft, en deze app wordt gestart door `open` (build.sh), door de
+Finder of via `SMAppService`. Gemeten op deze Mac: de draaiende app zit in launchd als
+`application.com.peter46jan.dopaminecode.…`, een LaunchServices-taak, dus `KeepAlive` had
+niets herstart. De wachter is daarom een aparte taak die elke 30 seconden dezelfde app-binary
+start met het argument `--vangnet`, kijkt, en weer verdwijnt.
+
+**Het onderscheid tussen bewust afsluiten en wegvallen maakt de kernel zelf.** Elke bewuste
+route — Stop, de signaalafhandeling, `willPowerOff` — zet de blokkade eerst terug. Een nette
+afsluiting laat dus een 0 achter en `kill -9` een 1, en de wachter beslist op precies die
+waarde plus de vraag of er nog een app draait. Voor het enige dubbelzinnige geval — bewust
+afsluiten waarbij het terugzetten mislukte — laat de app een markering achter met tijdstip,
+reden en de stand van de blokkade. Stond die netjes uit, dan komt de app nooit terug. Stond hij
+nog aan, dan komt hij na twee minuten tóch terug: zonder app is er geen tijdslimiet, geen
+accugrens en geen temperatuurbewaking, en dan staat het gat van deze fase gewoon door een
+andere deur weer open.
+
+Dat launchd zo'n agent met de klep dicht, het scherm vergrendeld en de Mac op accu ook echt
+elke 30 seconden draait, is gemeten met precies de plist die de app schrijft: `run interval =
+30 seconds`, drie runs in 75 seconden. Daarbij kwam één valkuil boven water die in de README
+staat: in de oude ASCII-plistvorm bestaan geen booleans, dus `RunAtLoad` en `StartInterval`
+worden strings en negeert launchd ze zonder één woord.
+
+**Het beloofde venster is twee minuten.** Twee bevestigingen van 30 seconden uit elkaar zijn
+nodig voordat er iets gebeurt — één waarneming zou middenin `build.sh --install` kunnen vallen,
+dat de app afsluit, de bundel vervangt en hem opnieuw start. Daarmee is het venster ten hoogste
+ongeveer 70 seconden plus de opruiming bij het starten.
+
+**Aantoonbaar met `./verify.sh --killtest`.** Die staat bewust niet in de standaardronde: de kop
+van dat script belooft dat het niets kapotmaakt, en deze test schiet een lopende sessie af. Hij
+vraagt eerst om toestemming, weigert als de blokkade niet aan staat, en meet hoe lang het duurt
+voor de kernel weer op 0 staat en de app terug is. De echte proef is dezelfde test met de klep
+dicht en het scherm vergrendeld — of `open` daar werkt is nog niet gemeten en staat zolang in
+de README onder "Wat nog niet bewezen is", mét de terugvalroute die er voor dat geval in zit.
 
 ---
 
