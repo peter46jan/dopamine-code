@@ -44,12 +44,12 @@ enum ConflictWatch {
     @MainActor
     static func current() async -> Conflict? {
         guard Prefs.warnAboutAmphetamine, amphetamineRunning() else { return nil }
-        var detail = "Amphetamine draait nog. Zijn assertie houdt de Mac wakker zolang de klep open is, "
-            + "maar overleeft dichtklappen niet. Zolang beide draaien is niet te zien welke van de "
-            + "twee het werk doet."
+        var detail = "Amphetamine doet ongeveer hetzelfde, maar alleen zolang de klep open is — "
+            + "dichtklappen overleeft het niet. Draaien ze allebei, dan is niet te zien welke van "
+            + "de twee de Mac wakker houdt."
         let holders = await sleepAssertionHolders()
         if !holders.isEmpty {
-            detail += "\n\nHouden nu slaap tegen: " + holders.joined(separator: ", ") + "."
+            detail += "\n\nDeze programma's houden de Mac nu wakker: " + holders.joined(separator: ", ") + "."
         }
         return Conflict(name: "Amphetamine", detail: detail)
     }

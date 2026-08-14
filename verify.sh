@@ -356,7 +356,9 @@ test_afterwards() {
   [ -f "$archive" ] && sources=("$archive" "$log")
 
   if [ -z "$since" ]; then
-    since="$(cat "${sources[@]}" 2>/dev/null | grep -F 'Blijf actief AAN' | tail -1 | cut -c1-19)"
+    # Both spellings: the switch was renamed from "Blijf actief" to "Wakker houden" on
+    # 14 augustus 2026, and logs from before that are still on disk (and still rotate in).
+    since="$(cat "${sources[@]}" 2>/dev/null | grep -E '(Blijf actief|Wakker houden) AAN' | tail -1 | cut -c1-19)"
   fi
   if [ -z "$since" ]; then
     # Fail closed. With no window the filter passed every Sleep event ever recorded, and
@@ -387,7 +389,7 @@ test_afterwards() {
         (/SleepDisabled = 0, geverifieerd/ ||
          /van buitenaf op 0 gezet/ ||
          /Sessie afgesloten —/ ||
-         /Blijf actief UIT/) { print substr($0,1,19); exit }
+         /(Blijf actief|Wakker houden) UIT/) { print substr($0,1,19); exit }
       ')"
     fi
     if [ -z "$upto" ]; then
@@ -438,7 +440,7 @@ test_afterwards() {
     printf '%s\n' "$events" | cut -c1-150 | sed 's/^/    /'
     if printf '%s' "$events" | grep -qi clamshell; then
       fail "Clamshell Sleep binnen het venster — de Mac is door dichtklappen gaan slapen."
-      echo "       Het kernelveto houdt op deze hardware geen stand; 'Blijf actief' lost dit niet op."
+      echo "       Het kernelveto houdt op deze hardware geen stand; 'Mac wakker houden' lost dit niet op."
     else
       skip "Slaap/waak-gebeurtenissen binnen het venster, maar geen door de klep. Vergelijk de tijden."
     fi

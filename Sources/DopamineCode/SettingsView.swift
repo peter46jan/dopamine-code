@@ -23,11 +23,19 @@ struct Diagnostics {
     static func collect(model: AppModel) async -> Diagnostics {
         var d = Diagnostics()
         d.clamshellCausesSleep = SleepFlag.clamshellCausesSleep().map { $0 ? "ja" : "nee" } ?? "onbekend"
-        d.backlightRoute = (await model.backlight.hasDirectControl) ? "CoreBrightness" : "CGEvent"
+        d.backlightRoute = (await model.backlight.hasDirectControl)
+            ? "rechtstreeks (CoreBrightness)"
+            : "nagebootste toetsaanslagen (CGEvent)"
         d.thermal = await model.thermal.label
         d.lockDelay = await ScreenLock.lockDelayDescription() ?? "onbekend"
         d.cpuLimit = await ThermalWatch.cpuSpeedLimit().map { "\($0)%" } ?? "onbekend"
-        d.loginMechanism = await Task.detached { LaunchAtLogin.currentMechanism().rawValue }.value
+        d.loginMechanism = await Task.detached {
+            switch LaunchAtLogin.currentMechanism() {
+            case .serviceManagement: return "macOS-inlogitem (SMAppService)"
+            case .launchAgent: return "opstartbestand (LaunchAgent)"
+            case .none: return "niet ingesteld"
+            }
+        }.value
         return d
     }
 }
@@ -49,7 +57,7 @@ struct SettingsView: View {
     var body: some View {
         TabView {
             general.tabItem { Label("Algemeen", systemImage: "gearshape") }
-            safety.tabItem { Label("Vangnet", systemImage: "shield") }
+            safety.tabItem { Label("Vanzelf stoppen", systemImage: "shield") }
             diagnosticsTab.tabItem { Label("Diagnose", systemImage: "stethoscope") }
         }
         .frame(width: 480, height: 380)
@@ -78,48 +86,53 @@ struct SettingsView: View {
 
     private var general: some View {
         Form {
-            Section {
-                Picker("Vergrendelen", selection: $lockMoment) {
+            Section("Wat er gebeurt als de Mac wakker blijft") {
+                Picker("Mac vergrendelen", selection: $lockMoment) {
                     ForEach(Prefs.ActionMoment.allCases) { m in Text(m.label).tag(m) }
                 }
                 .onChange(of: lockMoment) { Prefs.lockMoment = $0 }
-                Text("Zonder systeemslaap komt de Mac nooit vanzelf op het inlogscherm. "
-                     + "Standaard gebeurt dit bij het dichtklappen, zodat je gewoon door kunt werken "
-                     + "terwijl \"Blijf actief\" aan staat.")
+                Text("Vergrendelen betekent: terug naar het inlogscherm, zodat er een wachtwoord "
+                     + "nodig is om verder te kunnen. Normaal doet macOS dat vanzelf zodra de Mac "
+                     + "gaat slapen — maar zolang Dopamine Code hem wakker houdt slaapt hij nooit, "
+                     + "dus gebeurt het ook nooit. Standaard wacht het tot je de klep dichtdoet, "
+                     + "zodat je met de klep open gewoon door kunt werken.")
                     .font(.caption).foregroundStyle(.secondary)
                     .fixedSize(horizontal: false, vertical: true)
 
-                Picker("Scherm uit", selection: $displayOffMoment) {
+                Picker("Scherm uitzetten", selection: $displayOffMoment) {
                     ForEach(Prefs.ActionMoment.allCases) { m in Text(m.label).tag(m) }
                 }
                 .onChange(of: displayOffMoment) { Prefs.displayOffMoment = $0 }
-                Text("Zonder dit blijft het interne scherm onder de gesloten klep op volle helderheid branden.")
+                Text("Zet je dit op \"nooit\", dan brandt het ingebouwde scherm onder de dichte "
+                     + "klep op volle helderheid door. Je ziet er niets van, maar het kost stroom.")
                     .font(.caption).foregroundStyle(.secondary)
                     .fixedSize(horizontal: false, vertical: true)
             }
 
-            Section {
-                Toggle("Meldingen bij wat onbeheerd gebeurt", isOn: $notifications)
+            Section("Hoe de app zich meldt") {
+                Toggle("Melding als er iets gebeurt terwijl je weg bent", isOn: $notifications)
                     .onChange(of: notifications) { Prefs.notifications = $0 }
-                Text("Vier gebeurtenissen: het vangnet greep in, de vlag kon niet terug, de "
-                     + "Mac werd te warm, of de Mac heeft tóch geslapen. Een melding wacht tot "
-                     + "je scherm ontgrendeld is en blijft daarna staan — een geluid om 03:12 "
-                     + "hoort niemand.")
+                Text("Er komt een melding in vier gevallen: het wakker houden is vanzelf gestopt, "
+                     + "dat stoppen lukte niet, de Mac werd te warm, of de Mac is tóch in slaap "
+                     + "gegaan. De melding wacht tot je scherm ontgrendeld is en blijft daarna "
+                     + "staan — een geluidje om 03:12 hoort niemand.")
                     .font(.caption).foregroundStyle(.secondary)
                     .fixedSize(horizontal: false, vertical: true)
 
-                Toggle("Geluid bij aan- en uitzetten", isOn: $sound)
+                Toggle("Geluidje bij aan- en uitzetten", isOn: $sound)
                     .onChange(of: sound) { Prefs.soundFeedback = $0 }
-                Toggle("Geluid bij verlies van verbinding", isOn: $networkSound)
+                Toggle("Geluidje als de internetverbinding wegvalt", isOn: $networkSound)
                     .onChange(of: networkSound) { Prefs.soundOnNetworkLoss = $0 }
                 Toggle("Toetsenbordverlichting kort laten knipperen", isOn: $blink)
                     .onChange(of: blink) { Prefs.blinkBacklightOnToggle = $0 }
-                Text("Geluid staat standaard aan omdat knipperen onder een dichte klep onzichtbaar is.")
+                Text("Geluid staat standaard aan: een knipperend toetsenbord zie je niet als de "
+                     + "klep dicht is.")
                     .font(.caption).foregroundStyle(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
             }
 
-            Section {
-                Toggle("Start bij inloggen", isOn: $launchAtLogin)
+            Section("Opstarten") {
+                Toggle("Dopamine Code starten zodra ik inlog", isOn: $launchAtLogin)
                     .onChange(of: launchAtLogin) { value in
                         if syncingLaunchAtLogin { syncingLaunchAtLogin = false; return }
                         model.applyLaunchAtLogin(value)
@@ -134,9 +147,14 @@ struct SettingsView: View {
                             launchAtLogin = actual
                         }
                     }
+                Text("De app zit dan meteen klaar in de menubalk. Het wakker houden gaat niet "
+                     + "vanzelf aan — dat blijft een klik van jou.")
+                    .font(.caption).foregroundStyle(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
                 if LaunchAtLogin.requiresApproval {
                     HStack {
-                        Text("macOS wacht op je goedkeuring.").font(.caption).foregroundStyle(.orange)
+                        Text("macOS wacht nog op je goedkeuring hiervoor.")
+                            .font(.caption).foregroundStyle(.orange)
                         Button("Openen") { LaunchAtLogin.openLoginItemsSettings() }
                             .controlSize(.small)
                     }
@@ -160,7 +178,7 @@ struct SettingsView: View {
 
     private var safety: some View {
         Form {
-            Section {
+            Section("Na een tijd") {
                 // Bound to the model, not to local @State: the same value is editable from
                 // the menu bar panel, and a private copy here would drift out of sync the
                 // moment it was changed there.
@@ -187,7 +205,7 @@ struct SettingsView: View {
                 }
 
                 HStack(spacing: 6) {
-                    Text("Snel:").font(.caption).foregroundStyle(.secondary)
+                    Text("Veelgebruikt:").font(.caption).foregroundStyle(.secondary)
                     ForEach(presets, id: \.self) { total in
                         Button(label(forMinutes: total)) { model.setAutoOff(minutes: total) }
                             .controlSize(.small)
@@ -200,8 +218,8 @@ struct SettingsView: View {
                     .fixedSize(horizontal: false, vertical: true)
             }
 
-            Section {
-                LabeledContent("Batterijgrens") {
+            Section("Bij een bijna lege accu") {
+                LabeledContent("Stoppen onder") {
                     HStack {
                         Slider(
                             value: Binding(
@@ -213,15 +231,30 @@ struct SettingsView: View {
                         Text("\(batteryFloor)%").monospacedDigit().frame(width: 50, alignment: .trailing)
                     }
                 }
-                Text("Onder deze stand op accu wordt slapen automatisch weer toegestaan, zonder wachtwoordprompt.")
+                Text("Werk je zonder lader, dan mag de Mac weer slapen zodra de accu onder deze "
+                     + "stand komt. Zonder die grens loopt de accu met de klep dicht gewoon "
+                     + "helemaal leeg. Er wordt hierbij niet om je wachtwoord gevraagd.")
                     .font(.caption).foregroundStyle(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
             }
 
-            Section("Waarom dit niet optioneel is") {
-                Text("De vlag die systeemslaap blokkeert, schakelt in de kernel dezelfde controle uit "
-                     + "die de noodslaap bij een lege batterij én bij oververhitting regelt. "
-                     + "Deze twee grenzen en de thermische bewaking zijn de softwarevervanging daarvan.")
+            Section("Als de Mac te warm wordt") {
+                Text("Dit gaat vanzelf en is niet uit te zetten. Wordt de Mac kritiek warm, dan "
+                     + "stopt Dopamine Code onmiddellijk, zodat macOS zelf weer kan ingrijpen. "
+                     + "Bij \"hoog\" krijg je alleen een waarschuwing.")
                     .font(.caption).foregroundStyle(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+
+            Section("Waarom je deze drie niet kunt uitzetten") {
+                Text("Om de Mac wakker te houden met de klep dicht moet Dopamine Code één "
+                     + "systeeminstelling omzetten: de slaapblokkade (SleepDisabled). Diezelfde "
+                     + "instelling zet ook de noodrem van macOS uit — de automatische slaap bij "
+                     + "een bijna lege accu en bij oververhitting. De tijdslimiet, de accugrens "
+                     + "en de temperatuurbewaking hierboven nemen die taak over. Daarom horen ze "
+                     + "er altijd bij.")
+                    .font(.caption).foregroundStyle(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
             }
         }
         .formStyle(.grouped)
@@ -253,13 +286,14 @@ struct SettingsView: View {
     }
 
     private var durationExplanation: String {
-        var text = "Ook als je vergeet uit te zetten, mag de Mac na "
+        var text = "Vergeet je het uit te zetten, dan mag de Mac na "
             + label(forMinutes: model.autoOffMinutes)
-            + " weer slapen. De teller loopt vanaf het begin van de sessie, niet vanaf deze wijziging."
+            + " vanzelf weer slapen. De teller loopt vanaf het moment dat je aanzette, niet "
+            + "vanaf deze wijziging — korter zetten haalt het einde dus naar voren."
         if let deadline = model.deadline {
             let clock = DateFormatter()
             clock.dateFormat = "HH:mm"
-            text += " De huidige sessie eindigt om " + clock.string(from: deadline) + "."
+            text += " Nu loopt hij tot " + clock.string(from: deadline) + "."
         }
         return text
     }
@@ -268,11 +302,19 @@ struct SettingsView: View {
 
     private var diagnosticsTab: some View {
         Form {
-            Section("Rechten") {
-                LabeledContent("Sudoers-regel", value: model.grantText)
+            Section("Toestemming") {
+                LabeledContent("Wachtwoordvrijstelling", value: model.grantText)
+                Text("Met deze eenmalige regel mag Dopamine Code precies één commando uitvoeren "
+                     + "zonder je wachtwoord: de slaapblokkade aan- en uitzetten. Zonder de regel "
+                     + "vraagt macOS er elke keer om — en met de klep dicht kan niemand dat "
+                     + "invullen, dus kan de Mac daarna niet vanzelf weer gaan slapen.")
+                    .font(.caption).foregroundStyle(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
                 if model.safetyNetsDisarmed {
-                    Label("Vangnetten kunnen de vlag nu niet zelf terugzetten.", systemImage: "exclamationmark.triangle.fill")
+                    Label("Het vanzelf stoppen werkt nu niet: de app kan de Mac niet zelf weer laten slapen.",
+                          systemImage: "exclamationmark.triangle.fill")
                         .font(.caption).foregroundStyle(.orange)
+                        .fixedSize(horizontal: false, vertical: true)
                 }
                 HStack {
                     Button("Installeren…") { model.installGrant() }
@@ -281,6 +323,8 @@ struct SettingsView: View {
                 }
                 .controlSize(.small)
                 .disabled(model.busy)
+                Text("Dit is de regel die geïnstalleerd wordt (in /etc/sudoers.d):")
+                    .font(.caption).foregroundStyle(.secondary)
                 Text(SudoersGrant.ruleText)
                     .font(.system(.caption2, design: .monospaced))
                     .textSelection(.enabled)
@@ -288,26 +332,38 @@ struct SettingsView: View {
                     .fixedSize(horizontal: false, vertical: true)
             }
 
-            Section("Systeem") {
+            Section("Wat het systeem nu meldt") {
                 // Live, from the model: the guardian refreshes it and every write updates it
                 // at once. As a snapshot it sat there reading "0" while the user switched
                 // keep-awake on in the menu bar next to it.
-                LabeledContent("SleepDisabled",
-                               value: model.kernelFlag.map { $0 ? "1 (slaap geblokkeerd)" : "0" } ?? "onleesbaar")
-                LabeledContent("Klep→slaap-beleid", value: diagnostics.clamshellCausesSleep + " (volgt de vlag niet)")
-                LabeledContent("Vergrendeling", value: diagnostics.lockDelay)
-                LabeledContent("Verlichting via", value: diagnostics.backlightRoute)
-                LabeledContent("Start bij inloggen", value: diagnostics.loginMechanism)
-                LabeledContent("Thermische druk", value: diagnostics.thermal)
-                LabeledContent("CPU-limiet", value: diagnostics.cpuLimit)
+                LabeledContent("Slaapblokkade (SleepDisabled)",
+                               value: model.kernelFlag.map {
+                                   $0 ? "1 — de Mac mag niet slapen" : "0 — de Mac mag gewoon slapen"
+                               } ?? "onleesbaar")
+                LabeledContent("Klep dicht laat de Mac slapen", value: diagnostics.clamshellCausesSleep)
+                Text("Die tweede regel staat er alleen ter informatie: hij verandert niet mee met "
+                     + "de slaapblokkade, ook niet als het wakker houden aan staat.")
+                    .font(.caption).foregroundStyle(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
+                LabeledContent("Wachtwoord na vergrendelen", value: diagnostics.lockDelay)
+                LabeledContent("Toetsenbordverlichting via", value: diagnostics.backlightRoute)
+                LabeledContent("Start bij inloggen via", value: diagnostics.loginMechanism)
+                LabeledContent("Temperatuur", value: diagnostics.thermal)
+                LabeledContent("Rekensnelheid", value: diagnostics.cpuLimit)
+                Text("100% betekent dat macOS de Mac niet afremt. Lager betekent: teruggeschroefd "
+                     + "om af te koelen.")
+                    .font(.caption).foregroundStyle(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
                 Button("Opnieuw uitlezen") { refresh() }
                     .controlSize(.small)
             }
 
             Section("Toetsenbordverlichting") {
-                Text("Een niveau instellen blijft alleen staan met automatische helderheid uit, "
-                     + "dus die zet Dopamine Code uit zodra je de schuif gebruikt.")
+                Text("Een vaste helderheid blijft alleen staan als de automatische "
+                     + "toetsenbordverlichting uit staat. Die zet Dopamine Code daarom uit zodra "
+                     + "je de schuif gebruikt — met deze knop zet je hem weer terug zoals hij was.")
                     .font(.caption).foregroundStyle(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
                 Button("Automatische helderheid terugzetten") {
                     model.restoreKeyboardAutoBrightness()
                 }
@@ -316,6 +372,10 @@ struct SettingsView: View {
             }
 
             Section("Logboek") {
+                Text("Alles wat de app doet komt in dit bestand te staan — daarin kun je "
+                     + "achteraf teruglezen wat er 's nachts gebeurd is.")
+                    .font(.caption).foregroundStyle(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
                 Button("Toon logbestand in Finder") { model.openLog() }
                     .controlSize(.small)
                 Text(EventLog.shared.logPath)

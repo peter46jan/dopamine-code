@@ -11,7 +11,7 @@ struct Outage: Identifiable, Equatable {
     var duration: TimeInterval { (ended ?? Date()).timeIntervalSince(began) }
     var isOngoing: Bool { ended == nil }
 
-    /// "verbinding was 12 minuten weg om 03:41"
+    /// "internet was 12 minuten weg om 03:41"
     func describe() -> String {
         let clock = DateFormatter()
         clock.dateFormat = "HH:mm"
@@ -19,7 +19,7 @@ struct Outage: Identifiable, Equatable {
         let length: String
         if isOngoing {
             length = minutes < 1 ? "nog steeds weg sinds" : "al \(minutes) min weg sinds"
-            return "verbinding \(length) \(clock.string(from: began))"
+            return "internet \(length) \(clock.string(from: began))"
         }
         if minutes < 1 {
             let seconds = Int(duration.rounded())
@@ -27,7 +27,7 @@ struct Outage: Identifiable, Equatable {
         } else {
             length = "\(minutes) minuten"
         }
-        return "verbinding was \(length) weg om \(clock.string(from: began))"
+        return "internet was \(length) weg om \(clock.string(from: began))"
     }
 }
 
@@ -114,15 +114,15 @@ final class NetworkMonitor {
         case .unsatisfied:
             switch path.unsatisfiedReason {
             case .wifiDenied: return "wifi staat uit"
-            case .cellularDenied: return "mobiel netwerk geweigerd"
-            case .localNetworkDenied: return "lokaal netwerk geweigerd"
-            case .notAvailable: return "geen bruikbare interface"
+            case .cellularDenied: return "mobiele verbinding geblokkeerd"
+            case .localNetworkDenied: return "lokaal netwerk geblokkeerd"
+            case .notAvailable: return "geen netwerk beschikbaar"
             default: return "geen verbinding"
             }
         case .requiresConnection:
-            return "verbinding moet nog opgezet worden"
+            return "verbinding moet nog opgebouwd worden"
         @unknown default:
-            return "onbekende netwerkstatus"
+            return "netwerkstatus onbekend"
         }
     }
 
@@ -183,7 +183,7 @@ final class NetworkMonitor {
                     }
                     return
                 }
-                self.update(reachable: false, reason: "geen route naar internet")
+                self.update(reachable: false, reason: "wel netwerk, geen internet")
             }
         }.resume()
     }
@@ -194,6 +194,6 @@ final class NetworkMonitor {
         guard !finished.isEmpty else { return nil }
         if finished.count == 1 { return finished[0].describe() }
         let total = Int((finished.reduce(0) { $0 + $1.duration } / 60).rounded())
-        return "\(finished.count) onderbrekingen, samen ongeveer \(total) minuten. Eerste: \(finished[0].describe())."
+        return "\(finished.count) keer geen internet, samen ongeveer \(total) minuten. De eerste keer: \(finished[0].describe())."
     }
 }

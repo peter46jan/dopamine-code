@@ -167,7 +167,7 @@ enum Prefs {
 
         var label: String {
             switch self {
-            case .lidClose: return "Bij klep dicht"
+            case .lidClose: return "Zodra ik de klep dichtdoe"
             case .activate: return "Meteen bij aanzetten"
             case .never: return "Nooit"
             }

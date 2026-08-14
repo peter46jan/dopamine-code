@@ -174,8 +174,8 @@ Twee gevolgen daarvan zijn zichtbaar in de app:
 
 En als de vangnetten niets kúnnen: zonder de sudoers-regel is de vlag alleen met een
 wachtwoord terug te zetten, en met de klep dicht kan niemand dat invullen. De app zegt dat
-dan met zoveel woorden ("Vangnetten staan uit") in plaats van te doen alsof alles in orde
-is.
+dan met zoveel woorden ("Vanzelf stoppen werkt nu niet") in plaats van te doen alsof alles
+in orde is.
 
 Een paar keuzes die verder niet vanzelf spreken:
 
@@ -322,14 +322,14 @@ Wat het script controleert:
 
 | Scenario | Hoe je het controleert |
 |---|---|
-| Klep dicht, geen extern scherm, uren wakker | Zet "Blijf actief" aan, klap dicht, laat een run draaien. Daarna `./verify.sh --after`: elke `Clamshell Sleep` in het pmset-log is een falen |
+| Klep dicht, geen extern scherm, uren wakker | Zet "Mac wakker houden" aan, klap dicht, laat een run draaien. Daarna `./verify.sh --after`: elke `Clamshell Sleep` in het pmset-log is een falen |
 | Scherm was echt uit, batterij niet abnormaal weg | Batterijstand voor en na noteren; het logboek bevat het tijdstip van elke `displaysleepnow` |
 | Wachtwoord bij openklappen | Klep openen, er moet om wachtwoord of Touch ID gevraagd worden |
 | Wifi uit tijdens een sessie | Wifi uitzetten, even wachten, weer aan. Bij het openklappen verschijnt "verbinding was X minuten weg om HH:MM" |
 | Vergeten uit te zetten | Zet de timer in de instellingen op 5 of 30 minuten, wacht die af, controleer met `./verify.sh --report` dat `SleepDisabled false` is |
 | Batterij onder de grens | Grens tijdelijk op bijvoorbeeld 60% zetten, stekker eruit, wachten |
 | Sudoers ontbreekt of is geblokkeerd | `sudo rm /etc/sudoers.d/dopamine-code-disablesleep`, dan schakelen: er hoort een beheerdersprompt te komen, geen stilte |
-| App geforceerd afsluiten met de vlag aan | `kill -9 $(pgrep -x Dopamine Code)` terwijl "Blijf actief" aan staat, dan de app starten: de vlag hoort opgeruimd te worden |
+| App geforceerd afsluiten met de vlag aan | `kill -9 $(pgrep -x Dopamine Code)` terwijl "Mac wakker houden" aan staat, dan de app starten: de vlag hoort opgeruimd te worden |
 | macOS-update | `./verify.sh` opnieuw draaien. Sudoers-regel en toestemming overleven een update meestal, maar de private symbolen uit `CoreBrightness` en `login.framework` zijn precies wat Apple ongemerkt kan wijzigen |
 
 ---

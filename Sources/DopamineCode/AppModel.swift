@@ -134,8 +134,8 @@ final class AppModel: ObservableObject {
 
     var statusText: String {
         switch status {
-        case .off: return "Slapen toegestaan"
-        case .on: return "Blijft actief"
+        case .off: return "De Mac mag gewoon slapen"
+        case .on: return "De Mac blijft wakker"
         case .error(let message): return message
         }
     }
@@ -147,9 +147,9 @@ final class AppModel: ObservableObject {
         let seconds = max(0, Int(deadline.timeIntervalSince(now)))
         let hours = seconds / 3600
         let minutes = (seconds % 3600) / 60
-        if hours > 0 { return "nog \(hours) u \(minutes) min" }
-        if minutes > 0 { return "nog \(minutes) min" }
-        return "nog minder dan een minuut"
+        if hours > 0 { return "stopt vanzelf over \(hours) u \(minutes) min" }
+        if minutes > 0 { return "stopt vanzelf over \(minutes) min" }
+        return "stopt vanzelf binnen een minuut"
     }
 
     /// The configured duration, in minutes.
@@ -181,9 +181,11 @@ final class AppModel: ObservableObject {
     /// the one moment nothing was going to release it.
     var safetyNetLine: String? {
         if let remaining = remainingText { return remaining }
-        if kernelFlag == true && !intendedOn { return "geen vangnet — vlag staat aan zonder sessie" }
+        if kernelFlag == true && !intendedOn {
+            return "de Mac wordt wakker gehouden zonder dat er iets loopt — niets stopt dat vanzelf"
+        }
         if status.isOn { return nil }
-        return "vangnet na \(configuredDurationText)"
+        return "stopt straks vanzelf na \(configuredDurationText)"
     }
 
     static func durationText(_ total: Int) -> String {
@@ -217,9 +219,9 @@ final class AppModel: ObservableObject {
     var behaviourSummary: String {
         var parts: [String] = []
         switch Prefs.lockMoment {
-        case .lidClose: parts.append("vergrendelt bij klep dicht")
-        case .activate: parts.append("vergrendelt meteen")
-        case .never: parts.append("vergrendelt niet")
+        case .lidClose: parts.append("gaat op slot bij klep dicht")
+        case .activate: parts.append("gaat meteen op slot")
+        case .never: parts.append("gaat niet op slot")
         }
         switch Prefs.displayOffMoment {
         case .lidClose: parts.append("scherm uit bij klep dicht")
@@ -231,9 +233,9 @@ final class AppModel: ObservableObject {
 
     var grantText: String {
         switch grantStatus {
-        case .granted: return "Sudoers-regel actief"
-        case .missing: return "Sudoers-regel ontbreekt"
-        case .present(let why): return "Sudoers-regel werkt niet: \(why)"
+        case .granted: return "Wachtwoordvrijstelling actief"
+        case .missing: return "Wachtwoordvrijstelling ontbreekt"
+        case .present(let why): return "Wachtwoordvrijstelling werkt niet: \(why)"
         }
     }
 
@@ -302,7 +304,7 @@ final class AppModel: ObservableObject {
     private func clearStaleFlagAtStartup() async {
         kernelFlag = SleepFlag.read()
         guard let flag = kernelFlag else {
-            status = .error("Kernelvlag onleesbaar")
+            status = .error("Kan niet uitlezen of de Mac mag slapen")
             EventLog.shared.error("SleepDisabled kon bij het starten niet gelezen worden.")
             return
         }
@@ -321,11 +323,12 @@ final class AppModel: ObservableObject {
         switch outcome {
         case .verified:
             status = .off
-            lastMessage = "Vastgelopen vlag van een vorige sessie is opgeruimd."
+            lastMessage = "De Mac stond nog van een vorige keer wakker gehouden; dat is opgeruimd."
         default:
-            status = .error("Vlag van vorige sessie staat nog aan")
+            status = .error("De Mac wordt nog wakker gehouden van een vorige keer")
             safetyNetsDisarmed = true
-            lastMessage = "De Mac slaapt niet. Installeer de sudoers-regel, dan ruimt Dopamine Code dit vanzelf op."
+            lastMessage = "De Mac kan nu niet slapen. Installeer de wachtwoordvrijstelling bij "
+                + "Instellingen → Diagnose, dan ruimt Dopamine Code dit vanzelf op."
         }
     }
 
@@ -478,7 +481,7 @@ final class AppModel: ObservableObject {
             // Unreadable is not "all clear". If a session is running, the deadline, the
             // battery floor and the thermal cut-out must still be able to fire — failing
             // open here would silently disable all three for as long as the read fails.
-            status = .error("Kernelvlag onleesbaar")
+            status = .error("Kan niet uitlezen of de Mac mag slapen")
             if intendedOn, let reason = releaseReason() {
                 await forceRelease(reason: reason + " (vlag onleesbaar)")
             }
@@ -495,7 +498,7 @@ final class AppModel: ObservableObject {
             if intendedOn {
                 intendedOn = false
                 endSession()
-                status = .error("De vlag is buiten Dopamine Code om uitgezet")
+                status = .error("Buiten Dopamine Code om uitgezet")
                 EventLog.shared.warn("SleepDisabled werd van buitenaf op 0 gezet; sessie beëindigd.")
             } else if status.isOn {
                 status = .off
@@ -516,7 +519,7 @@ final class AppModel: ObservableObject {
             // a backoff window — and leaving `status` on a calm `.off` while the kernel
             // flag is 1 is exactly the lie this app exists to prevent.
             if !status.isError {
-                status = .error("Vlag staat aan zonder sessie")
+                status = .error("Mac wordt wakker gehouden zonder dat er iets loopt")
             }
             await attemptRelease(reason: "vlag stond aan zonder actieve sessie")
             return
@@ -561,11 +564,11 @@ final class AppModel: ObservableObject {
         // channels at once: log, status, panel and notification.
         let flagWasUp = flag == true
         let context = flagWasUp
-            ? "terwijl de vlag op 1 stond"
-            : "terwijl de sessie liep, maar de vlag stond niet (meer) op 1"
+            ? "terwijl de slaapblokkade aan stond"
+            : "terwijl het wakker houden aan stond, maar de slaapblokkade niet (meer)"
         let verdict = flagWasUp
-            ? " Het kernelveto heeft het hier niet gehouden."
-            : " De vlag was buiten Dopamine Code om uitgezet, dus dit zegt niets over het kernelveto."
+            ? " De blokkade heeft het hier niet gehouden."
+            : " De blokkade was buiten Dopamine Code om uitgezet, dus dit zegt niets over de blokkade zelf."
         let sentence = episode.describe().prefix(1).uppercased() + episode.describe().dropFirst()
 
         EventLog.shared.log(
@@ -573,9 +576,9 @@ final class AppModel: ObservableObject {
             (flagWasUp ? "BELOFTE NIET GEHAALD — " : "Mac sliep tijdens een sessie — ")
             + "\(episode.describe()), \(context)." + verdict
         )
-        status = .error(flagWasUp ? "De Mac heeft tóch geslapen" : "Mac sliep — vlag stond niet aan")
+        status = .error(flagWasUp ? "De Mac heeft tóch geslapen" : "Mac sliep — blokkade stond niet aan")
         lastMessage = "\(sentence), \(context)." + verdict
-            + (flagWasUp ? " Controleer het met ./verify.sh --after voordat je hierop vertrouwt." : "")
+            + (flagWasUp ? " Vertrouw er dus niet blind op; controleer het met ./verify.sh --after." : "")
         sleepBrokeThePromise = flagWasUp
         Feedback.failed()
         Notify.post(.macSlept, "\(sentence), \(context)." + verdict)
@@ -604,17 +607,17 @@ final class AppModel: ObservableObject {
     /// Whether any safety net says the flag should come off right now.
     private func releaseReason() -> String? {
         if let deadline {
-            if Date() >= deadline { return "vangnet-timer verlopen" }
+            if Date() >= deadline { return "de ingestelde tijd was om" }
         } else if intendedOn {
             // A running session with no deadline has no timer at all. Rather than let it
             // run forever, treat the missing deadline as the fault it is.
-            return "sessie zonder einddatum"
+            return "er stond geen eindtijd ingesteld"
         }
         if let battery, !battery.onAC, battery.percent <= Prefs.batteryFloor {
-            return "batterij \(battery.percent)% onder de grens van \(Prefs.batteryFloor)%"
+            return "de accu stond op \(battery.percent)%, onder je grens van \(Prefs.batteryFloor)%"
         }
         if thermal == .critical {
-            return "thermische druk kritiek"
+            return "de Mac werd te warm"
         }
         return nil
     }
@@ -624,7 +627,7 @@ final class AppModel: ObservableObject {
         intendedOn = false
         await attemptRelease(reason: reason)
         if case .off = status {
-            lastMessage = "Automatisch uitgezet: \(reason)."
+            lastMessage = "Automatisch gestopt: \(reason). De Mac mag weer slapen."
             // This is the message that most needs to survive until someone reads it: it
             // fires unattended, hours in, and the sound it used to make played to an empty
             // room. The clock is in the body because "just now" is meaningless by morning.
@@ -666,14 +669,14 @@ final class AppModel: ObservableObject {
             }
             endSession()
             status = .off
-            EventLog.shared.info("Blijf actief UIT (\(reason)).")
+            EventLog.shared.info("Wakker houden UIT (\(reason)).")
             Feedback.deactivated()
         default:
             releaseAttempts += 1
             safetyNetsDisarmed = true
-            status = .error("Vlag zit vast — Mac slaapt niet")
-            lastMessage = "Kon de vlag niet terugzetten (\(reason)). "
-                + "Installeer de sudoers-regel, of voer uit: sudo pmset -a disablesleep 0"
+            status = .error("Zit vast — de Mac kan niet gaan slapen")
+            lastMessage = "Het stoppen lukte niet (\(reason)). Installeer de wachtwoordvrijstelling "
+                + "bij Instellingen → Diagnose, of voer dit uit in Terminal: sudo pmset -a disablesleep 0"
 
             // 20s, 40s, 80s … capped at 10 minutes. Still persistent enough to recover the
             // moment the grant appears, without hammering for hours.
@@ -691,8 +694,8 @@ final class AppModel: ObservableObject {
                 // Inside the throttle on purpose. Outside it this would post every twenty
                 // seconds all night for one unchanging problem.
                 Notify.post(.releaseFailed,
-                            "Poging \(releaseAttempts) mislukte (\(reason)). Herstel handmatig met: "
-                            + "sudo pmset -a disablesleep 0")
+                            "Poging \(releaseAttempts) om te stoppen mislukte (\(reason)). Zet het "
+                            + "zelf terug in Terminal met: sudo pmset -a disablesleep 0")
                 // Re-checking the grant costs two more processes, so only do it alongside
                 // the throttled alarm rather than on every failed attempt.
                 await refreshGrantAsync()
@@ -761,8 +764,8 @@ final class AppModel: ObservableObject {
     private func activate() async {
         // Refuse to start a session that the battery rule would immediately end.
         if let battery, !battery.onAC, battery.percent <= Prefs.batteryFloor {
-            status = .error("Batterij \(battery.percent)% — onder de grens van \(Prefs.batteryFloor)%")
-            lastMessage = "Sluit de lader aan of verlaag de batterijgrens."
+            status = .error("Accu \(battery.percent)% — onder je grens van \(Prefs.batteryFloor)%")
+            lastMessage = "Sluit de lader aan, of verlaag de accugrens bij Instellingen → Vanzelf stoppen."
             Feedback.failed()
             EventLog.shared.warn("Activeren geweigerd: batterij \(battery.percent)%.")
             return
@@ -772,8 +775,8 @@ final class AppModel: ObservableObject {
         // cached value is ALWAYS .nominal here and this guard could never fire.
         thermal = ThermalWatch.Pressure(ProcessInfo.processInfo.thermalState)
         if thermal == .critical {
-            status = .error("Thermische druk is kritiek")
-            lastMessage = "De Mac is te warm. Wachten tot hij is afgekoeld."
+            status = .error("De Mac is te warm")
+            lastMessage = "Wacht even tot hij is afgekoeld en probeer het dan opnieuw."
             Feedback.failed()
             return
         }
@@ -792,10 +795,11 @@ final class AppModel: ObservableObject {
         // takes the warning with it.
         await refreshGrantAsync()
         guard grantStatus == .granted else {
-            status = .error("Vangnetten zouden niet kunnen ingrijpen")
-            lastMessage = "\(grantText). Installeer eerst de sudoers-regel — zonder die regel kunnen "
-                + "de timer, de batterijgrens en de thermische beveiliging de vlag niet terugzetten "
-                + "met de klep dicht."
+            status = .error("Niet gestart: het stoppen zou later mislukken")
+            lastMessage = "\(grantText). Installeer hem eerst bij Instellingen → Diagnose. Zonder "
+                + "die regel kunnen de tijdslimiet, de accugrens en de temperatuurbewaking de Mac "
+                + "later niet vanzelf weer laten slapen — en met de klep dicht kan niemand het "
+                + "gevraagde wachtwoord invullen."
             Feedback.failed()
             EventLog.shared.warn("Activeren geweigerd: \(grantText).")
             return
@@ -806,8 +810,8 @@ final class AppModel: ObservableObject {
         case .verified:
             break
         case .needsAuthorisation:
-            status = .error("Geen toestemming om de vlag te zetten")
-            lastMessage = "Installeer de sudoers-regel via het menu."
+            status = .error("Geen toestemming om de Mac wakker te houden")
+            lastMessage = "Installeer de wachtwoordvrijstelling bij Instellingen → Diagnose."
             await refreshGrantAsync()
             Feedback.failed()
             return
@@ -820,21 +824,23 @@ final class AppModel: ObservableObject {
             // branch — the exact collapse the comment above forbids. An unreadable flag
             // after a cancelled prompt is the case where it matters most.
             if SleepFlag.read() != false {
-                status = .error("Vlag staat aan zonder sessie")
-                lastMessage = "Geannuleerd, maar de vlag staat mogelijk aan. Dopamine Code zet hem terug."
-                await attemptRelease(reason: "geannuleerd tijdens activeren")
+                status = .error("Mac wordt wakker gehouden zonder dat er iets loopt")
+                lastMessage = "Geannuleerd, maar de Mac wordt mogelijk toch wakker gehouden. "
+                    + "Dopamine Code zet dat terug."
+                await attemptRelease(reason: "geannuleerd tijdens aanzetten")
             } else {
                 status = .off
                 lastMessage = "Geannuleerd."
             }
             return
         case .commandSucceededButFlagWrong(let actual):
-            status = .error("Kernel meldt SleepDisabled = \(actual.map { $0 ? "1" : "0" } ?? "onleesbaar")")
-            lastMessage = "Het commando gaf geen fout, maar de vlag staat niet zoals verwacht."
+            status = .error("Het systeem meldt iets anders dan verwacht")
+            lastMessage = "Het commando gaf geen fout, maar de slaapblokkade staat op "
+                + "\(actual.map { $0 ? "1" : "0" } ?? "onleesbaar") in plaats van op 1."
             Feedback.failed()
             return
         case .failed(let message):
-            status = .error("Zetten van de vlag mislukt")
+            status = .error("Wakker houden is niet gelukt")
             lastMessage = message
             Feedback.failed()
             return
@@ -886,7 +892,7 @@ final class AppModel: ObservableObject {
         )
 
         EventLog.shared.info(String(
-            format: "Blijf actief AAN. Vangnet na %.2f u, batterijgrens %d%%, thermisch %@.",
+            format: "Wakker houden AAN. Stopt vanzelf na %.2f u, accugrens %d%%, temperatuur %@.",
             Prefs.autoOffHours, Prefs.batteryFloor, thermal.label
         ))
 
@@ -906,8 +912,8 @@ final class AppModel: ObservableObject {
 
         if grantStatus != .granted {
             safetyNetsDisarmed = true
-            lastMessage = "Let op: zonder de sudoers-regel kunnen de timer, de batterijgrens en "
-                + "de thermische beveiliging de vlag niet zelf terugzetten."
+            lastMessage = "Let op: zonder de wachtwoordvrijstelling kunnen de tijdslimiet, de "
+                + "accugrens en de temperatuurbewaking de Mac straks niet zelf weer laten slapen."
             EventLog.shared.warn("Sessie gestart zonder sudoers-regel; vangnetten kunnen niet ingrijpen.")
         } else {
             safetyNetsDisarmed = false
@@ -993,17 +999,20 @@ final class AppModel: ObservableObject {
     /// Locks to the real login window, and reports honestly when it could not.
     private func lockScreenNow() {
         if ScreenLock.lockingEnabled == false {
-            lastMessage = "Let op: het systeem vraagt geen wachtwoord na vergrendelen."
+            lastMessage = "Let op: op deze Mac staat ingesteld dat er ná vergrendelen géén "
+                + "wachtwoord gevraagd wordt. Het scherm gaat dus wel op slot, maar iedereen "
+                + "kan het weer openen."
             EventLog.shared.warn("SACScreenLockEnabled is false; vergrendelen levert geen wachtwoordprompt op.")
         }
         switch ScreenLock.lockNow() {
         case .locked:
             break
         case .fellBackToScreenSaver:
-            lastMessage = "Scherm vergrendeld via de schermbeveiliging."
+            lastMessage = "Scherm op slot gezet via de schermbeveiliging."
         case .unavailable:
             status = .error("Vergrendelen lukte niet")
-            lastMessage = "Het scherm is NIET vergrendeld. De sessie loopt wel."
+            lastMessage = "Het scherm is NIET op slot gegaan — de Mac staat straks onbeheerd open. "
+                + "Wakker houden loopt gewoon door."
             Feedback.failed()
         }
     }
@@ -1012,7 +1021,7 @@ final class AppModel: ObservableObject {
         // Give the lock a moment to take the screen before asking the panel to sleep.
         try? await Task.sleep(nanoseconds: 600_000_000)
         if await !DisplayControl.sleepDisplayNow() {
-            lastMessage = "Het scherm ging niet uit. Onder een dichte klep kost dat batterij."
+            lastMessage = "Het scherm ging niet uit. Onder een dichte klep brandt het dan onzichtbaar door en kost het accu."
             Feedback.failed()
         }
     }
@@ -1028,18 +1037,19 @@ final class AppModel: ObservableObject {
             lastMessage = nil
             safetyNetsDisarmed = false
             allowImmediateRetry()
-            EventLog.shared.info("Blijf actief UIT (handmatig).")
+            EventLog.shared.info("Wakker houden UIT (handmatig).")
             Feedback.deactivated()
             if Prefs.blinkBacklightOnToggle { backlight.blink() }
         case .cancelled:
             // The flag is still set and the user knows it; the guardian keeps trying.
             intendedOn = true
             status = .on
-            lastMessage = "Geannuleerd — de Mac blijft actief."
+            lastMessage = "Geannuleerd — de Mac wordt nog steeds wakker gehouden."
         default:
             safetyNetsDisarmed = true
-            status = .error("Vlag staat nog aan")
-            lastMessage = "Uitzetten mislukte. Handmatig herstellen: sudo pmset -a disablesleep 0"
+            status = .error("De Mac wordt nog steeds wakker gehouden")
+            lastMessage = "Uitzetten lukte niet. Zet het zelf terug in Terminal met: "
+                + "sudo pmset -a disablesleep 0"
             Feedback.failed()
         }
         await refreshGrantAsync()
@@ -1112,15 +1122,16 @@ final class AppModel: ObservableObject {
             Task { [weak self] in
                 let limit = await ThermalWatch.cpuSpeedLimit()
                 guard let self, self.thermal == .serious else { return }
-                self.lastMessage = "Thermische druk is hoog"
-                    + (limit.map { $0 < 100 ? ", CPU teruggeschroefd naar \($0)%." : "." } ?? ".")
+                self.lastMessage = "De Mac wordt warm"
+                    + (limit.map { $0 < 100 ? " en draait nu op \($0)% snelheid." : "." } ?? ".")
+                    + " Wordt het kritiek, dan stopt Dopamine Code vanzelf."
             }
         case .critical:
             EventLog.shared.error("Thermische druk KRITIEK — slaap onmiddellijk weer toestaan.")
             Notify.post(.thermalCritical,
-                        "De Mac is te warm. Blijf actief wordt uitgezet zodat de kernel weer "
-                        + "kan ingrijpen — die noodslaap staat uit zolang de vlag op 1 staat.")
-            Task { await forceRelease(reason: "thermische druk kritiek") }
+                        "Het wakker houden is gestopt zodat macOS zelf weer kan ingrijpen: die "
+                        + "automatische noodslaap staat uit zolang de Mac wakker gehouden wordt.")
+            Task { await forceRelease(reason: "de Mac werd te warm") }
         }
     }
 
@@ -1147,7 +1158,7 @@ final class AppModel: ObservableObject {
 
         lastMessage = report
         EventLog.shared.warn("Melding bij openklappen: \(report)")
-        presentAlert(title: "Verbinding was weg", body: report)
+        presentAlert(title: "De internetverbinding is weg geweest", body: report)
     }
 
     private func handleNetwork(online: Bool, outage: Outage?) {
@@ -1183,8 +1194,9 @@ final class AppModel: ObservableObject {
                 intendedOn = false
                 let outcome = await write(false, allowPrompt: true)
                 guard case .verified = outcome else {
-                    status = .error("Vlag staat nog aan — niet in slaap gezet")
-                    lastMessage = "De Mac wordt niet in slaap gezet zolang SleepDisabled op 1 staat."
+                    status = .error("Niet in slaap gezet")
+                    lastMessage = "Het wakker houden kon niet gestopt worden, en zolang dat aan "
+                        + "staat kan de Mac niet gaan slapen."
                     EventLog.shared.error("Nu slapen geweigerd: SleepDisabled kon niet op 0 gezet worden.")
                     Feedback.failed()
                     return
@@ -1197,7 +1209,7 @@ final class AppModel: ObservableObject {
 
             // Re-read immediately before the call rather than trusting the write outcome.
             guard SleepFlag.read() == false else {
-                status = .error("Vlag staat nog aan — niet in slaap gezet")
+                status = .error("Niet in slaap gezet")
                 EventLog.shared.error("Nu slapen afgebroken: vlag staat nog op 1 vlak voor de aanroep.")
                 return
             }
@@ -1221,17 +1233,17 @@ final class AppModel: ObservableObject {
             case .installed:
                 await refreshGrantAsync()
                 lastMessage = grantStatus == .granted
-                    ? "Sudoers-regel geïnstalleerd."
-                    : "Regel geschreven, maar sudo bevestigt hem nog niet."
+                    ? "Wachtwoordvrijstelling geïnstalleerd."
+                    : "De regel is geschreven, maar het systeem bevestigt hem nog niet."
                 // A stuck flag can now be cleared, so drop the backoff and try at once.
                 allowImmediateRetry()
                 if SleepFlag.read() == true && !intendedOn {
-                    await attemptRelease(reason: "opruimen na installatie van de regel")
+                    await attemptRelease(reason: "opruimen na installatie van de vrijstelling")
                     // A successful release clears `lastMessage` — it has to, or a stale
                     // failure line survives the repair. Restate the outcome here, or the
                     // one click that fixed everything would report nothing at all.
                     if case .off = status {
-                        lastMessage = "Sudoers-regel geïnstalleerd en de vastgelopen vlag is opgeruimd."
+                        lastMessage = "Wachtwoordvrijstelling geïnstalleerd; de Mac mag weer slapen."
                     }
                 }
             case .cancelled:
@@ -1252,9 +1264,9 @@ final class AppModel: ObservableObject {
                 intendedOn = false
                 let outcome = await write(false, allowPrompt: true)
                 guard case .verified = outcome else {
-                    status = .error("Vlag staat nog aan")
-                    lastMessage = "De regel is niet verwijderd: eerst moet de vlag terug naar 0, "
-                        + "anders kan niets hem daarna nog terugzetten."
+                    status = .error("De Mac wordt nog steeds wakker gehouden")
+                    lastMessage = "De vrijstelling is niet verwijderd: het wakker houden moet "
+                        + "eerst uit, anders kan niets het daarna nog stoppen."
                     Feedback.failed()
                     return
                 }
@@ -1267,7 +1279,7 @@ final class AppModel: ObservableObject {
             switch outcome {
             case .installed:
                 await refreshGrantAsync()
-                lastMessage = "Sudoers-regel verwijderd."
+                lastMessage = "Wachtwoordvrijstelling verwijderd."
             case .cancelled:
                 lastMessage = "Verwijderen geannuleerd."
             case .failed(let message):
@@ -1315,7 +1327,8 @@ final class AppModel: ObservableObject {
             backlightOn = false
             EventLog.shared.info("Toetsenbordverlichting uit.")
         case .needsAccessibility:
-            lastMessage = "Toegankelijkheid is nodig om toetsaanslagen te simuleren."
+            lastMessage = "Dopamine Code heeft toestemming nodig bij Systeeminstellingen → "
+                + "Privacy → Toegankelijkheid om de helderheidstoetsen na te bootsen."
             _ = KeyboardBacklight.requestEventAccess()
         case .unavailable:
             lastMessage = "Toetsenbordverlichting kon niet geschakeld worden."
@@ -1335,9 +1348,9 @@ final class AppModel: ObservableObject {
             // These two used to collapse into one message, so a refused restore was
             // reported as reassurance while auto-brightness stayed off — with the
             // preference still flagged as suppressed and nothing on screen saying so.
-            lastMessage = "Terugzetten werd geweigerd door CoreBrightness. Automatische "
-                + "helderheid staat nog uit; probeer het opnieuw of zet hem aan bij "
-                + "Systeeminstellingen → Toetsenbord."
+            lastMessage = "Het systeem weigerde het terugzetten. De automatische "
+                + "toetsenbordverlichting staat nog uit; probeer het opnieuw of zet hem zelf aan "
+                + "bij Systeeminstellingen → Toetsenbord."
         }
         refreshBacklight()
     }
@@ -1357,8 +1370,9 @@ final class AppModel: ObservableObject {
             switch LaunchAtLogin.enable() {
             case .success(let mechanism):
                 lastMessage = LaunchAtLogin.requiresApproval
-                    ? "Zet Dopamine Code nog aan bij Systeeminstellingen → Inloggen."
-                    : "Start bij inloggen via \(mechanism.rawValue)."
+                    ? "Zet Dopamine Code nu nog aan bij Systeeminstellingen → Algemeen → "
+                      + "Inloggen en extensies."
+                    : "Dopamine Code start voortaan mee bij het inloggen (via \(mechanism.rawValue))."
             case .failure(let error):
                 Prefs.launchAtLogin = false
                 lastMessage = "Start bij inloggen mislukt: \(error.localizedDescription)"
@@ -1439,10 +1453,11 @@ final class AppModel: ObservableObject {
             EventLog.shared.error("Vlag kon bij afsluiten NIET teruggezet worden — de Mac slaapt niet.")
             if !ScreenState.isLocked && !(SleepFlag.clamshellClosed() ?? lidClosed) {
                 let alert = NSAlert()
-                alert.messageText = "De Mac slaapt nog steeds niet"
+                alert.messageText = "De Mac kan nog steeds niet gaan slapen"
                 alert.informativeText =
-                    "Dopamine Code kon SleepDisabled niet terugzetten bij het afsluiten. "
-                    + "Voer dit uit in Terminal:\n\nsudo pmset -a disablesleep 0"
+                    "Dopamine Code kon het wakker houden bij het afsluiten niet uitzetten. "
+                    + "Zet het zelf terug: open Terminal en voer deze regel uit."
+                    + "\n\nsudo pmset -a disablesleep 0"
                 alert.alertStyle = .critical
                 alert.addButton(withTitle: "OK")
                 alert.runModal()

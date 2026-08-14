@@ -53,7 +53,7 @@ struct MenuView: View {
         if model.networkWatched {
             parts.append(model.online ? "verbonden" : "geen verbinding")
         }
-        if model.thermal != .nominal { parts.append("warmte \(model.thermal.label)") }
+        if model.thermal != .nominal { parts.append("temperatuur \(model.thermal.label)") }
         return parts.joined(separator: " · ")
     }
 
@@ -70,7 +70,7 @@ struct MenuView: View {
                 get: { model.intendedOn },
                 set: { model.setKeepAwake($0) }
             )) {
-                Text("Blijf actief").fontWeight(.medium)
+                Text("Mac wakker houden").fontWeight(.medium)
             }
             .toggleStyle(.switch)
             .disabled(model.busy)
@@ -183,12 +183,13 @@ struct MenuView: View {
     /// nothing running unattended is able to change that.
     private var disarmedWarning: some View {
         VStack(alignment: .leading, spacing: 6) {
-            Label("Vangnetten staan uit", systemImage: "shield.slash.fill")
+            Label("Vanzelf stoppen werkt nu niet", systemImage: "shield.slash.fill")
                 .font(.caption.weight(.semibold))
                 .foregroundStyle(.red)
-            Text("De timer, de batterijgrens en de thermische beveiliging kunnen de vlag niet "
-                 + "zelf terugzetten, omdat dat een wachtwoord vraagt dat met de klep dicht "
-                 + "niemand kan invullen.")
+            Text("De tijdslimiet, de accugrens en de temperatuurbewaking kunnen de Mac niet zelf "
+                 + "weer laten slapen: daar is een wachtwoord voor nodig dat met de klep dicht "
+                 + "niemand kan invullen. Zet het zo nodig zelf terug — plak deze regel in "
+                 + "Terminal:")
                 .font(.caption2)
                 .foregroundStyle(.secondary)
                 .fixedSize(horizontal: false, vertical: true)
@@ -210,14 +211,14 @@ struct MenuView: View {
         // false alarm dressed in red.
         let broke = model.sleepBrokeThePromise
         return VStack(alignment: .leading, spacing: 6) {
-            Label(broke ? "De Mac heeft tóch geslapen" : "Mac sliep — de vlag stond niet aan",
+            Label(broke ? "De Mac heeft tóch geslapen" : "Mac sliep — de blokkade stond niet aan",
                   systemImage: broke ? "exclamationmark.octagon.fill" : "exclamationmark.triangle.fill")
                 .font(.caption.weight(.semibold))
                 .foregroundStyle(broke ? .red : .orange)
             Text(episode.describe().prefix(1).uppercased() + episode.describe().dropFirst() + ". "
                  + (broke
-                    ? "Dat hoort niet te kunnen met SleepDisabled op 1."
-                    : "De vlag was buiten Dopamine Code om uitgezet, dus dit zegt niets over het kernelveto."))
+                    ? "Dat hoort niet te kunnen terwijl de slaapblokkade aan stond: op deze Mac houdt de belofte dus niet."
+                    : "De slaapblokkade was buiten Dopamine Code om uitgezet, dus dit zegt niets over de blokkade zelf."))
                 .font(.caption2)
                 .foregroundStyle(.secondary)
                 .fixedSize(horizontal: false, vertical: true)
@@ -236,7 +237,9 @@ struct MenuView: View {
             Label(model.grantText, systemImage: "lock.trianglebadge.exclamationmark")
                 .font(.caption)
                 .foregroundStyle(.orange)
-            Text("Zonder deze regel vraagt elke schakeling om je wachtwoord — wat met de klep dicht niet werkt.")
+            Text("Zonder deze eenmalige regel vraagt macOS bij elke schakeling om je wachtwoord. "
+                 + "Met de klep dicht kan niemand dat invullen, dus kan de Mac daarna niet "
+                 + "vanzelf weer gaan slapen.")
                 .font(.caption2)
                 .foregroundStyle(.secondary)
                 .fixedSize(horizontal: false, vertical: true)
@@ -288,7 +291,7 @@ struct MenuView: View {
             // but the heading has to say which session it belongs to. "Netwerk deze sessie"
             // above last night's outages, at two in the afternoon with keep-awake off, is
             // simply a false statement.
-            Text(model.outagesFromFinishedSession ? "Netwerk vorige sessie" : "Netwerk deze sessie")
+            Text(model.outagesFromFinishedSession ? "Internet — vorige keer" : "Internet — nu actief")
                 .font(.caption).foregroundStyle(.secondary)
             ForEach(model.outages.suffix(3)) { outage in
                 Text("• " + outage.describe())
@@ -323,14 +326,16 @@ struct MenuView: View {
                     .controlSize(.small)
                 }
                 if model.backlightSuppressed {
-                    Text("Het systeem onderdrukt de verlichting nu (scherm slaapt). Een wijziging is pas zichtbaar als het scherm weer aan is.")
+                    Text("Het toetsenbord blijft nu donker omdat het scherm uit staat. Wat je hier instelt zie je pas als het scherm weer aan gaat.")
                         .font(.caption2)
                         .foregroundStyle(.orange)
                         .fixedSize(horizontal: false, vertical: true)
                 }
             } else if !KeyboardBacklight.canPostEvents {
                 VStack(alignment: .leading, spacing: 4) {
-                    Text("Toegankelijkheid is nodig om de verlichtingstoetsen te simuleren.")
+                    Text("Deze Mac laat de verlichting niet rechtstreeks instellen. Dopamine Code "
+                         + "kan hem alleen schakelen door de helderheidstoetsen na te bootsen, en "
+                         + "daarvoor is toestemming nodig bij Privacy → Toegankelijkheid.")
                         .font(.caption2)
                         .foregroundStyle(.secondary)
                         .fixedSize(horizontal: false, vertical: true)

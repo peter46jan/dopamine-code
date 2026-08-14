@@ -30,9 +30,9 @@ enum Notify {
 
         var title: String {
             switch self {
-            case .sessionEnded: return "Blijf actief is automatisch uitgezet"
-            case .releaseFailed: return "De Mac slaapt niet — vlag zit vast"
-            case .thermalCritical: return "Thermische druk kritiek"
+            case .sessionEnded: return "Het wakker houden is vanzelf gestopt"
+            case .releaseFailed: return "De Mac kan niet gaan slapen"
+            case .thermalCritical: return "De Mac is te warm geworden"
             case .macSlept: return "De Mac heeft tóch geslapen"
             }
         }
