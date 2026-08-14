@@ -759,10 +759,20 @@ final class AppModel: ObservableObject {
             // both an unreadable property and a write powerd had not applied yet (measured
             // 250 ms) as "nothing to do" — on the one path that runs as the machine powers
             // off, where nothing runs after it to notice.
-            guard SleepFlag.read() != false else {
-                RestartGuard.recordDeliberateExit(reason: "systeem gaat uit")
-                return
-            }
+            // Bewust GEEN `RestartGuard.recordDeliberateExit` hier, anders dan in de
+            // signaalhandler hierboven en in `finishShutdown()`. Die twee eindigen allebei in
+            // `exit()`; deze notificatie is geen belofte dat het proces weggaat. Een uitlogpoging
+            // die een andere app afbreekt — een niet-opgeslagen document, een geannuleerd
+            // bewaarblad — laat Dopamine Code gewoon doordraaien, en de markering bleef dan op
+            // schijf staan met "de blokkade stond uit". Werd de app daarna afgeschoten met
+            // `kill -9`, dan las de wachter die markering, concludeerde "dit is niet van ons"
+            // en haalde de app nooit meer terug: blokkade aan, geen app, dus geen tijdslimiet,
+            // geen accugrens en geen temperatuurbewaking. Precies het gat waarvoor de wachter
+            // gebouwd is.
+            //
+            // Gaat het systeem écht uit, dan volgt hierna een SIGTERM, en die handler schrijft
+            // de markering wél — op een pad dat daadwerkelijk eindigt.
+            guard SleepFlag.read() != false else { return }
             EventLog.shared.warn("Systeem gaat uit met vlag aan — terugzetten naar 0.")
             let outcome = SleepFlag.set(false, allowPrompt: false)
             if case .verified = outcome {
@@ -771,7 +781,6 @@ final class AppModel: ObservableObject {
                 EventLog.shared.error("Vlag kon vóór het uitschakelen NIET teruggezet worden. "
                                       + "Herstel na de herstart: sudo pmset -a disablesleep 0")
             }
-            RestartGuard.recordDeliberateExit(reason: "systeem gaat uit")
         }
     }
 
@@ -857,6 +866,15 @@ final class AppModel: ObservableObject {
         // Hourly. Rotation used to run only at launch, so an app that starts at login and
         // runs for weeks never rotated until the one time it did.
         if tickCount % 180 == 0 { EventLog.shared.rotateIfNeeded() }
+
+        // Kijken hoort bij élke tik, ook met een lopende sessie. Handelen niet — dat gebeurt
+        // verderop, alleen in de tak waar de vlag aantoonbaar op 0 staat.
+        //
+        // Dit stond eerst één functie verder, samen met het starten, en daardoor bevroor de
+        // waarneming zodra er iets liep. Twee gevallen kwamen daaruit voort, allebei met
+        // hetzelfde gevolg: een trigger die afging op iets van uren geleden, meteen nadat een
+        // vangnet de sessie had beëindigd, en zo de tijdslimiet in de praktijk verdubbelde.
+        observeTriggers(flag: read)
 
         guard let flag = read else {
             // Unreadable is not "all clear". If a session is running, the deadline, the
@@ -948,6 +966,52 @@ final class AppModel: ObservableObject {
         /// Er was net iets anders met de vlag bezig. Géén beslissing, dus de flank blijft
         /// staan en de volgende tik probeert het gewoon opnieuw.
         case probeerStraksOpnieuw
+    }
+
+    /// Houdt bij wat de triggers zien, zónder er iets mee te doen.
+    ///
+    /// Draait bij élke guardian-tik, ook met een lopende sessie en ook met een onleesbare
+    /// vlag. Alleen kijken: deze functie start niets en stopt niets, en dat is precies wat
+    /// hem ongevaarlijk maakt.
+    ///
+    /// Nodig omdat waarnemen en handelen eerst in één functie zaten, die alleen liep als de
+    /// vlag op 0 stond. Tijdens een sessie stond de waarneming dus stil, met twee gevolgen
+    /// die allebei op hetzelfde neerkwamen — een vangnet dat afging, en twintig seconden
+    /// later een trigger die opnieuw aanzette op iets van uren geleden:
+    ///
+    /// * Ging een gekozen app om 09:30 draaien terwijl er al een sessie liep, dan bleef dat
+    ///   een "nieuwe" app tot de sessie voorbij was. Om 13:00 liet de tijdslimiet los, en om
+    ///   13:00:20 zette de app-trigger een tweede sessie van vier uur op. De ingestelde
+    ///   limiet werd zo in de praktijk het dubbele — precies het vangnet dat net had gewerkt.
+    /// * Ging het schemavenster om 09:00 open terwijl er al een sessie liep, dan werd dat
+    ///   venster nooit afgevinkt. Zette je om 10:05 zelf uit, dan stond het schema hem twintig
+    ///   seconden later weer aan — woordelijk het gedrag dat het ontwerp wilde uitsluiten.
+    ///
+    /// Staat de vlag op 0 en loopt er niets, dan doet deze functie niets: dan is `evaluate`
+    /// aan de beurt, en die moet de flank zelf nog kunnen zien.
+    private func observeTriggers(flag: Bool?) {
+        guard flag != false || intendedOn else { return }
+        refreshAppTriggerSnapshot()
+        // Alleen bij een échte sessie, niet bij een vlag die blijft hangen zonder sessie: dan
+        // is de app juist bezig op te ruimen, en hoort het schema zijn venster gewoon nog te
+        // krijgen zodra dat gelukt is.
+        if intendedOn {
+            markSchemaWindowHandled(reason: "er liep al een sessie toen het venster openging.")
+        }
+    }
+
+    /// Zet de momentopname van draaiende trigger-apps gelijk aan wat er nu draait.
+    ///
+    /// Zonder edge-detectie met opzet: dit is de "kijken"-helft. Wie de flank wil weten, moet
+    /// hem uitrekenen vóórdat dit draait — en dat doet `evaluateAppTriggers`, in de tak waar
+    /// er ook iets met die flank gedaan mag worden.
+    private func refreshAppTriggerSnapshot() {
+        let gekozen = Set(Prefs.appTriggerBundleIDs)
+        guard !gekozen.isEmpty, let watch = appTrigger else {
+            appsDieDraaiden = []
+            return
+        }
+        appsDieDraaiden = Set(watch.draaiendeApps(gekozen).keys)
     }
 
     /// Leest de drie triggers uit en start er hooguit één sessie op.
@@ -1509,8 +1573,7 @@ final class AppModel: ObservableObject {
         sessionCapReason = nil
         deadlineReason = "de ingestelde tijd was om"
         sessionTrigger = nil
-        binding?.watcher?.cancel()
-        binding = nil
+        clearBinding()
         displayReassertTimer?.invalidate()
         displayReassertTimer = nil
         thermalWatch?.stop()
@@ -1685,7 +1748,7 @@ final class AppModel: ObservableObject {
         }
 
         if let identity = nieuweKoppeling {
-            binding?.watcher?.cancel()
+            clearBinding()
             binding = makeBinding(identity)
             EventLog.shared.info("Lopende sessie gekoppeld aan \(identity.label) "
                                  + "(\(request.trigger.logNaam)).")
@@ -1703,6 +1766,16 @@ final class AppModel: ObservableObject {
             Task { await guardianTick() }
         }
         return .liepAl(deadline: deadline)
+    }
+
+    /// Haalt de proceskoppeling weg én zet de bewaker stil.
+    ///
+    /// Die twee horen bij elkaar: een `ExitWatcher` die blijft leven nadat de koppeling weg
+    /// is, meldt straks het einde van een proces waar niets meer aan hangt. Er waren drie
+    /// plekken die dit paarsgewijs deden en één die het vergat, dus staat het nu op één plek.
+    private func clearBinding() {
+        binding?.watcher?.cancel()
+        binding = nil
     }
 
     /// Maakt de koppeling en zet de snelle melding erop.
@@ -1884,6 +1957,13 @@ final class AppModel: ObservableObject {
         sessionNotLaterThan = request.notLaterThan
         sessionCapReason = request.notLaterThanReason
         applyDeadline(start: start)
+        // Onvoorwaardelijk wissen, niet alleen overschrijven als er een nieuwe koppeling is.
+        // Elk ander sessieveld hierboven wordt hoe dan ook gezet; `binding` stond achter de
+        // `if let` en bleef dus staan als deze sessie er geen had. `endSession()` ruimt hem
+        // óók op, maar draait niet als het terugzetten van de vlag mislukte — en juist dan
+        // begint er even later een nieuwe sessie die de koppeling van de vorige erft en
+        // binnen twintig seconden stopt op een proces dat niemand aan haar koppelde.
+        clearBinding()
         if let identity = koppeling { binding = makeBinding(identity) }
         displayRelitCount = 0
         // A finding from a previous session must not haunt this one; it has been logged.
