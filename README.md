@@ -226,7 +226,7 @@ tijdslimiet, de accugrens en de warmtegrens binnen één tik alle drie waardeloo
 En omdat een trigger afgaat terwijl je er niet bent, is harde regel 3 hier zwaarder: elke
 geweigerde automatische start krijgt een regel in het logboek mét de naam van de trigger én
 een melding. Een gelukte start krijgt log en paneel, maar geen melding — die zou elke
-werkdag om 09:00 komen en de vijf meldingen die er wél toe doen laten verwateren.
+werkdag om 09:00 komen en de zes meldingen die er wél toe doen laten verwateren.
 
 Een paar keuzes die verder niet vanzelf spreken:
 
@@ -489,6 +489,21 @@ Wat het script controleert:
 4. Werkt `pmset displaysleepnow` zonder root?
 5. Is `CoreBrightness.KeyboardBrightnessClient` bereikbaar?
 6. Bestaat `SACLockScreenImmediate`, en staat de vergrendeling op `immediate`?
+7. Blijft de opdrachtregel van de kernelvlag af — raakt geen enkel bestand van `dopamine`
+   `pmset`, IOKit of de vlag aan, en is er nog steeds precies één plek in de hele bronmap
+   die de blokkade aanzet?
+8. Blijft de wachter van de kernelvlag af? Hij draait als dezelfde binary en heeft dus
+   dezelfde wachtwoordvrijstelling binnen handbereik; hij mag uitsluitend lezen.
+
+Los daarvan, en met opzet niet in de standaardronde omdat hij je lopende sessie beëindigt:
+
+```
+./verify.sh --killtest
+```
+
+Die schiet de app hard af tijdens een sessie en kijkt of de wachter de slaapblokkade binnen
+twee minuten opruimt. Dat is het enige gat dat `SIGTERM` niet dekt, dus het is ook het enige
+dat je niet kunt aantonen zonder het echt te doen.
 
 ### De scenario's uit je spec die alleen met de hand kunnen
 

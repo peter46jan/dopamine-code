@@ -129,7 +129,7 @@ final class AppTriggerWatch {
             geklaagdOver.insert(bundleID)
             EventLog.shared.warn(
                 "De melding van macOS gaf niet door dat \(bundleID) "
-                + (draait ? "gestart" : "gestopt") + " is; pas de guardian-tik zag het. "
+                + (draait ? "gestart" : "gestopt") + " is; pas de controle van twintig seconden zag het. "
                 + "De trigger werkt, maar reageert trager."
             )
         }

@@ -136,7 +136,7 @@ struct SessionHistory {
                 }
                 nummer += 1
                 var nieuw = Sessie(id: nummer, begin: tijd)
-                nieuw.trigger = Self.waarde(na: "Gestart via de ", in: tekst)
+                nieuw.trigger = Self.waarde(na: "Gestart via ", in: tekst)
                 open = nieuw
                 vangnetInDeWacht = nil
                 netGesloten = nil

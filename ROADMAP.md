@@ -143,9 +143,16 @@ van een gok. De uitleg met de gemeten cijfers staat in de README.
 
 De CLI is een tweede binary in dezelfde bundel die alleen Foundation linkt. `verify.sh`
 controleert nu met `otool -L` dat hij het IOKit-framework niet linkt, dat geen enkel bestand
-van de opdrachtregel `pmset`, `IOKit` of de vlag aanraakt, en dat er in de hele codebase
-precies één plek is die de slaapblokkade aanzet. Die drie controles zijn er niet voor deze
-fase maar voor de volgende drie.
+van de opdrachtregel `pmset`, `IOKit` of de vlag aanraakt, en dat er in de hele bronmap
+precies één aanroep staat die de slaapblokkade aanzet — in beide vormen: via de wikkel
+`write(true, …)` én rechtstreeks via `SleepFlag.set(true, …)`.
+
+Wat die derde controle níét is, is een bewijs. Het is een grep over twee bekende
+schrijfvormen; een vierde fase die de vlag langs een derde weg zet — een nieuwe wikkel, een
+andere spelling, C-interop rechtstreeks op IOKit — loopt er ongezien langs. Dat is geen
+tekortkoming die met een betere grep te repareren valt, dus staat het hier in plaats van dat
+de controle meer belooft dan ze waarmaakt. Die drie controles zijn er niet voor deze fase
+maar voor de volgende drie.
 
 `status --json` leest de kernelvlag vers bij elk verzoek en zet hem naast het beeld van de
 app als twee losse velden. Onenigheid daartussen is precies waar deze app voor bestaat;

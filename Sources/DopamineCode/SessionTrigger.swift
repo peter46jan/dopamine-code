@@ -34,15 +34,32 @@ enum SessionTrigger: Equatable {
         }
     }
 
-    /// Wat er in het logboek komt te staan.
+    /// Wat er in het logboek komt te staan, kaal — bedoeld voor tussen haakjes.
     var logNaam: String {
         switch self {
         case .schakelaar: return "schakelaar"
         case .cli: return "opdrachtregel"
-        case .klepArming: return "klep-arming"
+        case .klepArming: return "klep"
         case .app(_, let naam): return "app \(naam)"
         case .schema: return "schema"
         case .sneltoets: return "sneltoets"
+        }
+    }
+
+    /// Dezelfde naam, mét het lidwoord dat erbij hoort.
+    ///
+    /// Nodig omdat één logregel er een lopende zin van maakt ("Gestart via …"), en een vast
+    /// "de" ervoor plakken leverde "Gestart via de schema" op — in het logboek én in
+    /// Instellingen → Geschiedenis, die deze regel terugleest. Het lidwoord hoort bij het
+    /// woord, dus staat het hier en niet op de plek die de zin bouwt.
+    var metLidwoord: String {
+        switch self {
+        case .schakelaar: return "de schakelaar"
+        case .cli: return "de opdrachtregel"
+        case .klepArming: return "de klep"
+        case .app(_, let naam): return "de app \(naam)"
+        case .schema: return "het schema"
+        case .sneltoets: return "de sneltoets"
         }
     }
 

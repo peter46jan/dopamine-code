@@ -1067,7 +1067,7 @@ final class AppModel: ObservableObject {
     private func verlopenArmingOpruimen() {
         guard let arm = lidArm, arm.isVerlopen(op: Date()) else { return }
         lidArm = nil
-        let zin = "De arming is verlopen: je hebt de klep binnen "
+        let zin = "Het klaarzetten is vervallen: je hebt de klep binnen "
             + "\(Int(LidArm.geldigheid / 60)) minuten niet dichtgedaan. Het wakker houden staat uit."
         EventLog.shared.info(zin)
         lastMessage = zin
@@ -1236,7 +1236,7 @@ final class AppModel: ObservableObject {
     /// weg als alle andere routes. Deze functie start dus nooit iets.
     func armForLidClose() {
         guard !intendedOn else {
-            lastMessage = "Het wakker houden staat al aan; daar is geen arming voor nodig."
+            lastMessage = "Het wakker houden staat al aan; klaarzetten heeft nu geen zin."
             return
         }
         // Het gebaar gaat over de vólgende keer dichtklappen. Wapenen met de klep al dicht zou
@@ -1245,13 +1245,13 @@ final class AppModel: ObservableObject {
             let zin = "De klep is al dicht. Dit gaat over de vólgende keer dat je hem dichtdoet — "
                 + "doe hem eerst open. Wil je nu aanzetten, gebruik dan de schakelaar."
             lastMessage = zin
-            EventLog.shared.info("Arming geweigerd: de klep is al dicht.")
+            EventLog.shared.info("Klaarzetten geweigerd: de klep is al dicht.")
             Feedback.failed()
             return
         }
         let arm = LidArm()
         lidArm = arm
-        let zin = "Gewapend: het wakker houden gaat aan zodra je de klep dichtdoet. "
+        let zin = "Staat klaar: het wakker houden gaat aan zodra je de klep dichtdoet. "
             + "Vervalt vanzelf om \(Self.clockText(arm.verlooptOp))."
         lastMessage = zin
         EventLog.shared.info(zin)
@@ -1260,8 +1260,8 @@ final class AppModel: ObservableObject {
     func cancelArming() {
         guard lidArm != nil else { return }
         lidArm = nil
-        lastMessage = "De arming is ingetrokken; dichtklappen doet nu niets."
-        EventLog.shared.info("Arming ingetrokken.")
+        lastMessage = "Het staat niet meer klaar; dichtklappen doet nu niets."
+        EventLog.shared.info("Klaarzetten ingetrokken.")
     }
 
     // MARK: - App-triggers, van buitenaf bediend
@@ -1392,12 +1392,17 @@ final class AppModel: ObservableObject {
         guard leeftijd.map({ $0 > 300 }) ?? true else { return }
         warnedAboutStaleGuard = true
         let hoelang = leeftijd.map { "al \(Int($0 / 60)) minuten" } ?? "nog nooit"
-        EventLog.shared.warn(
-            "Het vangnet heeft \(hoelang) gekeken. Zolang dat zo blijft, blijft de Mac wakker als "
-            + "Dopamine Code hard afgeschoten wordt. Kijk bij Systeeminstellingen → Algemeen → "
-            + "Inloggen en extensies of Dopamine Code op de achtergrond mag draaien, of gebruik "
-            + "'Vangnet herstellen' bij Instellingen → Diagnose."
-        )
+        let zin = "De wachter heeft \(hoelang) gekeken. Zolang dat zo blijft, blijft de Mac "
+            + "wakker als Dopamine Code hard afgeschoten wordt. Kijk bij Systeeminstellingen → "
+            + "Algemeen → Inloggen en extensies of Dopamine Code op de achtergrond mag draaien, "
+            + "of gebruik 'Wachter herstellen' bij Instellingen → Diagnose."
+        EventLog.shared.warn(zin)
+        // Ook in het paneel, niet alleen in het logboek. Dit gaat over een vangnet dat er stil
+        // niet meer is — precies het geval waarin niemand uit zichzelf het logboek opslaat, en
+        // waarvoor lichtere gebeurtenissen (een geweigerde trigger) wél een regel krijgen.
+        // Géén melding: die zou aankomen terwijl er niets aan de hand lijkt, en de vier
+        // gebeurtenissen die 's nachts echt tellen laten verwateren.
+        lastMessage = zin
     }
 
     /// Whether any safety net says the flag should come off right now.
@@ -1444,7 +1449,7 @@ final class AppModel: ObservableObject {
         current.loggedSlowDetection = true
         binding = current
         EventLog.shared.warn(
-            "De snelle procesmelding kwam niet; pas de guardian-tik merkte dat "
+            "De snelle procesmelding kwam niet; pas de controle van twintig seconden merkte dat "
             + "\(current.identity.label) weg was. De koppeling werkt, maar reageert trager."
         )
     }
@@ -1789,7 +1794,7 @@ final class AppModel: ObservableObject {
             // gebruiker. Dan blijft de poll over — die geeft het antwoord toch al, alleen
             // een tik later. Wel opschrijven, anders lijkt het of de snelle route stuk is.
             EventLog.shared.info("\(identity.label) is van een andere gebruiker; deze koppeling "
-                                 + "wordt alleen door de guardian-tik bewaakt, niet door een directe melding.")
+                                 + "wordt alleen door de controle van twintig seconden bewaakt, niet door een directe melding.")
             return fresh
         }
         fresh.watcher = ProcessWatch.ExitWatcher(pid: identity.pid) { [weak self] in
@@ -1805,7 +1810,7 @@ final class AppModel: ObservableObject {
         }
         if fresh.watcher == nil {
             EventLog.shared.warn("Voor \(identity.label) kon geen directe exit-melding gezet worden; "
-                                 + "alleen de guardian-tik bewaakt deze koppeling.")
+                                 + "alleen de controle van twintig seconden bewaakt deze koppeling.")
         }
         return fresh
     }
@@ -1934,7 +1939,7 @@ final class AppModel: ObservableObject {
         // triggers — in plaats van alleen voor de weg waarlangs de arming zelf afgaat.
         if lidArm != nil {
             lidArm = nil
-            EventLog.shared.info("De arming is vervallen: er loopt nu een sessie.")
+            EventLog.shared.info("Het klaarzetten is vervallen: er loopt nu een sessie.")
         }
         // Binnen een schemavenster telt elke sessiestart als "dit venster is gehad". Zonder
         // dat zou het schema een sessie die je om 10:05 zelf uitzette twintig seconden later
@@ -2004,7 +2009,7 @@ final class AppModel: ObservableObject {
             format: "Wakker houden AAN. Stopt vanzelf na %@, accugrens %d%%, temperatuur %@.",
             Self.durationText(effectiveLimitMinutes), Prefs.batteryFloor, thermal.label
         )
-        startRegel += " Gestart via de \(request.trigger.logNaam)."
+        startRegel += " Gestart via \(request.trigger.metLidwoord)."
         if let deadline { startRegel += " Loopt tot \(Self.clockText(deadline))." }
         if let binding { startRegel += " Stopt ook als \(binding.identity.label) klaar is." }
         EventLog.shared.info(startRegel)
@@ -2271,7 +2276,7 @@ final class AppModel: ObservableObject {
 
         if closed {
             EventLog.shared.info("Klep dicht met status \(intendedOn ? "AAN" : "uit")"
-                                 + (lidArm != nil ? ", gewapend" : "") + ".")
+                                 + (lidArm != nil ? ", staat klaar voor de klep" : "") + ".")
 
             evaluateLidSecurity()
             // De guardian meteen aanstoten in plaats van tot de volgende tik te wachten.
@@ -2682,7 +2687,7 @@ final class AppModel: ObservableObject {
             let zin = await Task.detached(priority: .userInitiated) {
                 RestartGuard.ensureInstalled(force: true)
             }.value
-            lastMessage = "Vangnet als de app wegvalt: \(zin)"
+            lastMessage = "De wachter: \(zin)"
         }
     }
 

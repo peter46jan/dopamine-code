@@ -508,8 +508,8 @@ struct SettingsView: View {
                 Text("Dit staat in het menubalk-paneel en niet hier, want het geldt één keer: "
                      + "je klikt \"Aanzetten zodra ik de klep dichtdoe\", je klapt dicht, en het "
                      + "wakker houden gaat aan. Doe je het niet, dan vervalt het na vijf minuten "
-                     + "vanzelf en zegt de app dat ook. Een gewapende stand die een herstart zou "
-                     + "overleven gaat uren later af zonder dat iemand dat nog verwacht.")
+                     + "vanzelf en zegt de app dat ook. Het overleeft met opzet geen herstart: "
+                     + "iets dat klaarstaat en pas uren later afgaat verwacht niemand nog.")
                     .font(.caption).foregroundStyle(.secondary)
                     .fixedSize(horizontal: false, vertical: true)
             }
@@ -666,7 +666,7 @@ struct SettingsView: View {
                     .controlSize(.small)
             }
 
-            Section("Vangnet als de app wegvalt") {
+            Section("De wachter, voor als de app wegvalt") {
                 LabeledContent("Wachter", value: diagnostics.restartGuard)
                 Text("Wordt Dopamine Code hard afgeschoten — kill -9, of een crash — dan is er "
                      + "geen enkele kans meer om de slaapblokkade terug te zetten, en blijft de "
@@ -679,7 +679,7 @@ struct SettingsView: View {
                 Text("Dit gaat vanzelf en is niet uit te zetten — net als de temperatuurbewaking.")
                     .font(.caption).foregroundStyle(.secondary)
                     .fixedSize(horizontal: false, vertical: true)
-                Button("Vangnet herstellen") { model.repairRestartGuard() }
+                Button("Wachter herstellen") { model.repairRestartGuard() }
                     .controlSize(.small)
             }
 
@@ -851,7 +851,7 @@ struct SettingsView: View {
 
     private func historyDetail(_ sessie: SessionHistory.Sessie, loopt: Bool) -> String? {
         var delen: [String] = []
-        if let trigger = sessie.trigger { delen.append("gestart via de \(trigger)") }
+        if let trigger = sessie.trigger { delen.append("gestart via \(trigger)") }
         if let vangnet = sessie.vangnet {
             delen.append("een vangnet greep in: \(vangnet)")
         } else if let reden = sessie.reden {

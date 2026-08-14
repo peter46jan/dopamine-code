@@ -209,7 +209,7 @@ report() {
   fi
 
   printf '  App draait       %s\n' "$(pgrep -x DopamineCode >/dev/null && echo ja || echo nee)"
-  printf '  Herstart-vangnet %s\n' "$(watchdog_line)"
+  printf '  Wachter          %s\n' "$(watchdog_line)"
   trigger_lines
 
   # Wat de app zelf zegt, náást de kernelregel hierboven — nooit in plaats daarvan. Het
@@ -493,14 +493,25 @@ test_cli_purity() {
     pass "Geen enkel bestand van de opdrachtregel raakt pmset, IOKit of de vlag aan."
   fi
 
-  # Er hoort precies één plek te zijn die de vlag aanzet. Meer dan één betekent dat er een
-  # route is die de accugrens, de warmtegrens of de wachtwoordvrijstelling overslaat.
-  local writers
-  writers="$(grep -c 'await write(true' "$PROJECT_DIR/Sources/DopamineCode/AppModel.swift" 2>/dev/null)"
-  if [ "$writers" = "1" ]; then
-    pass "Er is precies één plek die de slaapblokkade aanzet."
+  # Er hoort precies één plek te zijn die de vlag AANzet. Meer dan één betekent een route die
+  # de accugrens, de warmtegrens of de wachtwoordvrijstelling overslaat.
+  #
+  # Twee greps over de hele bronmap, niet één op één bestand. De oude controle telde alleen
+  # `await write(true` in AppModel.swift, en juist de gevaarlijke variant viel daarbuiten: een
+  # nieuw bestand dat rechtstreeks `SleepFlag.set(true, …)` aanroept gaat langs de wikkel én
+  # langs alle drie de controles, en werd niet geteld. Dat is precies de route die een
+  # volgende fase per ongeluk neemt.
+  #
+  # Terugzetten (`false`) staat hier bewust niet in: de blokkade uitzetten is nooit gevaarlijk.
+  local wrapped direct
+  wrapped="$(grep -rho 'await write(true' "$PROJECT_DIR/Sources" 2>/dev/null | wc -l | tr -d ' ')"
+  direct="$(grep -rn 'SleepFlag\.set(true' "$PROJECT_DIR/Sources" 2>/dev/null \
+            | grep -vc '/SleepFlag\.swift:' || true)"
+  direct="${direct:-0}"
+  if [ "$wrapped" = "1" ] && [ "$direct" = "0" ]; then
+    pass "Er is precies één plek die de slaapblokkade aanzet, en niets omzeilt hem."
   else
-    fail "Er zijn $writers plekken die de slaapblokkade aanzetten; dat horen er één te zijn."
+    fail "Aanzetroutes: $wrapped via write(true) en $direct rechtstreeks via SleepFlag.set(true; dat horen er 1 en 0 te zijn."
   fi
 }
 
