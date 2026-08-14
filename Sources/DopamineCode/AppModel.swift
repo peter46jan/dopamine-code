@@ -14,8 +14,12 @@ struct SessionRequest {
     var limitMinutes: Int? = nil
     /// De sessie stopt zodra dit proces weg is — of eerder, als de timer eerder is.
     var bindToPID: pid_t? = nil
-    /// Harde bovengrens, bijvoorbeeld een eindtijd of straks een schemavenster.
+    /// Harde bovengrens, bijvoorbeeld een eindtijd of een schemavenster.
     var notLaterThan: Date? = nil
+    /// Waarom die bovengrens er is, in gewone taal, voor de logregel bij het aflopen.
+    /// `nil` = de neutrale zin. Fase 3 vult hem met "het schema liep tot 18:00", want
+    /// "de sessie liep tot 18:00" laat in het logboek in het midden wíe dat besloot.
+    var notLaterThanReason: String? = nil
 }
 
 /// Wat er van een verzoek terechtkwam. De weigerzin moet woordelijk doorgegeven kunnen
@@ -140,6 +144,9 @@ final class AppModel: ObservableObject {
     /// Een harde bovengrens voor déze sessie (`--until`, en straks een schemavenster). De
     /// tijdslimiet gaat er altijd overheen: wat het eerst komt wint.
     private var sessionNotLaterThan: Date?
+    /// Waarom die bovengrens er is, in gewone taal. Hoort bij `sessionNotLaterThan` en wordt
+    /// met hem samen gewist.
+    private var sessionCapReason: String?
     /// Waarom de eindtijd staat waar hij staat, in gewone taal, voor de logregel bij het
     /// aflopen. Gezet op dezelfde plek als de eindtijd zelf.
     private var deadlineReason = "de ingestelde tijd was om"
@@ -161,6 +168,33 @@ final class AppModel: ObservableObject {
 
     /// Wie de sessie gestart heeft. Gezet in hetzelfde blok als `intendedOn = true`.
     @Published private(set) var sessionTrigger: SessionTrigger?
+
+    // MARK: - Triggers (fase 3)
+    //
+    // Drie manieren om een sessie te laten beginnen zonder de schakelaar aan te raken. Ze
+    // hebben één ding gemeen dat belangrijker is dan hun onderlinge verschillen: **het zijn
+    // uitspraken, geen actoren.** Geen van de drie heeft een eigen timer die aanzet, geen van
+    // de drie weet of er een sessie loopt, en geen van de drie raakt de kernelvlag aan. Ze
+    // leveren feiten; `evaluateTriggers()` leest die feiten uit één plek in de guardian-tik,
+    // en starten gaat dan langs precies dezelfde `startSession` als de schakelaar.
+    //
+    // En alle drie zijn ze een **flank**, nooit een stand. Dat is geen stijlkeuze: een schema
+    // dat zegt "het is werkdag, het is 15:29, er loopt niets" zou twintig seconden na een
+    // accugrens die om 15:29 net ingreep de Mac weer wakker zetten — en dan zijn de
+    // tijdslimiet, de accugrens en de warmtegrens binnen één tik alle drie waardeloos.
+
+    /// De eenmalige "ga aan zodra ik de klep dichtdoe". Bewust niet in `Prefs`; zie `LidArm`.
+    @Published private(set) var lidArm: LidArm?
+    private var appTrigger: AppTriggerWatch?
+    /// Welke gekozen apps er bij de vorige waarneming draaiden. Dit gaat over díe apps, niet
+    /// over ons: alleen de overgang niet-draaiend → draaiend is een trigger. Wordt bij
+    /// `start()` op de huidige toestand gezet, zodat inloggen met Xcode al open geen sessie
+    /// oplevert die niemand gevraagd heeft.
+    private var appsDieDraaiden: Set<String> = []
+    /// Zodat een schema dat nooit open kan gaan één keer opvalt en niet elke twintig seconden.
+    private var loggedScheduleProblem: String?
+    /// Zodat "even bezig, volgende tik opnieuw" één regel oplevert per episode.
+    private var loggedTriggersSkipped = false
 
     /// `guard !busy` dekt niet wat het lijkt te dekken: `activate` heeft twee
     /// onderbrekingspunten (de grantcontrole en de privileged schrijf) waarop `busy` nog
@@ -282,6 +316,26 @@ final class AppModel: ObservableObject {
         return "stopt ook zodra \(binding.identity.label) klaar is"
     }
 
+    /// Hoe de lopende sessie begonnen is, voor het paneel.
+    ///
+    /// Altijd zichtbaar zolang er een sessie loopt, ook bij de schakelaar. Een regel die er
+    /// soms wel en soms niet staat maakt zijn afwezigheid dubbelzinnig, en dan is "welke
+    /// trigger heeft dit gestart?" niet met zekerheid te beantwoorden — precies de vraag die
+    /// fase 3 moest beantwoorden. Staat de vlag aan zónder sessie, dan is er ook geen trigger
+    /// en zegt deze regel niets: dat is dezelfde eerlijkheid als in `safetyNetLine`.
+    var triggerLine: String? {
+        guard intendedOn, let sessionTrigger else { return nil }
+        let zin = sessionTrigger.zin
+        return zin.prefix(1).uppercased() + zin.dropFirst() + "."
+    }
+
+    /// Het ingestelde schemavenster, zoals het nú in de instellingen staat.
+    var scheduleWindow: ScheduleWindow {
+        ScheduleWindow(dagen: Prefs.scheduleDays,
+                       startMinuut: Prefs.scheduleStartMinute,
+                       eindMinuut: Prefs.scheduleEndMinute)
+    }
+
     /// Dezelfde klem als `Prefs.autoOffMinutes` (5 minuten tot 24 uur), zodat een verzoek van
     /// buiten de tijdslimiet niet kan oprekken. `nil` = de duur die in het paneel staat.
     private func clampedMinutes(_ minutes: Int?) -> Int {
@@ -298,16 +352,18 @@ final class AppModel: ObservableObject {
     /// deze functie; nergens anders wordt `deadline` geschreven, behalve in `endSession`.
     /// De waarden staan erin als parameters zodat een verzoek van buiten eerst uitgerekend
     /// kan worden en pas daarna toegepast — de tijdslimiet wint altijd van de bovengrens.
-    private func computeDeadline(start: Date, limitMinutes: Int?, notLaterThan: Date?) -> (date: Date, reason: String) {
+    private func computeDeadline(start: Date, limitMinutes: Int?, notLaterThan: Date?,
+                                 capReason: String? = nil) -> (date: Date, reason: String) {
         let byLimit = start.addingTimeInterval(Double(clampedMinutes(limitMinutes)) * 60)
         if let cap = notLaterThan, cap < byLimit {
-            return (cap, "de sessie liep tot \(Self.clockText(cap))")
+            return (cap, capReason ?? "de sessie liep tot \(Self.clockText(cap))")
         }
         return (byLimit, "de ingestelde tijd was om")
     }
 
     private func applyDeadline(start: Date) {
-        let planned = computeDeadline(start: start, limitMinutes: sessionLimitMinutes, notLaterThan: sessionNotLaterThan)
+        let planned = computeDeadline(start: start, limitMinutes: sessionLimitMinutes,
+                                      notLaterThan: sessionNotLaterThan, capReason: sessionCapReason)
         deadline = planned.date
         deadlineReason = planned.reason
     }
@@ -396,6 +452,25 @@ final class AppModel: ObservableObject {
 
         thermalWatch = ThermalWatch { [weak self] pressure in
             self?.handleThermal(pressure)
+        }
+
+        // De app-trigger uit 3.2. Zijn meldingen doen precies één ding — de guardian
+        // aanstoten — net als de klepmelding en de exit-melding van een gekoppeld proces.
+        // Wat er dan gebeurt beslist `evaluateTriggers()`, en die kijkt naar de kernelvlag.
+        let apps = AppTriggerWatch { [weak self] in
+            Task { @MainActor in await self?.guardianTick() }
+        }
+        apps.start()
+        appTrigger = apps
+        // De begintoestand telt als "al gezien". Inloggen 's ochtends terwijl Xcode nog open
+        // staat van gisteren hoort geen sessie op te leveren die niemand gevraagd heeft; een
+        // trigger gaat over de overgang niet-draaiend → draaiend en niet over de stand.
+        appsDieDraaiden = Set(apps.draaiendeApps(Set(Prefs.appTriggerBundleIDs)).keys)
+        if !appsDieDraaiden.isEmpty {
+            EventLog.shared.info(
+                "Deze app-triggers draaiden al bij het starten en tellen als gezien: "
+                + appsDieDraaiden.sorted().map { Prefs.appTriggerName($0) }.joined(separator: ", ") + "."
+            )
         }
 
         // Started here rather than per session: the reading has to stay current while the
@@ -692,6 +767,11 @@ final class AppModel: ObservableObject {
                 endSession()
                 status = .error("Buiten Dopamine Code om uitgezet")
                 EventLog.shared.warn("SleepDisabled werd van buitenaf op 0 gezet; sessie beëindigd.")
+                // Uitdrukkelijk géén trigger-evaluatie in deze tik. De vlag viel zojuist van
+                // buitenaf weg, en een schema dat daar meteen overheen gaat maakt precies
+                // ongedaan wat er net gebeurd is. De volgende tik kijkt opnieuw, met een
+                // rustige toestand.
+                return
             } else if status.isOn {
                 status = .off
                 lastMessage = nil
@@ -702,6 +782,14 @@ final class AppModel: ObservableObject {
                     status = .off
                 }
             }
+
+            // Hier, en nergens anders, mag een trigger een sessie beginnen: de vlag staat
+            // aantoonbaar op 0 en er loopt niets. De stópkant zit met opzet ergens anders —
+            // in `releaseReason()`, dat alleen loopt als de vlag op 1 staat. Die splitsing is
+            // de kern van fase 3: starten is een beslissing over een rustige machine, stoppen
+            // is een beslissing over een lopende sessie, en één functie die allebei doet is
+            // een functie die de vangnetten kan omzeilen.
+            await evaluateTriggers()
             return
         }
 
@@ -732,6 +820,319 @@ final class AppModel: ObservableObject {
         if let reason = releaseReason() {
             await forceRelease(reason: reason)
         }
+    }
+
+    // MARK: - Triggers: de enige plek die vanzelf aanzet
+
+    /// Wat er van een trigger-poging terechtkwam, voor de flankbewaking van de aanroeper.
+    private enum TriggerUitkomst {
+        case gestart
+        /// Geweigerd, of er liep al iets. De flank is op: binnen deze episode niet opnieuw
+        /// proberen, want een weigering die elke twintig seconden terugkomt is geen melding
+        /// meer maar ruis — en een accugrens die net ingreep zou er alsnog door omzeild worden.
+        case nietGestart
+        /// Er was net iets anders met de vlag bezig. Géén beslissing, dus de flank blijft
+        /// staan en de volgende tik probeert het gewoon opnieuw.
+        case probeerStraksOpnieuw
+    }
+
+    /// Leest de drie triggers uit en start er hooguit één sessie op.
+    ///
+    /// Wordt uitsluitend aangeroepen vanuit `guardianTick()`, in de tak waarin de kernelvlag
+    /// aantoonbaar op 0 staat en er niets loopt. Hij beslist zelf niets over veiligheid:
+    /// starten gaat langs `startSession` → `activate`, dus langs dezelfde accugrens, dezelfde
+    /// warmtegrens, dezelfde controle op de wachtwoordvrijstelling en dezelfde tijdslimiet
+    /// als de schakelaar. Een trigger die zijn eigen `write(true, …)` zou doen, zou alle vier
+    /// overslaan; die bestaat hier dan ook niet.
+    private func evaluateTriggers() async {
+        // Bij bezet niet weigeren maar overslaan: er verandert niets aan de feiten, dus de
+        // volgende tik komt er vanzelf op terug. Weigeren zou een flank verbranden voor een
+        // toestand die twintig seconden later voorbij is.
+        guard !busy, !activationInFlight else {
+            if !loggedTriggersSkipped {
+                loggedTriggersSkipped = true
+                EventLog.shared.info("Trigger-controle overgeslagen: Dopamine Code was net met de "
+                                     + "slaapblokkade bezig. De volgende tik kijkt opnieuw.")
+            }
+            return
+        }
+        loggedTriggersSkipped = false
+
+        verlopenArmingOpruimen()
+
+        var gestart = false
+
+        // 1. De klep-arming (3.1). Wapenen kan alleen met de klep open, dus "de klep is nu
+        //    dicht" ís hier de flank; het consumeren gebeurt vóór de poging, zodat een
+        //    mislukte start geen arming achterlaat die twintig seconden later weer afgaat.
+        if let arm = lidArm, !arm.isVerlopen(op: Date()),
+           SleepFlag.clamshellClosed() ?? lidClosed {
+            let uitkomst = await startTrigger(
+                SessionRequest(trigger: .klepArming),
+                aanleiding: "je had gevraagd om aan te gaan zodra de klep dichtging"
+            )
+            if uitkomst != .probeerStraksOpnieuw { lidArm = nil }
+            gestart = uitkomst == .gestart
+        }
+
+        // 2. Apps (3.2). De flank is de overgang niet-draaiend → draaiend. Stoppen loopt
+        //    hierna nergens langs deze functie: de sessie krijgt de pid als koppeling mee, en
+        //    een app die afgesloten wordt eindigt de sessie via dezelfde clausule onderaan
+        //    `releaseReason()` als `dopamine on --until-exit`. Eén stoproute, niet twee.
+        gestart = await evaluateAppTriggers(alGestart: gestart)
+
+        // 3. Het schema (3.3).
+        await evaluateSchedule(alGestart: gestart)
+    }
+
+    /// Een arming die vanzelf verlopen is. Nooit stil: je hebt hem aangezet en erop gerekend.
+    private func verlopenArmingOpruimen() {
+        guard let arm = lidArm, arm.isVerlopen(op: Date()) else { return }
+        lidArm = nil
+        let zin = "De arming is verlopen: je hebt de klep binnen "
+            + "\(Int(LidArm.geldigheid / 60)) minuten niet dichtgedaan. Het wakker houden staat uit."
+        EventLog.shared.info(zin)
+        lastMessage = zin
+    }
+
+    private func evaluateAppTriggers(alGestart: Bool) async -> Bool {
+        let gekozen = Set(Prefs.appTriggerBundleIDs)
+        guard !gekozen.isEmpty, let watch = appTrigger else {
+            appsDieDraaiden = []
+            return alGestart
+        }
+
+        let draaiendNu = watch.draaiendeApps(gekozen)
+        let nuSet = Set(draaiendNu.keys)
+        let nieuw = nuSet.subtracting(appsDieDraaiden)
+        // De waarneming meteen vastleggen, ook als er hierna niets gestart wordt. Dit is de
+        // flank: zonder deze regel zou een geweigerde start elke twintig seconden opnieuw
+        // geprobeerd worden zolang Xcode draait, en dat is niet "start zodra hij begint" maar
+        // "blijf het proberen zolang hij aanstaat" — precies het niveaugestuurde gedrag dat
+        // een vangnet ongedaan kan maken.
+        appsDieDraaiden = nuSet
+
+        guard let bundleID = nieuw.sorted().first, let info = draaiendNu[bundleID] else {
+            return alGestart
+        }
+        guard !alGestart else {
+            EventLog.shared.info("\(info.naam) ging draaien, maar er is in deze tik al een sessie "
+                                 + "gestart; de app-trigger doet niets.")
+            return alGestart
+        }
+
+        let uitkomst = await startTrigger(
+            SessionRequest(trigger: .app(bundleID: bundleID, naam: info.naam),
+                           bindToPID: info.pid),
+            aanleiding: "\(info.naam) ging draaien"
+        )
+        // Alleen bij "even bezig" blijft de flank staan; alles anders is een beslissing.
+        if uitkomst == .probeerStraksOpnieuw { appsDieDraaiden.remove(bundleID) }
+        return uitkomst == .gestart
+    }
+
+    private func evaluateSchedule(alGestart: Bool) async {
+        guard Prefs.scheduleEnabled else {
+            loggedScheduleProblem = nil
+            return
+        }
+        let venster = scheduleWindow
+
+        // Een schema dat aanstaat maar nooit open kan gaan is erger dan geen schema: je
+        // rekent erop en er gebeurt niets. Eén regel, en niet elke twintig seconden dezelfde.
+        if let probleem = venster.probleem {
+            if loggedScheduleProblem != probleem {
+                loggedScheduleProblem = probleem
+                EventLog.shared.warn("Het schema staat aan, maar \(probleem) — er gaat dus nooit "
+                                     + "iets vanzelf aan. Pas het aan bij Instellingen → Zelf aanzetten.")
+            }
+            return
+        }
+        loggedScheduleProblem = nil
+
+        guard let begin = venster.begin(op: Date()),
+              begin != Prefs.scheduleLastArmedWindowStart
+        else { return }
+
+        // In de praktijk heeft `activate` het venster dan al afgevinkt, maar dat mag geen
+        // stilzwijgende afspraak tussen twee functies zijn: hier staat het met zoveel woorden.
+        guard !alGestart else {
+            markSchemaWindowHandled(reason: "er is in deze tik al een sessie gestart.")
+            return
+        }
+
+        guard let einde = venster.einde(vanBegin: begin) else {
+            EventLog.shared.warn("Het einde van het schemavenster was niet uit te rekenen; "
+                                 + "er wordt niets gestart.")
+            return
+        }
+
+        let uitkomst = await startTrigger(
+            SessionRequest(trigger: .schema(omschrijving: venster.omschrijving),
+                           notLaterThan: einde,
+                           notLaterThanReason: "het schema liep tot \(Self.clockText(einde))"),
+            aanleiding: "het schema-venster \(venster.omschrijving) ging open"
+        )
+        switch uitkomst {
+        case .gestart:
+            markSchemaWindowHandled(reason: "het schema heeft aangezet.")
+        case .nietGestart:
+            markSchemaWindowHandled(reason: "aanzetten lukte niet; het schema probeert het in "
+                                    + "dit venster niet nog eens.")
+        case .probeerStraksOpnieuw:
+            EventLog.shared.info("Het schemavenster \(venster.omschrijving) is open, maar Dopamine "
+                                 + "Code was net bezig; de volgende tik probeert het opnieuw.")
+        }
+    }
+
+    /// Vinkt het schemavenster af waarin dit moment valt.
+    ///
+    /// Aangeroepen vanuit `activate` (bij élke sessiestart, ook een handmatige) en vanuit
+    /// `evaluateSchedule` als er níet gestart is. Dat het ook bij een handmatige start gebeurt
+    /// is met opzet: begon je om 10:00 zelf een sessie binnen het venster en zet je hem om
+    /// 10:05 weer uit, dan hoort het schema hem niet twintig seconden later terug te zetten.
+    /// Binnen één venster gebeurt er dus hooguit één keer iets, wat er ook tussen zit.
+    ///
+    /// Schrijft niets als het venster al afgevinkt is, zodat de logregel er precies één is
+    /// per vensterovergang — ook als er niet gestart wordt, mét de reden waarom niet. Zonder
+    /// die regel is "waarom deed hij vanochtend niks" achteraf onbeantwoordbaar.
+    private func markSchemaWindowHandled(reason: String) {
+        guard Prefs.scheduleEnabled else { return }
+        let venster = scheduleWindow
+        guard venster.probleem == nil,
+              let begin = venster.begin(op: Date()),
+              begin != Prefs.scheduleLastArmedWindowStart
+        else { return }
+        Prefs.scheduleLastArmedWindowStart = begin
+        EventLog.shared.info("Schema-venster \(venster.omschrijving) is open sinds "
+                             + "\(Self.clockText(begin)); \(reason)")
+    }
+
+    /// Eén trigger-poging, met de melding eromheen die bij een trigger hoort.
+    ///
+    /// Harde regel 3 weegt hier zwaarder dan bij de schakelaar, want dit gaat af terwijl je er
+    /// niet bent. `activate` zet bij een weigering alleen `status` en `lastMessage`, en dat
+    /// ziet niemand met de klep dicht. Elke geweigerde poging krijgt daarom een regel in het
+    /// logboek mét de naam van de trigger, plus een melding die blijft staan tot je hem leest.
+    /// Een gelukte start krijgt geen melding: die zou elke werkdag om 09:00 komen en de vijf
+    /// meldingen die er wél toe doen laten verwateren.
+    private func startTrigger(_ request: SessionRequest, aanleiding: String) async -> TriggerUitkomst {
+        switch await startSession(request) {
+        case .gestart(let eind, let minuten):
+            let zin = "Vanzelf aangezet omdat \(aanleiding). De Mac blijft wakker tot "
+                + "\(Self.clockText(eind)) (\(Self.durationText(minuten)))."
+            EventLog.shared.info(zin)
+            lastMessage = zin
+            return .gestart
+
+        case .liepAl(let eind):
+            EventLog.shared.info("\(aanleiding.prefix(1).uppercased() + aanleiding.dropFirst()), "
+                                 + "maar er liep al een sessie"
+                                 + (eind.map { " tot \(Self.clockText($0))" } ?? "") + ".")
+            return .nietGestart
+
+        case .geweigerd(let reden):
+            EventLog.shared.warn("Vanzelf aanzetten geweigerd (\(request.trigger.logNaam)): \(reden)")
+            lastMessage = "Vanzelf aanzetten lukte niet (\(aanleiding)): \(reden)"
+            if request.trigger.isAutomatisch {
+                let klok = DateFormatter()
+                klok.dateFormat = "HH:mm"
+                Notify.post(.triggerRefused,
+                            "Om \(klok.string(from: Date())) wilde Dopamine Code vanzelf aanzetten "
+                            + "(\(aanleiding)), maar dat kon niet: \(reden)")
+            }
+            return .nietGestart
+
+        case .bezet:
+            EventLog.shared.info("Vanzelf aanzetten (\(request.trigger.logNaam)) uitgesteld: er was "
+                                 + "net iets anders met de slaapblokkade bezig.")
+            return .probeerStraksOpnieuw
+        }
+    }
+
+    // MARK: - De klep-arming, van buitenaf bediend
+
+    /// "Zet het wakker houden aan zodra ik de klep dichtdoe", eenmalig.
+    ///
+    /// Zet alleen een vlag; het aanzetten zelf gebeurt in `evaluateTriggers()`, langs dezelfde
+    /// weg als alle andere routes. Deze functie start dus nooit iets.
+    func armForLidClose() {
+        guard !intendedOn else {
+            lastMessage = "Het wakker houden staat al aan; daar is geen arming voor nodig."
+            return
+        }
+        // Het gebaar gaat over de vólgende keer dichtklappen. Wapenen met de klep al dicht zou
+        // betekenen dat hij meteen afgaat, en dat is iets anders dan waar de knop om vraagt.
+        if SleepFlag.clamshellClosed() ?? lidClosed {
+            let zin = "De klep is al dicht. Dit gaat over de vólgende keer dat je hem dichtdoet — "
+                + "doe hem eerst open. Wil je nu aanzetten, gebruik dan de schakelaar."
+            lastMessage = zin
+            EventLog.shared.info("Arming geweigerd: de klep is al dicht.")
+            Feedback.failed()
+            return
+        }
+        let arm = LidArm()
+        lidArm = arm
+        let zin = "Gewapend: het wakker houden gaat aan zodra je de klep dichtdoet. "
+            + "Vervalt vanzelf om \(Self.clockText(arm.verlooptOp))."
+        lastMessage = zin
+        EventLog.shared.info(zin)
+    }
+
+    func cancelArming() {
+        guard lidArm != nil else { return }
+        lidArm = nil
+        lastMessage = "De arming is ingetrokken; dichtklappen doet nu niets."
+        EventLog.shared.info("Arming ingetrokken.")
+    }
+
+    // MARK: - App-triggers, van buitenaf bediend
+
+    /// Voegt een app toe als trigger.
+    ///
+    /// Draait hij op dit moment al, dan telt dat meteen als "gezien": een trigger die afgaat
+    /// op het moment dat je hem instelt is niet wat "start zodra deze app begint" betekent.
+    func addAppTrigger(bundleID: String, naam: String) {
+        guard !bundleID.isEmpty else { return }
+        var lijst = Prefs.appTriggerBundleIDs
+        guard !lijst.contains(bundleID) else { return }
+        lijst.append(bundleID)
+        Prefs.appTriggerBundleIDs = lijst
+        var namen = Prefs.appTriggerNames
+        namen[bundleID] = naam
+        Prefs.appTriggerNames = namen
+        if appTrigger?.draaiendeApps([bundleID])[bundleID] != nil {
+            appsDieDraaiden.insert(bundleID)
+            lastMessage = "\(naam) staat nu als trigger ingesteld. Hij draait al, dus er gebeurt "
+                + "nu niets; de volgende keer dat hij start gaat het wakker houden aan."
+        } else {
+            lastMessage = "\(naam) staat nu als trigger ingesteld."
+        }
+        EventLog.shared.info("App-trigger toegevoegd: \(naam) (\(bundleID)).")
+        objectWillChange.send()
+    }
+
+    func removeAppTrigger(bundleID: String) {
+        let naam = Prefs.appTriggerName(bundleID)
+        Prefs.appTriggerBundleIDs = Prefs.appTriggerBundleIDs.filter { $0 != bundleID }
+        var namen = Prefs.appTriggerNames
+        namen[bundleID] = nil
+        Prefs.appTriggerNames = namen
+        appsDieDraaiden.remove(bundleID)
+        EventLog.shared.info("App-trigger verwijderd: \(naam) (\(bundleID)).")
+        objectWillChange.send()
+    }
+
+    /// Het schema opnieuw instellen vanuit het venster Instellingen.
+    ///
+    /// Wist de flankbewaking, want anders zou een schema dat je zojuist op "nu" zet pas morgen
+    /// afgaan omdat het venster van vandaag toevallig al afgevinkt was. Een wijziging door een
+    /// mens is een nieuw schema, niet hetzelfde schema opnieuw.
+    func scheduleSettingsChanged() {
+        Prefs.scheduleLastArmedWindowStart = nil
+        loggedScheduleProblem = nil
+        objectWillChange.send()
+        Task { await guardianTick() }
     }
 
     /// The Mac slept. If that happened while we were holding it awake, the app's single
@@ -991,6 +1392,7 @@ final class AppModel: ObservableObject {
         // stopt een sessie die niemand koppelde alsnog op een proces van een uur geleden.
         sessionLimitMinutes = nil
         sessionNotLaterThan = nil
+        sessionCapReason = nil
         deadlineReason = "de ingestelde tijd was om"
         sessionTrigger = nil
         binding?.watcher?.cancel()
@@ -1063,7 +1465,9 @@ final class AppModel: ObservableObject {
             }
             let gevraagd = computeDeadline(start: start,
                                            limitMinutes: request.limitMinutes ?? sessionLimitMinutes,
-                                           notLaterThan: request.notLaterThan ?? sessionNotLaterThan)
+                                           notLaterThan: request.notLaterThan ?? sessionNotLaterThan,
+                                           capReason: request.notLaterThan != nil
+                                               ? request.notLaterThanReason : sessionCapReason)
             guard gevraagd.date <= huidige else {
                 return .geweigerd(reden: "Een lopende sessie wordt niet verlengd — stop de sessie eerst. "
                                   + "Hij loopt nu tot \(Self.clockText(huidige)).")
@@ -1079,7 +1483,10 @@ final class AppModel: ObservableObject {
         }
         if let eind = nieuweEindtijd {
             if let m = request.limitMinutes { sessionLimitMinutes = m }
-            if let cap = request.notLaterThan { sessionNotLaterThan = cap }
+            if let cap = request.notLaterThan {
+                sessionNotLaterThan = cap
+                sessionCapReason = request.notLaterThanReason
+            }
             deadline = eind.date
             deadlineReason = eind.reason
             EventLog.shared.info("Lopende sessie ingekort tot \(Self.clockText(eind.date)) "
@@ -1240,6 +1647,22 @@ final class AppModel: ObservableObject {
         sessionTrigger = request.trigger
         status = .on
         lastMessage = nil
+        // Een arming die nog stond is niet meer aan de orde: er loopt al iets. Hier en niet in
+        // `endSession`, zodat dit voor élke route geldt — de schakelaar, de opdrachtregel en de
+        // triggers — in plaats van alleen voor de weg waarlangs de arming zelf afgaat.
+        if lidArm != nil {
+            lidArm = nil
+            EventLog.shared.info("De arming is vervallen: er loopt nu een sessie.")
+        }
+        // Binnen een schemavenster telt elke sessiestart als "dit venster is gehad". Zonder
+        // dat zou het schema een sessie die je om 10:05 zelf uitzette twintig seconden later
+        // terugzetten, en zou een vangnet dat om 15:29 ingreep in een handmatige sessie alsnog
+        // door het schema ongedaan gemaakt worden. Bij het schema zelf doet `evaluateSchedule`
+        // het afvinken, met een zin die zegt dat hij het was.
+        if case .schema = request.trigger {} else {
+            markSchemaWindowHandled(reason: "er loopt sinds \(Self.clockText(Date())) een sessie, "
+                                    + "dus het schema doet in dit venster niets meer.")
+        }
         // Both halves of the backoff, not just the counter: a stale `nextReleaseAttempt`
         // left over from an earlier failure would otherwise gate this session's first
         // release for up to ten minutes.
@@ -1250,6 +1673,7 @@ final class AppModel: ObservableObject {
         sessionStart = start
         sessionLimitMinutes = request.limitMinutes
         sessionNotLaterThan = request.notLaterThan
+        sessionCapReason = request.notLaterThanReason
         applyDeadline(start: start)
         if let identity = koppeling { binding = makeBinding(identity) }
         displayRelitCount = 0
@@ -1557,9 +1981,20 @@ final class AppModel: ObservableObject {
         lidClosed = closed
 
         if closed {
-            EventLog.shared.info("Klep dicht met status \(intendedOn ? "AAN" : "uit").")
+            EventLog.shared.info("Klep dicht met status \(intendedOn ? "AAN" : "uit")"
+                                 + (lidArm != nil ? ", gewapend" : "") + ".")
 
             evaluateLidSecurity()
+            // De guardian meteen aanstoten in plaats van tot de volgende tik te wachten.
+            //
+            // Bij een gewapende klep-arming is dit geen gemak maar de kern: staat de
+            // slaapblokkade nog uit, dan begint de Mac binnen enkele seconden na het
+            // dichtklappen aan zijn slaap, en twintig seconden later is er niets meer om aan
+            // te zetten. De tik zelf doet niets nieuws — hij leest de kernel en laat
+            // `evaluateTriggers()` beslissen — hij komt alleen eerder langs.
+            if lidArm != nil {
+                Task { await guardianTick() }
+            }
             return
         }
 
@@ -2054,6 +2489,8 @@ final class AppModel: ObservableObject {
         // maar een dood bestand laten liggen hoort niet.
         controlServer?.stop()
         controlServer = nil
+        appTrigger?.stop()
+        appTrigger = nil
         clamshell?.stop()
         powerMonitor?.stop()
         sleepWatch?.stop()

@@ -222,7 +222,7 @@ de README onder "Wat nog niet bewezen is", mét de terugvalroute die er voor dat
 
 ---
 
-## Fase 3 — Zelf weten wanneer het aan moet
+## Fase 3 — Zelf weten wanneer het aan moet · ✅ gedaan 14 augustus 2026
 
 Dit is de grootste functionele afstand tot Amphetamine, dat sessies kan starten op een
 draaiende app, een schema, een actieve download, een wifi-netwerk, een aangesloten
@@ -253,6 +253,51 @@ Een venster waarin de app zichzelf aan mag zetten. Het simpelste geval — "elke
 **Klaar als:** elke trigger een sessie start via dezelfde weg als de schakelaar, met
 dezelfde timer, accugrens en temperatuurbewaking eromheen, en het menubalk-paneel zegt
 wélke trigger de lopende sessie gestart heeft.
+
+**Gedaan.** De hele fase draaide om één keuze: **een trigger is een uitspraak, geen actor.**
+`ScheduleWindow`, `AppTriggerWatch` en `LidArm` hebben geen eigen klok, geen kennis van
+sessies en geen enkele aanraking met de vlag; ze leveren feiten. Er is precies één plek die
+vanzelf aanzet — `AppModel.evaluateTriggers()`, aangeroepen vanuit de guardian-tik in de tak
+waarin de kernelvlag aantoonbaar op 0 staat — en die gaat langs dezelfde `startSession` als
+de schakelaar. De stopkant kreeg er níets bij: fase 3 voegde geen enkele clausule toe aan
+`releaseReason()`.
+
+De doorslaggevende afweging zit in de flankbewaking. Een trigger die *niveaugestuurd* is
+("het is werkdag, het is 15:29, er loopt niets") zet twintig seconden later terug wat de
+accugrens om 15:29 net had laten vallen — en dan zijn alle drie de vangnetten binnen één tik
+waardeloos. Alle drie de triggers zijn daarom een flank. Het schema onthoudt persistent welk
+venster het gehad heeft (`Prefs.scheduleLastArmedWindowStart`), en élke sessiestart binnen
+dat venster vinkt het af, ook een handmatige — anders zou het schema een sessie die je om
+10:05 zelf uitzette meteen terugzetten. De accu- en warmteweigering in `activate()` blijft
+daarbij een tweede laag, geen vervanging.
+
+**3.2 werd geen eigen mechanisme.** De app-trigger start een sessie mét de pid van de app als
+proceskoppeling, dus het stoppen loopt door dezelfde clausule uit fase 1 als
+`dopamine on --until-exit`. Daarmee is er geen respijt bij het verdwijnen van de app, en is
+er geen tweede stoproute die de tijdslimiet kan missen. Een app die al draaide bij het
+starten van Dopamine Code telt als gezien: inloggen met Xcode nog open levert geen sessie op
+die niemand vroeg.
+
+**3.1 werd expliciete arming, niet het Option-gebaar van Clamshell.** Een toetsstand aflezen
+op het moment dat de klep dichtgaat vraagt Toegankelijkheid (staat op deze Mac uit,
+`gebeurtenissen posten toegestaan: false`) en hangt af van een klepmelding die tot tien
+seconden te laat kan komen — dan is "hield je Option ingedrukt?" niet meer te beantwoorden.
+Vooraf zeggen wat je wilt kan nooit per ongeluk afgaan en kost geen enkel recht. Prijs
+daarvan: het is een race met de slaap die begint zodra de klep dichtgaat, en of die gewonnen
+wordt is op deze hardware niet te meten zonder één keer echt dicht te klappen. Dat staat in
+de README onder "Wat nog niet bewezen is", mét de logregels om het aan af te lezen. De arming
+staat bewust niet in `Prefs`: een gewapende stand die een herstart overleeft gaat uren later
+af zonder dat iemand het nog verwacht.
+
+**3.3 werd één venster met een dagenselectie**, standaard uit, standaard ma–vr 09:00–18:00,
+en over middernacht heen toegestaan met de weekdag gekoppeld aan de begindag. De tijdslimiet
+wint altijd van het venster: het venstereinde gaat als bovengrens mee in de eindtijd, en
+`min(start + limiet, venstereinde)` is dus wat er staat. Loopt de timer af vóór 18:00, dan
+begint het schema in dat venster niet opnieuw — anders zou "vanzelf stoppen na 4 uur" in de
+praktijk niets betekenen. Een schema dat nooit open kan gaan (geen dag aangevinkt, begin en
+eind gelijk) krijgt een WARN-regel in plaats van stil niets te doen, en
+`verify.sh --report` drukt de schema-instelling af zodat "waarom deed hij vanochtend niks"
+te beantwoorden is zonder de app te openen.
 
 ---
 

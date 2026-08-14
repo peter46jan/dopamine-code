@@ -89,6 +89,20 @@ struct MenuView: View {
             .toggleStyle(.switch)
             .disabled(model.busy)
 
+            // Hoe deze sessie begonnen is. Altijd zichtbaar zolang er iets loopt, ook bij de
+            // schakelaar: een regel die er soms wel en soms niet staat maakt zijn afwezigheid
+            // dubbelzinnig, en dan is "welke trigger heeft dit gestart?" niet te beantwoorden.
+            // Bewust hier en niet in `safetyNetLine`: die zin is rond drie gevallen opgebouwd
+            // en zijn derde tak — vlag aan zonder sessie — mag niet verwateren.
+            if let line = model.triggerLine {
+                Text(line)
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+
+            armingRow
+
             durationRow
 
             processRow
@@ -129,6 +143,43 @@ struct MenuView: View {
                 model.sleepNow()
             } label: {
                 Label("Nu slapen", systemImage: "powersleep")
+            }
+            .buttonStyle(.link)
+            .disabled(model.busy)
+        }
+    }
+
+    /// "Ga aan zodra ik de klep dichtdoe" — fase 3.1.
+    ///
+    /// Vooraf zeggen wat je wilt, in plaats van een gebaar meten op het moment dat de klep
+    /// dichtgaat. Dat gebaar zou Toegankelijkheid vragen (staat op deze Mac uit) en het zou
+    /// afhangen van een klepmelding die tot tien seconden te laat kan komen — dan is de
+    /// toetsstand niets meer waard. Zo kan het nooit per ongeluk afgaan.
+    ///
+    /// De aftelling rekent met `model.now`, de kloktik die het hele paneel al gebruikt. Geen
+    /// eigen timer: dat zou een tweede klok naast de guardian zijn.
+    @ViewBuilder private var armingRow: some View {
+        if let arm = model.lidArm {
+            HStack(spacing: 6) {
+                Label("Gaat aan zodra je de klep dichtdoet", systemImage: "laptopcomputer.and.arrow.down")
+                    .font(.caption)
+                    .foregroundStyle(Color.accentColor)
+                    .fixedSize(horizontal: false, vertical: true)
+                Text("· \(arm.resterendeTekst(op: model.now))")
+                    .font(.caption)
+                    .monospacedDigit()
+                    .foregroundStyle(.secondary)
+                Spacer()
+                Button("Intrekken") { model.cancelArming() }
+                    .buttonStyle(.link)
+                    .font(.caption)
+            }
+        } else if !model.intendedOn {
+            Button {
+                model.armForLidClose()
+            } label: {
+                Label("Aanzetten zodra ik de klep dichtdoe", systemImage: "laptopcomputer.and.arrow.down")
+                    .font(.caption)
             }
             .buttonStyle(.link)
             .disabled(model.busy)

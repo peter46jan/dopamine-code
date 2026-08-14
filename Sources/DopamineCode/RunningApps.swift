@@ -12,6 +12,10 @@ enum RunningApps {
     struct Item: Identifiable, Equatable {
         let pid: pid_t
         let naam: String
+        /// Voor fase 3: een trigger wordt op de bundle-id opgeslagen en niet op de pid, want
+        /// een pid is morgen van iets anders. Kan `nil` zijn — een app zonder bundle-id is
+        /// wel te koppelen (dat gaat over dít proces) maar niet als trigger te bewaren.
+        let bundleID: String?
         var id: pid_t { pid }
     }
 
@@ -25,7 +29,9 @@ enum RunningApps {
                     // sessie — bij het afsluiten wordt de vlag toch al teruggezet.
                     && app.processIdentifier != ProcessInfo.processInfo.processIdentifier
             }
-            .map { Item(pid: $0.processIdentifier, naam: $0.localizedName ?? "onbekend") }
+            .map { Item(pid: $0.processIdentifier,
+                        naam: $0.localizedName ?? "onbekend",
+                        bundleID: $0.bundleIdentifier) }
             .sorted { $0.naam.localizedCaseInsensitiveCompare($1.naam) == .orderedAscending }
     }
 

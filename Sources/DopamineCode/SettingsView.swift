@@ -57,11 +57,24 @@ struct SettingsView: View {
     @State private var syncingLaunchAtLogin = false
     @State private var diagnostics = Diagnostics()
 
+    // Zelf aanzetten (fase 3). Lokale kopieën, net als de andere instellingen hierboven:
+    // `Prefs` is geen `ObservableObject`, dus een weergave die er rechtstreeks uit leest
+    // ververst niet als je er iets in verandert.
+    @State private var scheduleEnabled = Prefs.scheduleEnabled
+    @State private var scheduleDays = Prefs.scheduleDays
+    @State private var scheduleStartMinute = Prefs.scheduleStartMinute
+    @State private var scheduleEndMinute = Prefs.scheduleEndMinute
+    @State private var appTriggers = Prefs.appTriggerBundleIDs
+    /// Eén keer opgehaald bij het openen van het tabblad, niet in de body: die wordt door de
+    /// kloktik van het model elke seconde opnieuw geëvalueerd.
+    @State private var pickableApps: [RunningApps.Item] = []
+
     var body: some View {
         TabView {
             general.tabItem { Label("Algemeen", systemImage: "gearshape") }
             safety.tabItem { Label("Vanzelf stoppen", systemImage: "shield") }
             diagnosticsTab.tabItem { Label("Diagnose", systemImage: "stethoscope") }
+            triggers.tabItem { Label("Zelf aanzetten", systemImage: "wand.and.stars") }
         }
         .frame(width: 480, height: 380)
         .overlay(alignment: .bottom) { messageBar }
@@ -115,10 +128,14 @@ struct SettingsView: View {
             Section("Hoe de app zich meldt") {
                 Toggle("Melding als er iets gebeurt terwijl je weg bent", isOn: $notifications)
                     .onChange(of: notifications) { Prefs.notifications = $0 }
-                Text("Er komt een melding in vier gevallen: het wakker houden is vanzelf gestopt, "
-                     + "dat stoppen lukte niet, de Mac werd te warm, of de Mac is tóch in slaap "
-                     + "gegaan. De melding wacht tot je scherm ontgrendeld is en blijft daarna "
-                     + "staan — een geluidje om 03:12 hoort niemand.")
+                Text("Er komt een melding als het wakker houden vanzelf is gestopt, als dat "
+                     + "stoppen niet lukte, als de Mac te warm werd, als de Mac tóch in slaap is "
+                     + "gegaan, als het vangnet de app heeft moeten terughalen, en als iets "
+                     + "vanzelf wilde aangaan maar dat niet kon. De melding wacht tot je scherm "
+                     + "ontgrendeld is en blijft daarna staan — een geluidje om 03:12 hoort "
+                     + "niemand. Er komt géén melding als het vanzelf aangaan wél lukte: dat "
+                     + "staat in het paneel en in het logboek, en een dagelijkse melding om "
+                     + "09:00 laat de zes hierboven verwateren.")
                     .font(.caption).foregroundStyle(.secondary)
                     .fixedSize(horizontal: false, vertical: true)
 
@@ -298,6 +315,191 @@ struct SettingsView: View {
             clock.dateFormat = "HH:mm"
             text += " Nu loopt hij tot " + clock.string(from: deadline) + "."
         }
+        return text
+    }
+
+    // MARK: - Zelf aanzetten
+
+    /// De drie manieren waarop een sessie kan beginnen zonder dat je de schakelaar aanraakt.
+    ///
+    /// De klep-arming staat hier alleen uitgelegd en niet ingesteld: hij is per keer, en een
+    /// gewapende toestand die het venster Instellingen overleeft zou uren later afgaan zonder
+    /// dat iemand dat nog verwacht. De knop zit daarom in het menubalk-paneel.
+    private var triggers: some View {
+        Form {
+            Section("Op vaste tijden") {
+                Toggle("Aanzetten volgens een schema", isOn: $scheduleEnabled)
+                    .onChange(of: scheduleEnabled) { value in
+                        Prefs.scheduleEnabled = value
+                        model.scheduleSettingsChanged()
+                    }
+
+                LabeledContent("Dagen") {
+                    HStack(spacing: 3) {
+                        // Op maandag beginnen, niet op zondag: zo lezen we hier een week.
+                        ForEach([2, 3, 4, 5, 6, 7, 1], id: \.self) { dag in
+                            Toggle(ScheduleWindow.korteDagnaam(dag), isOn: dayBinding(dag))
+                                .toggleStyle(.button)
+                                .controlSize(.small)
+                        }
+                    }
+                }
+                .disabled(!scheduleEnabled)
+
+                DatePicker("Van", selection: startBinding, displayedComponents: .hourAndMinute)
+                    .disabled(!scheduleEnabled)
+                DatePicker("Tot", selection: endBinding, displayedComponents: .hourAndMinute)
+                    .disabled(!scheduleEnabled)
+
+                Text(scheduleExplanation)
+                    .font(.caption).foregroundStyle(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+
+            Section("Als een app gaat draaien") {
+                if appTriggers.isEmpty {
+                    Text("Nog geen apps gekozen.")
+                        .font(.caption).foregroundStyle(.secondary)
+                } else {
+                    ForEach(appTriggers, id: \.self) { bundleID in
+                        HStack {
+                            Text(Prefs.appTriggerName(bundleID))
+                            Text(bundleID)
+                                .font(.system(.caption2, design: .monospaced))
+                                .foregroundStyle(.secondary)
+                            Spacer()
+                            Button("Verwijderen") {
+                                model.removeAppTrigger(bundleID: bundleID)
+                                appTriggers = Prefs.appTriggerBundleIDs
+                            }
+                            .controlSize(.small)
+                        }
+                    }
+                }
+
+                Menu("App toevoegen…") {
+                    if addableApps.isEmpty {
+                        Text("Geen draaiende apps gevonden")
+                    } else {
+                        ForEach(addableApps) { item in
+                            Button(item.naam) {
+                                guard let bundleID = item.bundleID else { return }
+                                model.addAppTrigger(bundleID: bundleID, naam: item.naam)
+                                appTriggers = Prefs.appTriggerBundleIDs
+                            }
+                        }
+                    }
+                }
+                .frame(width: 200)
+
+                Text("De lijst toont wat er nu draait; wat je kiest wordt op naam bewaard en "
+                     + "geldt ook voor de volgende keer. Het wakker houden gaat aan zodra zo'n "
+                     + "app start — draait hij al op het moment dat je hem kiest, dan gebeurt er "
+                     + "niets tot hij opnieuw start. De sessie stopt weer zodra die app klaar "
+                     + "is, langs precies dezelfde weg als \"dopamine on --until-exit\".")
+                    .font(.caption).foregroundStyle(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+
+            Section("Zodra je de klep dichtdoet") {
+                Text("Dit staat in het menubalk-paneel en niet hier, want het geldt één keer: "
+                     + "je klikt \"Aanzetten zodra ik de klep dichtdoe\", je klapt dicht, en het "
+                     + "wakker houden gaat aan. Doe je het niet, dan vervalt het na vijf minuten "
+                     + "vanzelf en zegt de app dat ook. Een gewapende stand die een herstart zou "
+                     + "overleven gaat uren later af zonder dat iemand dat nog verwacht.")
+                    .font(.caption).foregroundStyle(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+
+            Section("Wat er hoe dan ook omheen blijft zitten") {
+                Text("Alles wat hier vanzelf aangaat loopt langs precies dezelfde weg als de "
+                     + "schakelaar: dezelfde tijdslimiet, dezelfde accugrens en dezelfde "
+                     + "temperatuurbewaking. Kan er op dat moment niet veilig aangezet worden — "
+                     + "de accu is te leeg, de Mac is te warm, of de wachtwoordvrijstelling is "
+                     + "weg — dan gebeurt er niets, en krijg je daar een melding van. Een schema "
+                     + "loopt nooit langer dan de tijdslimiet: staat die op 4 uur en het venster "
+                     + "tot 18:00, dan stopt het om 13:00 en niet om 18:00. En binnen één venster "
+                     + "gaat het schema hooguit één keer aan, ook als er iets tussendoor stopte — "
+                     + "anders zou het schema terugzetten wat een vangnet net had laten vallen.")
+                    .font(.caption).foregroundStyle(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+        }
+        .formStyle(.grouped)
+        .onAppear {
+            pickableApps = RunningApps.list()
+            appTriggers = Prefs.appTriggerBundleIDs
+        }
+    }
+
+    private var addableApps: [RunningApps.Item] {
+        pickableApps.filter { item in
+            guard let bundleID = item.bundleID else { return false }
+            return !appTriggers.contains(bundleID)
+        }
+    }
+
+    private func dayBinding(_ dag: Int) -> Binding<Bool> {
+        Binding(
+            get: { scheduleDays.contains(dag) },
+            set: { aan in
+                if aan { scheduleDays.insert(dag) } else { scheduleDays.remove(dag) }
+                Prefs.scheduleDays = scheduleDays
+                model.scheduleSettingsChanged()
+            }
+        )
+    }
+
+    private var startBinding: Binding<Date> {
+        Binding(
+            get: { Self.date(fromMinute: scheduleStartMinute) },
+            set: {
+                scheduleStartMinute = Self.minute(from: $0)
+                Prefs.scheduleStartMinute = scheduleStartMinute
+                model.scheduleSettingsChanged()
+            }
+        )
+    }
+
+    private var endBinding: Binding<Date> {
+        Binding(
+            get: { Self.date(fromMinute: scheduleEndMinute) },
+            set: {
+                scheduleEndMinute = Self.minute(from: $0)
+                Prefs.scheduleEndMinute = scheduleEndMinute
+                model.scheduleSettingsChanged()
+            }
+        )
+    }
+
+    /// De tijdkiezer werkt met een `Date`, de instelling met minuten na middernacht. De datum
+    /// eromheen doet niet mee; alleen de kloktijd wordt bewaard.
+    private static func date(fromMinute minute: Int) -> Date {
+        Calendar.current.date(from: DateComponents(
+            year: 2000, month: 1, day: 1, hour: minute / 60, minute: minute % 60
+        )) ?? Date()
+    }
+
+    private static func minute(from date: Date) -> Int {
+        let parts = Calendar.current.dateComponents([.hour, .minute], from: date)
+        return (parts.hour ?? 0) * 60 + (parts.minute ?? 0)
+    }
+
+    private var scheduleExplanation: String {
+        let venster = ScheduleWindow(dagen: scheduleDays,
+                                     startMinuut: scheduleStartMinute,
+                                     eindMinuut: scheduleEndMinute)
+        if let probleem = venster.probleem {
+            return "Dit schema kan nooit afgaan: \(probleem). Zolang dat zo is gebeurt er niets."
+        }
+        var text = "Het wakker houden gaat dan vanzelf aan: \(venster.omschrijving)."
+        if venster.loopOverMiddernacht {
+            text += " Dit venster loopt over middernacht heen; de dag hoort bij het begin, dus "
+                + "een venster dat vrijdagavond begint loopt zaterdagochtend af."
+        }
+        text += " Sliep de Mac toen het venster openging, dan gaat het alsnog aan zodra hij "
+            + "wakker is. Zet je het handmatig uit binnen het venster, dan blijft het uit tot "
+            + "het volgende venster."
         return text
     }
 

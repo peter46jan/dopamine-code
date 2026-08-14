@@ -35,6 +35,11 @@ enum Notify {
         /// De app was weggevallen (kill -9, een crash) terwijl de Mac wakker gehouden werd,
         /// en het vangnet heeft hem teruggehaald.
         case restartedAfterLoss
+        /// Een trigger wilde zelf aanzetten en dat mocht niet — een lege accu, te veel
+        /// warmte, of de wachtwoordvrijstelling die weg is. Dit is de enige van de zes die
+        /// over iets gaat dat *niet* gebeurd is, en juist daarom moet hij er zijn: een schema
+        /// dat drie weken lang stil niet afgaat is erger dan een schema dat niet bestaat.
+        case triggerRefused
 
         var title: String {
             switch self {
@@ -43,6 +48,7 @@ enum Notify {
             case .thermalCritical: return "De Mac is te warm geworden"
             case .macSlept: return "De Mac heeft tóch geslapen"
             case .restartedAfterLoss: return "Dopamine Code was weggevallen"
+            case .triggerRefused: return "Vanzelf aanzetten is niet gelukt"
             }
         }
 

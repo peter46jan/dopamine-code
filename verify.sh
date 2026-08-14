@@ -140,6 +140,55 @@ watchdog_line() {
   printf '%s' "$staat"
 }
 
+APP_DOMAIN="com.peter46jan.dopaminecode"
+
+# Eén instelling uit de voorkeuren van de app, of de meegegeven terugval.
+pref() {
+  defaults read "$APP_DOMAIN" "$1" 2>/dev/null || printf '%s' "${2:-}"
+}
+
+# Een plist-array uit `defaults read` platgeslagen tot "a, b, c". Leeg als de sleutel nooit
+# geschreven is — een geregistreerde standaardwaarde staat niet in het plistbestand, dus de
+# aanroeper zegt er zelf bij wat de standaard dan is.
+pref_list() {
+  defaults read "$APP_DOMAIN" "$1" 2>/dev/null \
+    | tr -d '()" ' | tr '\n' ' ' \
+    | sed 's/  */ /g; s/^ *//; s/ *$//; s/,$//; s/,/, /g'
+}
+
+# Minuten na middernacht als kloktijd.
+clock_of() {
+  awk -v m="${1:-0}" 'BEGIN { printf "%02d:%02d", int(m/60), m%60 }'
+}
+
+# Wat er vanzelf aan mag gaan (fase 3).
+#
+# Rechtstreeks uit de voorkeuren, zonder de app te openen en zonder iets te wijzigen: de
+# vraag die dit moet beantwoorden is "waarom deed hij vanochtend niks", en die stel je
+# achteraf — vaak op een moment dat de app allang herstart is en zelf niets meer weet.
+trigger_lines() {
+  local aan dagen van tot laatst apps
+  aan="$(pref scheduleEnabled 0)"
+  # Een sleutel die nooit aangeraakt is staat niet in het plistbestand; de standaardwaarde
+  # komt uit `register(defaults:)` in Prefs.swift en is hier met de hand herhaald.
+  dagen="$(pref_list scheduleDays)"
+  [ -z "$dagen" ] && dagen="2, 3, 4, 5, 6 (standaard)"
+  van="$(clock_of "$(pref scheduleStartMinute 540)")"
+  tot="$(clock_of "$(pref scheduleEndMinute 1080)")"
+  laatst="$(pref scheduleLastArmedWindowStart)"
+
+  if [ "$aan" = "1" ]; then
+    # De dagnummers zijn die van Calendar: 1 = zondag … 7 = zaterdag.
+    printf '  Schema           AAN — dagen %s (1=zo), %s tot %s\n' "$dagen" "$van" "$tot"
+    [ -n "$laatst" ] && printf '  Schema laatst    venster van %s is al afgehandeld\n' "$laatst"
+  else
+    printf '  Schema           uit (zou zijn: dagen %s, %s tot %s)\n' "$dagen" "$van" "$tot"
+  fi
+
+  apps="$(pref_list appTriggerBundleIDs)"
+  printf '  App-triggers     %s\n' "${apps:-geen}"
+}
+
 # --------------------------------------------------------------------------------------
 
 report() {
@@ -161,6 +210,7 @@ report() {
 
   printf '  App draait       %s\n' "$(pgrep -x DopamineCode >/dev/null && echo ja || echo nee)"
   printf '  Herstart-vangnet %s\n' "$(watchdog_line)"
+  trigger_lines
 
   # Wat de app zelf zegt, náást de kernelregel hierboven — nooit in plaats daarvan. Het
   # verschil tussen die twee is precies waar deze app voor bestaat, dus ze staan hier onder

@@ -145,6 +145,9 @@ inlogscherm blijven hangen.
 | `ProcessWatch.swift` | feiten over een proces: bestaat het nog, en is het nog hetzelfde proces |
 | `RunningApps.swift` | de lijst draaiende apps voor de proceskiezer in het menu |
 | `SessionTrigger.swift` | wie de lopende sessie gestart heeft |
+| `LidArm.swift` | de eenmalige "ga aan zodra ik de klep dichtdoe", met een geldigheid van vijf minuten |
+| `ScheduleWindow.swift` | puur datumrekenwerk: valt dit moment in het schemavenster, en wanneer begon dat |
+| `AppTriggerWatch.swift` | merkt op dat een gekozen app begint of stopt; stoot alleen de guardian aan |
 | `ControlServer.swift` | luistert op de socket waar de `dopamine`-opdrachtregel mee praat |
 | `Sources/Shared/ControlProtocol.swift` | het berichtformaat, meegecompileerd in de app én in de CLI |
 | `Sources/dopamine/main.swift` | de opdrachtregel; schakelt zelf niets, vraagt de app om iets te doen |
@@ -183,6 +186,45 @@ En als de vangnetten niets kúnnen: zonder de sudoers-regel is de vlag alleen me
 wachtwoord terug te zetten, en met de klep dicht kan niemand dat invullen. De app zegt dat
 dan met zoveel woorden ("Vanzelf stoppen werkt nu niet") in plaats van te doen alsof alles
 in orde is.
+
+### Triggers zijn uitspraken, geen actoren
+
+Fase 3 zette er drie manieren bij om een sessie te laten beginnen zonder de schakelaar aan
+te raken: de klep dichtdoen, een app die gaat draaien, en een schema. De verleiding is om
+elk daarvan een eigen timertje te geven dat op het juiste moment aanzet. Dat is precies de
+tweede waarheid waar de guardian uit voortkomt — en het werkt bovendien niet: een schema dat
+om 09:00 zelf aanzet gaat niet af als de Mac om 09:00 sliep.
+
+Daarom zijn `ScheduleWindow`, `AppTriggerWatch` en `LidArm` alle drie *feiten* zonder eigen
+klok. Er is precies één plek die vanzelf aanzet, en dat is `AppModel.evaluateTriggers()`,
+aangeroepen vanuit de guardian-tik in de tak waarin de kernelvlag aantoonbaar op 0 staat.
+Starten gaat vandaar langs dezelfde `startSession` als de schakelaar, dus langs dezelfde
+accugrens, warmtegrens, tijdslimiet en wachtwoordvrijstelling.
+
+De **stopkant zit met opzet ergens anders**: in `releaseReason()`, dat alleen loopt als de
+vlag op 1 staat. Fase 3 voegde daar geen enkele clausule aan toe. Een schemavenster eindigt
+via de eindtijd (het venstereinde is de bovengrens, de tijdslimiet gaat er altijd overheen),
+en een app-trigger eindigt via de proceskoppeling uit fase 1 — dezelfde clausule als
+`dopamine on --until-exit`. Starten is een beslissing over een rustige machine, stoppen is
+een beslissing over een lopende sessie, en één functie die allebei doet is een functie die
+de vangnetten kan omzeilen.
+
+**Elke trigger is een flank, nooit een stand.** Dat is de belangrijkste regel van deze fase.
+Een schema dat zegt "het is werkdag, het is 15:29, er loopt niets" zou twintig seconden na
+een accugrens die om 15:29 net ingreep de Mac weer wakker zetten — en dan zijn de
+tijdslimiet, de accugrens en de warmtegrens binnen één tik alle drie waardeloos. Dus:
+
+- Het schema onthoudt in `Prefs.scheduleLastArmedWindowStart` welk venster het al gehad
+  heeft. Persistent, want een herstart van de app binnen hetzelfde venster mag het evenmin
+  opnieuw wapenen. Elke sessiestart binnen dat venster — ook een handmatige — vinkt het af.
+- De app-trigger gaat alleen af op de overgang niet-draaiend → draaiend, en wat er bij het
+  starten van Dopamine Code al draaide telt als gezien.
+- De arming is eenmalig en wordt bij het afgaan opgebruikt, verloopt anders na vijf minuten.
+
+En omdat een trigger afgaat terwijl je er niet bent, is harde regel 3 hier zwaarder: elke
+geweigerde automatische start krijgt een regel in het logboek mét de naam van de trigger én
+een melding. Een gelukte start krijgt log en paneel, maar geen melding — die zou elke
+werkdag om 09:00 komen en de vijf meldingen die er wél toe doen laten verwateren.
 
 Een paar keuzes die verder niet vanzelf spreken:
 
@@ -495,6 +537,21 @@ werkdocument beweerde een tijd het tegenovergestelde. Geen van beide is onderbou
 het weten: laat `handle()` de bron meelogboeken en klap één keer dicht.
 Praktisch maakt het niets uit — de poll vangt het hoe dan ook op, met hooguit tien seconden
 vertraging.
+
+**Of de klep-arming op tijd is, is niet gemeten — en dat is de zwakke plek van fase 3.1.**
+De arming gaat af zodra de app ziet dat de klep dicht is. Met de slaapblokkade nog op 0 is
+dat een race: macOS begint binnen enkele seconden na het dichtklappen aan de slaap, en de
+app moet in die tijd de klepverandering zien, `evaluateTriggers()` doorlopen en `pmset` de
+vlag laten zetten. De klepmelding stoot de guardian daarom meteen aan in plaats van tot de
+volgende tik te wachten (`handleLid`), maar of dat genoeg is hangt af van de vraag hierboven
+— of `kIOPMMessageClamshellStateChange` op deze hardware überhaupt vuurt. Doet hij dat niet,
+dan blijft alleen de poll van tien seconden over, en dan is de Mac allang in slaap. De
+uitkomst is in dat geval niet gevaarlijk maar wel teleurstellend: er gebeurt niets, en na
+vijf minuten schrijft de app "De arming is verlopen" in het logboek en in het paneel. Meten
+gaat zo: wapenen, één keer dichtklappen, en in
+`~/Library/Logs/Dopamine Code/dopamine-code.log` kijken of er "Klep dicht … gewapend" staat
+en hoeveel seconden later "Wakker houden AAN" volgt. De andere twee triggers hebben dit
+probleem niet: die gaan af terwijl de Mac gewoon wakker is.
 
 **`SMAppService` op een dev-cert-ondertekende, niet-genotariseerde bundel** is niet
 uitgevoerd, want dat schrijft naar de background-task-database. De foutafhandeling maakt

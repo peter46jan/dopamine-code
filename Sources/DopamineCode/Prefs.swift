@@ -21,6 +21,14 @@ enum Prefs {
         static let blinkBacklightOnToggle = "blinkBacklightOnToggle"
         static let autoBrightnessWasSuppressed = "autoBrightnessWasSuppressed"
         static let autoBrightnessOriginallyOn = "autoBrightnessOriginallyOn"
+        // Fase 3 — zelf aanzetten.
+        static let appTriggerBundleIDs = "appTriggerBundleIDs"
+        static let appTriggerNames = "appTriggerNames"
+        static let scheduleEnabled = "scheduleEnabled"
+        static let scheduleDays = "scheduleDays"
+        static let scheduleStartMinute = "scheduleStartMinute"
+        static let scheduleEndMinute = "scheduleEndMinute"
+        static let scheduleLastArmedWindowStart = "scheduleLastArmedWindowStart"
     }
 
     /// The app used to be called Wakker, under a different bundle identifier. UserDefaults
@@ -76,6 +84,14 @@ enum Prefs {
             Key.blinkBacklightOnToggle: false,
             Key.autoBrightnessWasSuppressed: false,
             Key.autoBrightnessOriginallyOn: true,
+            // Het schema staat standaard UIT. Een app die na het installeren uit zichzelf de
+            // Mac wakker gaat houden op tijden die de gebruiker nooit gekozen heeft, is
+            // precies het soort verrassing waar deze app niet over gaat. De ingevulde tijden
+            // zijn het geval uit de roadmap dat moet werken, klaar om aangezet te worden.
+            Key.scheduleEnabled: false,
+            Key.scheduleDays: [2, 3, 4, 5, 6],   // maandag t/m vrijdag (1 = zondag)
+            Key.scheduleStartMinute: 9 * 60,
+            Key.scheduleEndMinute: 18 * 60,
         ])
     }
 
@@ -223,5 +239,64 @@ enum Prefs {
     static var warnAboutAmphetamine: Bool {
         get { d.bool(forKey: Key.warnAboutAmphetamine) }
         set { d.set(newValue, forKey: Key.warnAboutAmphetamine) }
+    }
+
+    // MARK: - Zelf aanzetten (fase 3)
+
+    /// De apps waarop een sessie mag beginnen, op bundle-id.
+    ///
+    /// Op bundle-id en niet op pid: een pid is over een uur van iets heel anders, en deze
+    /// lijst moet een herstart overleven. De pid komt er pas bij op het moment dat de trigger
+    /// afgaat, en die gaat dan als proceskoppeling de sessie in.
+    static var appTriggerBundleIDs: [String] {
+        get { (d.array(forKey: Key.appTriggerBundleIDs) as? [String] ?? []).filter { !$0.isEmpty } }
+        set { d.set(Array(Set(newValue)).sorted(), forKey: Key.appTriggerBundleIDs) }
+    }
+
+    /// De laatst bekende naam bij een bundle-id, zodat de instellingen "Xcode" kunnen tonen
+    /// in plaats van `com.apple.dt.Xcode` terwijl die app niet draait.
+    static var appTriggerNames: [String: String] {
+        get { d.dictionary(forKey: Key.appTriggerNames) as? [String: String] ?? [:] }
+        set { d.set(newValue, forKey: Key.appTriggerNames) }
+    }
+
+    static func appTriggerName(_ bundleID: String) -> String {
+        appTriggerNames[bundleID] ?? bundleID
+    }
+
+    static var scheduleEnabled: Bool {
+        get { d.bool(forKey: Key.scheduleEnabled) }
+        set { d.set(newValue, forKey: Key.scheduleEnabled) }
+    }
+
+    /// Weekdagen zoals `Calendar.component(.weekday:)` ze telt: 1 = zondag … 7 = zaterdag.
+    /// Geklemd op dat bereik, net als elke andere opgeslagen waarde hier — een handmatig
+    /// bewerkte of beschadigde lijst mag geen dag opleveren die nooit voorkomt.
+    static var scheduleDays: Set<Int> {
+        get { Set((d.array(forKey: Key.scheduleDays) as? [Int] ?? []).filter { (1...7).contains($0) }) }
+        set { d.set(newValue.filter { (1...7).contains($0) }.sorted(), forKey: Key.scheduleDays) }
+    }
+
+    static var scheduleStartMinute: Int {
+        get { min(max(d.integer(forKey: Key.scheduleStartMinute), 0), 24 * 60 - 1) }
+        set { d.set(min(max(newValue, 0), 24 * 60 - 1), forKey: Key.scheduleStartMinute) }
+    }
+
+    static var scheduleEndMinute: Int {
+        get { min(max(d.integer(forKey: Key.scheduleEndMinute), 0), 24 * 60 - 1) }
+        set { d.set(min(max(newValue, 0), 24 * 60 - 1), forKey: Key.scheduleEndMinute) }
+    }
+
+    /// Het begin van het laatste schemavenster dat al afgehandeld is.
+    ///
+    /// Dit is de flankbewaking van het schema, en hij staat hier — persistent — om precies
+    /// één fout te voorkomen: het schema mag nooit terugzetten wat een vangnet net heeft
+    /// laten vallen. Grijpt de accugrens om 15:29 in, dan zou "het is werkdag, het is 15:29,
+    /// er loopt niets" twintig seconden later een nieuwe sessie opleveren, en dan zijn alle
+    /// drie de vangnetten binnen één tik waardeloos. Persistent, want een herstart van de app
+    /// binnen hetzelfde venster mag het schema evenmin opnieuw wapenen.
+    static var scheduleLastArmedWindowStart: Date? {
+        get { d.object(forKey: Key.scheduleLastArmedWindowStart) as? Date }
+        set { d.set(newValue, forKey: Key.scheduleLastArmedWindowStart) }
     }
 }
