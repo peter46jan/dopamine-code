@@ -96,6 +96,23 @@ report() {
   printf '  App draait       %s\n' "$(pgrep -x DopamineCode >/dev/null && echo ja || echo nee)"
   printf '  Handtekening     %s\n' "$(codesign -dvv '/Applications/Dopamine Code.app' 2>&1 | grep '^Authority' | head -1 | cut -d= -f2-)"
   printf '  Andere wakers    %s\n' "$(pmset -g | grep 'sleep prevented by' | sed 's/.*prevented by //; s/)//' || echo geen)"
+
+  # Anything else in sudoers.d is a second passwordless writer to the same global flag.
+  # Amphetamine's Power Protect installs amphetamine_powerProtect there and reaches
+  # exactly the value this whole project is built around; neither app knows about the
+  # other, so either can clear it while the other still needs it.
+  #
+  # Only the directory is listed, never a rule's contents: sudoers.d is 0755 so the names
+  # are readable by anyone, while the files themselves are root-only. The names are all
+  # this needs, and it keeps --report free of sudo.
+  local foreign
+  foreign="$(ls /etc/sudoers.d/ 2>/dev/null | grep -v '^dopamine-code-disablesleep$' | tr '\n' ' ')"
+  if [ -n "${foreign// /}" ]; then
+    printf '  Andere sudoers   %s\n' "$foreign"
+    case "$foreign" in
+      *amphetamine*) printf '                   LET OP: Amphetamine schrijft naar dezelfde vlag.\n' ;;
+    esac
+  fi
 }
 
 # --------------------------------------------------------------------------------------

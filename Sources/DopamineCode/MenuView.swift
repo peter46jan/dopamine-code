@@ -266,11 +266,20 @@ struct MenuView: View {
         .background(Color.orange.opacity(0.10), in: RoundedRectangle(cornerRadius: 6))
     }
 
+    /// Two different problems, deliberately drawn differently. Two tools each holding the
+    /// Mac up their own way only makes a test meaningless; two tools writing the same
+    /// global flag means either can undo the other mid-session. Painting both the same
+    /// calm orange said the second was as harmless as the first.
     private func conflictWarning(_ conflict: ConflictWatch.Conflict) -> some View {
-        VStack(alignment: .leading, spacing: 6) {
-            Label("\(conflict.name) draait nog", systemImage: "exclamationmark.2")
-                .font(.caption)
-                .foregroundStyle(.orange)
+        let tint: Color = conflict.sharesTheFlag ? .red : .orange
+        return VStack(alignment: .leading, spacing: 6) {
+            Label(conflict.sharesTheFlag
+                  ? "\(conflict.name) schakelt dezelfde instelling"
+                  : "\(conflict.name) draait ook",
+                  systemImage: conflict.sharesTheFlag ? "exclamationmark.octagon.fill" : "exclamationmark.2")
+                .font(.caption.weight(conflict.sharesTheFlag ? .semibold : .regular))
+                .foregroundStyle(tint)
+                .fixedSize(horizontal: false, vertical: true)
             Text(conflict.detail)
                 .font(.caption2)
                 .foregroundStyle(.secondary)
@@ -282,7 +291,7 @@ struct MenuView: View {
             .controlSize(.small)
         }
         .padding(8)
-        .background(Color.orange.opacity(0.10), in: RoundedRectangle(cornerRadius: 6))
+        .background(tint.opacity(conflict.sharesTheFlag ? 0.15 : 0.10), in: RoundedRectangle(cornerRadius: 6))
     }
 
     private var outageList: some View {

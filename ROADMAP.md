@@ -29,7 +29,7 @@ De drie eigenschappen die niet mogen sneuvelen, ongeacht wat er bij komt:
 
 ---
 
-## Eerst even dit: een bewering in de app klopt niet meer
+## Fase 0 — een bewering in de app klopte niet meer · ✅ gedaan 14 augustus 2026
 
 `ConflictWatch.swift` zegt dat Amphetamine's assertie "dichtklappen niet overleeft". Dat is
 achterhaald. Amphetamine doet closed-display mode wél zonder extern scherm, toetsenbord of
@@ -49,6 +49,17 @@ beide merkt het van de ander. Maar de tekst eronder moet kloppen.
 **Klaar als:** de waarschuwing beschrijft het echte conflict (twee schrijvers op één
 globale vlag) in plaats van een verschil dat niet meer bestaat, en `verify.sh --report`
 noemt het als het bestand van Amphetamine in `/etc/sudoers.d/` staat.
+
+**Gedaan.** `ConflictWatch` kijkt nu of `/etc/sudoers.d/amphetamine_powerProtect` bestaat
+en onderscheidt twee gevallen. Draait Amphetamine zonder die regel, dan is het een
+oranje melding: er gaat niets kapot, maar je kunt niet zien welke van de twee de Mac
+wakker houdt, en dan zegt een test niets. Staat de regel er wél, dan is het rood — dan
+schrijven ze naar dezelfde vlag en kan elk van de twee de ander ongedaan maken.
+
+Alleen het bestáán van het bestand wordt gelezen, nooit de inhoud: `sudoers.d` is 0755
+dus de namen zijn voor iedereen zichtbaar, terwijl de regels zelf root-only zijn. Dat is
+precies genoeg, en het kost geen enkel recht. `verify.sh --report` somt op dezelfde manier
+elke vreemde regel in `sudoers.d` op.
 
 ---
 

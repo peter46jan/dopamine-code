@@ -2,21 +2,49 @@ import AppKit
 
 /// Notices other tools that are also holding the Mac awake.
 ///
-/// Amphetamine's `PreventUserIdleSystemSleep` assertion does not survive a closed lid —
-/// that is precisely why this app exists — but while both are running it is impossible
-/// to tell which one is keeping the machine up, which makes any test of this app
-/// meaningless.
+/// This used to say that Amphetamine's `PreventUserIdleSystemSleep` assertion cannot
+/// survive a closed lid, and that the difference was the reason this app exists. That is
+/// no longer true, and stating it in the UI was worse than saying nothing: Amphetamine
+/// does closed-display mode without an external display, and since version 5.3 it ships
+/// "Power Protect" to survive power-source transitions on Apple Silicon. Power Protect
+/// installs `/etc/sudoers.d/amphetamine_powerProtect` — the same architecture as our own
+/// rule, reaching the same global kernel flag.
+///
+/// So there are two different conflicts, and they are not equally bad:
+///
+/// * **An assertion.** Both hold the Mac up by different means. Nothing breaks, but while
+///   both run it cannot be told which one is doing it, which makes any test of this app
+///   meaningless.
+/// * **The same flag.** With Power Protect installed, Amphetamine writes the one global
+///   value this whole app is built around. Neither side knows about the other, so either
+///   can clear it while the other still needs it — and `SleepDisabled` has no owner, no
+///   reference count and no second opinion.
 enum ConflictWatch {
 
     struct Conflict {
         let name: String
         let detail: String
+        /// Both tools write the same kernel flag. Not a cosmetic overlap: one can undo the
+        /// other at any moment, in either direction.
+        let sharesTheFlag: Bool
     }
 
     private static let amphetamineBundleID = "com.if.Amphetamine"
 
+    /// Amphetamine's own sudoers rule, from its Power Protect installer.
+    private static let amphetamineGrantPath = "/etc/sudoers.d/amphetamine_powerProtect"
+
     static func amphetamineRunning() -> Bool {
         !NSRunningApplication.runningApplications(withBundleIdentifier: amphetamineBundleID).isEmpty
+    }
+
+    /// Whether Amphetamine has a passwordless route to the same flag.
+    ///
+    /// Only the file's existence is read, never its contents: `/etc/sudoers.d` is 0755 so
+    /// the entry is visible to anyone, while the rule itself is root-only — which is
+    /// exactly as much as this needs to know, and it costs no privilege to find out.
+    static func amphetaminePowerProtectInstalled() -> Bool {
+        FileManager.default.fileExists(atPath: amphetamineGrantPath)
     }
 
     /// Everything currently asserting against sleep, as reported by the power manager.
@@ -44,14 +72,23 @@ enum ConflictWatch {
     @MainActor
     static func current() async -> Conflict? {
         guard Prefs.warnAboutAmphetamine, amphetamineRunning() else { return nil }
-        var detail = "Amphetamine doet ongeveer hetzelfde, maar alleen zolang de klep open is — "
-            + "dichtklappen overleeft het niet. Draaien ze allebei, dan is niet te zien welke van "
-            + "de twee de Mac wakker houdt."
+
+        let sharesTheFlag = amphetaminePowerProtectInstalled()
+        var detail = sharesTheFlag
+            ? "Amphetamine heeft Power Protect geïnstalleerd en zet daarmee dezelfde "
+              + "systeeminstelling om als Dopamine Code. Geen van beide weet van de ander, "
+              + "dus wie het laatst schakelt wint: Amphetamine kan de Mac laten slapen "
+              + "midden in jouw sessie, en Dopamine Code kan dat andersom net zo goed. "
+              + "Gebruik er één tegelijk."
+            : "Amphetamine houdt de Mac op zijn eigen manier wakker. Er gaat niets kapot, "
+              + "maar zolang ze allebei draaien is niet te zien welke van de twee het doet — "
+              + "en dan zegt een test van Dopamine Code niets."
+
         let holders = await sleepAssertionHolders()
         if !holders.isEmpty {
             detail += "\n\nDeze programma's houden de Mac nu wakker: " + holders.joined(separator: ", ") + "."
         }
-        return Conflict(name: "Amphetamine", detail: detail)
+        return Conflict(name: "Amphetamine", detail: detail, sharesTheFlag: sharesTheFlag)
     }
 
     static func quitAmphetamine() {
