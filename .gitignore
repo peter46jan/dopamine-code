@@ -5,6 +5,10 @@ build/
 # single source of truth; this is its base64 twin, compiled into the binary.
 Sources/DopamineCode/GrantScript.generated.swift
 
+# The code-signing identity's common name is the certificate holder's own name. build.sh
+# reads it from here so it never has to live in a tracked file.
+.signing-identity
+
 # Local working documents, not project documentation.
 BACKLOG.md
 LOGO-BRIEF.md

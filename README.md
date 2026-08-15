@@ -3,9 +3,10 @@
 *Heette tot 11 augustus 2026 "Wakker". Bundle-ID, sudoers-regel, logboek en instellingen
 zijn meeverhuisd; de app migreert een oude installatie zelf bij de eerste start.*
 
-Menubalk-app voor één Mac. Twee dingen: de Mac actief houden met de klep dicht en zonder
-extern scherm, en de toetsenbordverlichting schakelen. Persoonlijk gereedschap, geen
-distributie.
+Menubalk-app voor macOS. Twee dingen: de Mac actief houden met de klep dicht en zonder
+extern scherm, en de toetsenbordverlichting schakelen. Gebouwd als persoonlijk gereedschap
+voor één Mac, en met die aanname geschreven — er is geen installer, geen automatische
+update, en getest is er op één machine.
 
 ```
 ./build.sh --install     bouwen, ondertekenen, in /Applications zetten en starten
@@ -13,6 +14,41 @@ distributie.
 ./verify.sh              alle controles, inclusief de twee die je wachtwoord nodig hebben
 ./verify.sh --after      na een echte sessie: heeft de Mac tóch geslapen?
 ```
+
+---
+
+## Zelf bouwen
+
+```bash
+git clone https://github.com/peter46jan/dopamine-code.git
+cd dopamine-code
+./build.sh --install
+```
+
+Nodig: **macOS 14 of nieuwer** en de Xcode command line tools (`xcode-select --install`).
+Geen Xcode-project, geen Apple Developer-account. Er komt geen Gatekeeper-waarschuwing:
+een lokaal gebouwde app krijgt geen `com.apple.quarantine`-attribuut, dus er is geen
+rechtsklik-Openen-omweg nodig.
+
+Bij het eerste gebruik vraagt de app één keer om je adminwachtwoord, voor een sudoers-regel
+die precies twee `pmset`-commando's wachtwoordloos maakt. Wat die regel wel en niet toestaat
+staat uitgeschreven in [De sudoers-regel](#de-sudoers-regel); waarom hij zo smal is, in
+[SECURITY-AUDIT.md](SECURITY-AUDIT.md).
+
+**Over ondertekenen.** Zonder identiteit tekent `build.sh` ad-hoc. Dat werkt, maar een
+ad-hoc handtekening zit vast aan de cdhash: na elke herbouw is je Toegankelijkheid-toestemming
+weg en moet je die opnieuw geven. Heb je een `Apple Development`-certificaat in je
+sleutelhanger, geef de naam dan mee — dan overleeft de toestemming een herbouw:
+
+```bash
+# eenmalig, blijft buiten git
+echo "Apple Development: Jouw Naam (XXXXXXXXXX)" > .signing-identity
+
+# of per build
+DOPAMINE_SIGN_IDENTITY="Apple Development: Jouw Naam (XXXXXXXXXX)" ./build.sh --install
+```
+
+`security find-identity -v -p codesigning` laat zien welke je hebt.
 
 ---
 
@@ -374,7 +410,7 @@ precies wat deze app niet moet doen.
 Pad `/etc/sudoers.d/dopamine-code-disablesleep`, `root:wheel`, `0440`. Inhoud:
 
 ```
-<gebruiker> ALL=(root) NOPASSWD: /usr/bin/pmset -a disablesleep 1, /usr/bin/pmset -a disablesleep 0
+<jouw-gebruikersnaam> ALL=(root) NOPASSWD: /usr/bin/pmset -a disablesleep 1, /usr/bin/pmset -a disablesleep 0
 ```
 
 Dat de argumenten erbij staan, is het hele punt. `man sudoers` op deze Mac:
@@ -447,9 +483,10 @@ sudo rm -f /etc/sudoers.d/dopamine-code-disablesleep
 
 ## Ondertekening
 
-De app wordt ondertekend met de `Apple Development`-identiteit die al in je sleutelhanger
-stond (geldig tot 27 december 2026). Dat is geen kosmetiek: TCC koppelt de
-Toegankelijkheid-toestemming aan de designated requirement.
+De app wordt ondertekend met een `Apple Development`-identiteit uit je eigen sleutelhanger.
+Dat is geen kosmetiek: TCC koppelt de Toegankelijkheid-toestemming aan de designated
+requirement. Welke identiteit `build.sh` pakt, staat in [Zelf bouwen](#zelf-bouwen) — kort:
+`DOPAMINE_SIGN_IDENTITY`, of een `.signing-identity`-bestand dat buiten git blijft.
 
 ```
 designated => identifier "com.peter46jan.dopaminecode" and anchor apple generic
@@ -464,9 +501,10 @@ Verloopt het certificaat, dan blijft de handtekening geldig dankzij `--timestamp
 vernieuwing levert dezelfde CN op, dus de requirement verandert niet en de toestemming
 blijft staan.
 
-**Dit wijkt bewust af van je spec**, die "geen code signing, geen Apple Developer-account"
-zei. De reden: het certificaat stond er al, kost niets, en zonder handtekening zou je na
-elke herbouw opnieuw Toegankelijkheid moeten toestaan. Wil je het toch zonder:
+**Dit wijkt bewust af van de oorspronkelijke opzet**, die "geen code signing, geen Apple
+Developer-account" zei. De reden: een Apple Development-certificaat kost niets als je al
+een Apple-ID hebt, en zonder handtekening moet je na elke herbouw opnieuw Toegankelijkheid
+toestaan. Zonder kan prima — geef geen identiteit op, of forceer het:
 
 ```
 DOPAMINE_SIGN_IDENTITY=none ./build.sh --install

@@ -38,7 +38,18 @@ APP_ICON="icons/appicon-aan-1024.png"
 # yields a designated requirement based on the bundle id and the certificate's common
 # name, which stays constant across rebuilds. An ad-hoc signature is pinned to the
 # cdhash instead, so every rebuild silently invalidates the grant.
-SIGN_IDENTITY="${DOPAMINE_SIGN_IDENTITY:-Apple Development: <naam> (<team-id>)}"
+#
+# A certificate's common name carries the holder's name, so it does not belong in the
+# repository. Pass it per build in DOPAMINE_SIGN_IDENTITY, or write it once into
+# .signing-identity next to this script — gitignored, read below. With neither, the
+# build signs ad-hoc and says so.
+SIGN_IDENTITY="${DOPAMINE_SIGN_IDENTITY:-}"
+if [ -z "$SIGN_IDENTITY" ] && [ -f .signing-identity ]; then
+  SIGN_IDENTITY="$(tr -d '\r\n' < .signing-identity)"
+fi
+# Must never end up empty: the lookup further down greps for this string, and
+# `grep -qF ""` matches every line — which would "find" an identity that isn't there.
+[ -n "$SIGN_IDENTITY" ] || SIGN_IDENTITY="none"
 
 say() { printf '\033[1m%s\033[0m\n' "$*"; }
 warn() { printf '\033[33m%s\033[0m\n' "$*" >&2; }
