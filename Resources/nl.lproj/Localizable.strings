@@ -172,3 +172,78 @@
 "alg.opstarten.uitleg" = "De app zit dan meteen klaar in de menubalk. Het wakker houden gaat niet vanzelf aan — dat blijft een klik van jou.";
 "alg.opstarten.wacht" = "macOS wacht nog op je goedkeuring hiervoor.";
 "alg.opstarten.openen" = "Openen";
+
+/* --- Instellingen · Bijwerken --- */
+"bij.titel" = "Bijwerken";
+"bij.versie" = "Deze versie";
+"bij.onbekend" = "onbekend";
+"bij.bron" = "Bron";
+"bij.toggle" = "Kijken of er een nieuwere versie is";
+"bij.uitleg" = "Vraagt hooguit eens per dag bij GitHub op wat de nieuwste versie is. GitHub ziet daarbij je IP-adres, zoals bij elk bezoek aan een website. De app downloadt of installeert nooit iets — bijwerken blijft een commando dat jij zelf draait.";
+"bij.nukijken" = "Nu kijken";
+"bij.status.beschikbaar" = "Versie %@ beschikbaar";
+"bij.status.actueel" = "Je bent bij";
+"bij.status.nooit" = "Nog niet gekeken";
+"bij.status.laatst" = "Laatst gekeken %@";
+
+/* --- Instellingen · Sneltoets --- */
+"snel.titel" = "Sneltoets";
+"snel.aanuit" = "Aan en uit met";
+"snel.druk" = "Druk de toetsen…";
+"snel.geen" = "geen";
+"snel.afbreken" = "Afbreken";
+"snel.opnemen" = "Opnemen…";
+"snel.wissen" = "Wissen";
+"snel.uitleg" = "De sneltoets doet precies hetzelfde als de schakelaar in het paneel, en loopt langs precies dezelfde controles: is de accu te leeg, is de Mac te warm, of ontbreekt de wachtwoordvrijstelling, dan gaat hij net zo goed niet aan. Je hoort dan het foutgeluid en het staat in het logboek; een melding krijg je niet, want je staat op dat moment aan het toetsenbord.";
+"snel.uitleg.combinatie" = "Neem een combinatie op met ⌘, ⌥ of ⌃ erin. Zonder zo'n toets zou de sneltoets die toets in élke app opslokken. Esc breekt het opnemen af.";
+
+/* --- Instellingen · Vanzelf stoppen: na een tijd --- */
+"stop.natijd.titel" = "Na een tijd";
+"stop.uitna" = "Automatisch uit na";
+"stop.uren" = "%d uur";
+"stop.minuten" = "%d min";
+"stop.veelgebruikt" = "Veelgebruikt:";
+"stop.uitleg.duur" = "Vergeet je het uit te zetten, dan mag de Mac na %@ vanzelf weer slapen. De teller loopt vanaf het moment dat je aanzette, niet vanaf deze wijziging — korter zetten haalt het einde dus naar voren.";
+"stop.uitleg.tot" = " Nu loopt hij tot %@.";
+
+/* --- Instellingen · Vanzelf stoppen: accu en temperatuur --- */
+"stop.accu.titel" = "Bij een bijna lege accu";
+"stop.accu.onder" = "Stoppen onder";
+"stop.accu.uitleg" = "Werk je zonder lader, dan mag de Mac weer slapen zodra de accu onder deze stand komt. Zonder die grens loopt de accu met de klep dicht gewoon helemaal leeg. Er wordt hierbij niet om je wachtwoord gevraagd.";
+"stop.warm.titel" = "Als de Mac te warm wordt";
+"stop.warm.uitleg" = "Dit gaat vanzelf en is niet uit te zetten. Wordt de Mac kritiek warm, dan stopt Dopamine Code onmiddellijk, zodat macOS zelf weer kan ingrijpen. Bij \"hoog\" krijg je alleen een waarschuwing.";
+"stop.waarom.titel" = "Waarom je deze drie niet kunt uitzetten";
+"stop.waarom.uitleg" = "Om de Mac wakker te houden met de klep dicht moet Dopamine Code één systeeminstelling omzetten: de slaapblokkade (SleepDisabled). Diezelfde instelling zet ook de noodrem van macOS uit — de automatische slaap bij een bijna lege accu en bij oververhitting. De tijdslimiet, de accugrens en de temperatuurbewaking hierboven nemen die taak over. Daarom horen ze er altijd bij.";
+
+/* --- Het schemavenster --- */
+"schema.venster" = "%1$@ van %2$@ tot %3$@";
+"schema.elkedag" = "elke dag";
+"schema.werkdag" = "elke werkdag";
+"schema.weekend" = "elk weekend";
+"schema.nooit" = "nooit";
+"schema.probleem.geendag" = "er is geen enkele dag aangevinkt";
+"schema.probleem.zelfdetijd" = "de begintijd en de eindtijd zijn hetzelfde";
+
+/* --- Instellingen · Zelf aanzetten: op vaste tijden --- */
+"aan.schema.titel" = "Op vaste tijden";
+"aan.schema.toggle" = "Aanzetten volgens een schema";
+"aan.schema.dagen" = "Dagen";
+"aan.schema.van" = "Van";
+"aan.schema.tot" = "Tot";
+"aan.schema.kannooit" = "Dit schema kan nooit afgaan: %@. Zolang dat zo is gebeurt er niets.";
+"aan.schema.gaataan" = "Het wakker houden gaat dan vanzelf aan: %@.";
+"aan.schema.middernacht" = " Dit venster loopt over middernacht heen; de dag hoort bij het begin, dus een venster dat vrijdagavond begint loopt zaterdagochtend af.";
+"aan.schema.staart" = " Sliep de Mac toen het venster openging, dan gaat het alsnog aan zodra hij wakker is. Zet je het handmatig uit binnen het venster, dan blijft het uit tot het volgende venster.";
+
+/* --- Instellingen · Zelf aanzetten: als een app gaat draaien --- */
+"aan.app.titel" = "Als een app gaat draaien";
+"aan.app.geen" = "Nog geen apps gekozen.";
+"aan.app.verwijderen" = "Verwijderen";
+"aan.app.geendraaiend" = "Geen draaiende apps gevonden";
+"aan.app.uitleg" = "De lijst toont wat er nu draait; wat je kiest wordt op naam bewaard en geldt ook voor de volgende keer. Het wakker houden gaat aan zodra zo'n app start — draait hij al op het moment dat je hem kiest, dan gebeurt er niets tot hij opnieuw start. De sessie stopt weer zodra die app klaar is, langs precies dezelfde weg als \"dopamine on --until-exit\".";
+
+/* --- Instellingen · Zelf aanzetten: klep en vangnetten --- */
+"aan.klep.titel" = "Zodra je de klep dichtdoet";
+"aan.klep.uitleg" = "Dit staat in het menubalk-paneel en niet hier, want het geldt één keer: je klikt \"Aanzetten zodra ik de klep dichtdoe\", je klapt dicht, en het wakker houden gaat aan. Doe je het niet, dan vervalt het na vijf minuten vanzelf en zegt de app dat ook. Het overleeft met opzet geen herstart: iets dat klaarstaat en pas uren later afgaat verwacht niemand nog.";
+"aan.omheen.titel" = "Wat er hoe dan ook omheen blijft zitten";
+"aan.omheen.uitleg" = "Alles wat hier vanzelf aangaat loopt langs precies dezelfde weg als de schakelaar: dezelfde tijdslimiet, dezelfde accugrens en dezelfde temperatuurbewaking. Kan er op dat moment niet veilig aangezet worden — de accu is te leeg, de Mac is te warm, of de wachtwoordvrijstelling is weg — dan gebeurt er niets, en krijg je daar een melding van. Een schema loopt nooit langer dan de tijdslimiet: staat die op 4 uur en het venster tot 18:00, dan stopt het om 13:00 en niet om 18:00. En binnen één venster gaat het schema hooguit één keer aan, ook als er iets tussendoor stopte — anders zou het schema terugzetten wat een vangnet net had laten vallen.";

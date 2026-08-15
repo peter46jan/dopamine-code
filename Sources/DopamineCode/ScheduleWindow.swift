@@ -31,8 +31,8 @@ struct ScheduleWindow: Equatable {
     /// Bestaat omdat een schema dat aanstaat maar nooit iets doet erger is dan geen schema:
     /// je vertrouwt erop en het gebeurt niet. De aanroeper zet dit in het logboek.
     var probleem: String? {
-        if dagen.isEmpty { return "er is geen enkele dag aangevinkt" }
-        if startMinuut == eindMinuut { return "de begintijd en de eindtijd zijn hetzelfde" }
+        if dagen.isEmpty { return L10n.t("schema.probleem.geendag") }
+        if startMinuut == eindMinuut { return L10n.t("schema.probleem.zelfdetijd") }
         return nil
     }
 
@@ -97,20 +97,34 @@ struct ScheduleWindow: Equatable {
 
     /// De zin die in het paneel, in het logboek en in `verify.sh --report` terechtkomt.
     var omschrijving: String {
-        "\(dagenTekst) van \(Self.klok(startMinuut)) tot \(Self.klok(eindMinuut))"
+        L10n.t("schema.venster", dagenTekst, Self.klok(startMinuut), Self.klok(eindMinuut))
     }
 
     private var dagenTekst: String {
-        if dagen == Set(1...7) { return "elke dag" }
-        if dagen == [2, 3, 4, 5, 6] { return "elke werkdag" }
-        if dagen == [1, 7] { return "elk weekend" }
+        if dagen == Set(1...7) { return L10n.t("schema.elkedag") }
+        if dagen == [2, 3, 4, 5, 6] { return L10n.t("schema.werkdag") }
+        if dagen == [1, 7] { return L10n.t("schema.weekend") }
         // Op maandag beginnen, niet op zondag: zo lezen we hier een week.
         let volgorde = [2, 3, 4, 5, 6, 7, 1]
         let namen = volgorde.filter { dagen.contains($0) }.map { Self.korteDagnaam($0) }
-        return namen.isEmpty ? "nooit" : namen.joined(separator: ", ")
+        return namen.isEmpty ? L10n.t("schema.nooit") : namen.joined(separator: ", ")
     }
 
+    /// De afgekorte dagnaam, uit macOS zelf.
+    ///
+    /// Bewust niet uit de vertaalbestanden. Dagnamen zijn geen tekst van deze app maar van de
+    /// taal, en macOS heeft ze al — in elke taal, met de juiste afkorting en hoofdletter.
+    /// Vier eigen lijstjes zouden alleen maar een extra plek zijn om het fout te doen.
+    ///
+    /// De taal van de app, niet `Locale.current`: die volgt de regio-instelling, en iemand met
+    /// Frans als taal en Nederland als regio hoort hier "lun" te zien en niet "ma".
     static func korteDagnaam(_ weekdag: Int) -> String {
-        ["", "zo", "ma", "di", "wo", "do", "vr", "za"][max(1, min(7, weekdag))]
+        var kalender = Calendar(identifier: .gregorian)
+        let taal = Bundle.main.preferredLocalizations.first ?? "nl"
+        kalender.locale = Locale(identifier: taal)
+        let symbolen = kalender.shortWeekdaySymbols          // index 0 = zondag
+        let i = max(1, min(7, weekdag)) - 1
+        guard symbolen.indices.contains(i) else { return "" }
+        return symbolen[i]
     }
 }

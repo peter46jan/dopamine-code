@@ -168,3 +168,78 @@
 "alg.opstarten.uitleg" = "L'app est alors prête dans la barre des menus. Le maintien en éveil ne s'active pas tout seul — cela reste votre clic.";
 "alg.opstarten.wacht" = "macOS attend encore votre autorisation pour cela.";
 "alg.opstarten.openen" = "Ouvrir";
+
+/* --- Instellingen · Bijwerken --- */
+"bij.titel" = "Mise à jour";
+"bij.versie" = "Cette version";
+"bij.onbekend" = "inconnue";
+"bij.bron" = "Source";
+"bij.toggle" = "Vérifier s'il existe une version plus récente";
+"bij.uitleg" = "Demande au maximum une fois par jour à GitHub quelle est la version la plus récente. GitHub voit alors votre adresse IP, comme lors de toute visite d'un site web. L'app ne télécharge et n'installe jamais rien — la mise à jour reste une commande que vous lancez vous-même.";
+"bij.nukijken" = "Vérifier maintenant";
+"bij.status.beschikbaar" = "Version %@ disponible";
+"bij.status.actueel" = "Vous êtes à jour";
+"bij.status.nooit" = "Pas encore vérifié";
+"bij.status.laatst" = "Dernière vérification %@";
+
+/* --- Instellingen · Sneltoets --- */
+"snel.titel" = "Raccourci clavier";
+"snel.aanuit" = "Activer et désactiver avec";
+"snel.druk" = "Appuyez sur les touches…";
+"snel.geen" = "aucun";
+"snel.afbreken" = "Annuler";
+"snel.opnemen" = "Enregistrer…";
+"snel.wissen" = "Effacer";
+"snel.uitleg" = "Le raccourci fait exactement la même chose que l'interrupteur du panneau et passe exactement les mêmes contrôles : si la batterie est trop faible, le Mac trop chaud, ou la dispense de mot de passe absente, il ne s'active pas davantage. Vous entendez le son d'erreur et cela figure dans le journal ; vous ne recevez pas de notification, car vous êtes au clavier à ce moment-là.";
+"snel.uitleg.combinatie" = "Enregistrez une combinaison contenant ⌘, ⌥ ou ⌃. Sans une telle touche, le raccourci accaparerait cette touche dans toutes les apps. Esc annule l'enregistrement.";
+
+/* --- Instellingen · Vanzelf stoppen: na een tijd --- */
+"stop.natijd.titel" = "Au bout d'un moment";
+"stop.uitna" = "Arrêt automatique après";
+"stop.uren" = "%d h";
+"stop.minuten" = "%d min";
+"stop.veelgebruikt" = "Courant :";
+"stop.uitleg.duur" = "Si vous oubliez de le désactiver, le Mac pourra se rendormir tout seul après %@. Le compteur part du moment où vous avez activé, pas de cette modification — raccourcir avance donc la fin.";
+"stop.uitleg.tot" = " Actuellement, il court jusqu'à %@.";
+
+/* --- Instellingen · Vanzelf stoppen: accu en temperatuur --- */
+"stop.accu.titel" = "Quand la batterie est presque vide";
+"stop.accu.onder" = "Arrêter en dessous de";
+"stop.accu.uitleg" = "Si vous travaillez sans chargeur, le Mac pourra se rendormir dès que la batterie passe sous ce niveau. Sans ce seuil, la batterie se vide entièrement écran rabattu. Votre mot de passe n'est pas demandé pour cela.";
+"stop.warm.titel" = "Quand le Mac chauffe trop";
+"stop.warm.uitleg" = "Cela se fait tout seul et ne peut pas être désactivé. Si le Mac atteint une température critique, Dopamine Code s'arrête immédiatement pour que macOS puisse reprendre la main. À \"élevée\", vous recevez seulement un avertissement.";
+"stop.waarom.titel" = "Pourquoi vous ne pouvez pas désactiver ces trois-là";
+"stop.waarom.uitleg" = "Pour garder le Mac éveillé écran rabattu, Dopamine Code doit basculer un réglage système : le blocage de veille (SleepDisabled). Ce même réglage désactive aussi le frein d'urgence de macOS — la mise en veille automatique quand la batterie est presque vide et en cas de surchauffe. La limite de temps, le seuil de batterie et la surveillance de température ci-dessus reprennent ce rôle. C'est pourquoi ils en font toujours partie.";
+
+/* --- Het schemavenster --- */
+"schema.venster" = "%1$@ de %2$@ à %3$@";
+"schema.elkedag" = "tous les jours";
+"schema.werkdag" = "chaque jour de semaine";
+"schema.weekend" = "chaque week-end";
+"schema.nooit" = "jamais";
+"schema.probleem.geendag" = "aucun jour n'est coché";
+"schema.probleem.zelfdetijd" = "l'heure de début et de fin sont identiques";
+
+/* --- Instellingen · Zelf aanzetten: op vaste tijden --- */
+"aan.schema.titel" = "À heures fixes";
+"aan.schema.toggle" = "Activer selon une planification";
+"aan.schema.dagen" = "Jours";
+"aan.schema.van" = "De";
+"aan.schema.tot" = "À";
+"aan.schema.kannooit" = "Cette planification ne peut jamais se déclencher : %@. Tant que c'est le cas, rien ne se produit.";
+"aan.schema.gaataan" = "Le maintien en éveil s'active alors tout seul : %@.";
+"aan.schema.middernacht" = " Cette fenêtre franchit minuit ; le jour se rattache au début, donc une fenêtre commençant vendredi soir se termine samedi matin.";
+"aan.schema.staart" = " Si le Mac dormait à l'ouverture de la fenêtre, cela s'active quand même dès son réveil. Si vous le désactivez à la main dans la fenêtre, cela reste désactivé jusqu'à la fenêtre suivante.";
+
+/* --- Instellingen · Zelf aanzetten: als een app gaat draaien --- */
+"aan.app.titel" = "Quand une app se lance";
+"aan.app.geen" = "Aucune app choisie pour l'instant.";
+"aan.app.verwijderen" = "Supprimer";
+"aan.app.geendraaiend" = "Aucune app en cours trouvée";
+"aan.app.uitleg" = "La liste montre ce qui tourne actuellement ; ce que vous choisissez est enregistré par nom et vaut aussi la fois suivante. Le maintien en éveil s'active dès qu'une telle app démarre — si elle tourne déjà au moment où vous la choisissez, rien ne se passe jusqu'à son redémarrage. La session s'arrête dès que cette app a terminé, par exactement le même chemin que \"dopamine on --until-exit\".";
+
+/* --- Instellingen · Zelf aanzetten: klep en vangnetten --- */
+"aan.klep.titel" = "Dès que vous rabattez l'écran";
+"aan.klep.uitleg" = "Cela se trouve dans le panneau de la barre des menus et pas ici, car cela vaut une seule fois : vous cliquez \"Activer dès que je rabats l'écran\", vous rabattez, et le maintien en éveil s'active. Sinon, cela expire tout seul au bout de cinq minutes et l'app le dit. Cela ne survit délibérément pas à un redémarrage : personne n'attend plus qu'une chose armée il y a des heures se déclenche.";
+"aan.omheen.titel" = "Ce qui reste en place quoi qu'il arrive";
+"aan.omheen.uitleg" = "Tout ce qui s'active tout seul ici emprunte exactement le même chemin que l'interrupteur : la même limite de temps, le même seuil de batterie et la même surveillance de température. Si l'activation n'est pas sûre à ce moment — batterie trop faible, Mac trop chaud, ou dispense de mot de passe disparue — rien ne se produit, et vous en recevez une notification. Une planification ne dure jamais plus que la limite de temps : si celle-ci est de 4 heures et la fenêtre jusqu'à 18:00, cela s'arrête à 13:00 et pas à 18:00. Et dans une même fenêtre, la planification s'active au plus une fois, même si quelque chose s'est arrêté entre-temps — sinon elle rétablirait ce qu'un garde-fou vient de relâcher.";

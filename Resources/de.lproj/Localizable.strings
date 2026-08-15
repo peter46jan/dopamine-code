@@ -168,3 +168,78 @@
 "alg.opstarten.uitleg" = "Die App sitzt dann sofort bereit in der Menüleiste. Das Wachhalten schaltet sich nicht von selbst ein — das bleibt dein Klick.";
 "alg.opstarten.wacht" = "macOS wartet dafür noch auf deine Zustimmung.";
 "alg.opstarten.openen" = "Öffnen";
+
+/* --- Instellingen · Bijwerken --- */
+"bij.titel" = "Aktualisieren";
+"bij.versie" = "Diese Version";
+"bij.onbekend" = "unbekannt";
+"bij.bron" = "Quelle";
+"bij.toggle" = "Nachsehen, ob es eine neuere Version gibt";
+"bij.uitleg" = "Fragt höchstens einmal am Tag bei GitHub nach der neuesten Version. GitHub sieht dabei deine IP-Adresse, wie bei jedem Besuch einer Website. Die App lädt und installiert nie etwas — Aktualisieren bleibt ein Befehl, den du selbst ausführst.";
+"bij.nukijken" = "Jetzt nachsehen";
+"bij.status.beschikbaar" = "Version %@ verfügbar";
+"bij.status.actueel" = "Du bist auf dem neuesten Stand";
+"bij.status.nooit" = "Noch nicht nachgesehen";
+"bij.status.laatst" = "Zuletzt nachgesehen %@";
+
+/* --- Instellingen · Sneltoets --- */
+"snel.titel" = "Kurzbefehl";
+"snel.aanuit" = "Ein und aus mit";
+"snel.druk" = "Tasten drücken…";
+"snel.geen" = "keiner";
+"snel.afbreken" = "Abbrechen";
+"snel.opnemen" = "Aufnehmen…";
+"snel.wissen" = "Löschen";
+"snel.uitleg" = "Der Kurzbefehl macht genau dasselbe wie der Schalter im Panel und durchläuft genau dieselben Prüfungen: ist der Akku zu leer, der Mac zu warm oder fehlt die Passwortfreistellung, dann schaltet er ebenso wenig ein. Du hörst den Fehlerton und es steht im Protokoll; eine Mitteilung bekommst du nicht, denn du sitzt in dem Moment an der Tastatur.";
+"snel.uitleg.combinatie" = "Nimm eine Kombination mit ⌘, ⌥ oder ⌃ auf. Ohne so eine Taste würde der Kurzbefehl diese Taste in jeder App verschlucken. Esc bricht die Aufnahme ab.";
+
+/* --- Instellingen · Vanzelf stoppen: na een tijd --- */
+"stop.natijd.titel" = "Nach einer Weile";
+"stop.uitna" = "Automatisch aus nach";
+"stop.uren" = "%d Std.";
+"stop.minuten" = "%d Min.";
+"stop.veelgebruikt" = "Häufig:";
+"stop.uitleg.duur" = "Vergisst du das Ausschalten, darf der Mac nach %@ von selbst wieder schlafen. Die Uhr läuft ab dem Moment des Einschaltens, nicht ab dieser Änderung — kürzer stellen zieht das Ende also vor.";
+"stop.uitleg.tot" = " Aktuell läuft er bis %@.";
+
+/* --- Instellingen · Vanzelf stoppen: accu en temperatuur --- */
+"stop.accu.titel" = "Bei fast leerem Akku";
+"stop.accu.onder" = "Beenden unter";
+"stop.accu.uitleg" = "Arbeitest du ohne Netzteil, darf der Mac wieder schlafen, sobald der Akku unter diesen Stand fällt. Ohne diese Grenze läuft der Akku bei geschlossenem Deckel einfach ganz leer. Nach deinem Passwort wird dabei nicht gefragt.";
+"stop.warm.titel" = "Wenn der Mac zu warm wird";
+"stop.warm.uitleg" = "Das passiert von selbst und lässt sich nicht abschalten. Wird der Mac kritisch warm, beendet Dopamine Code sofort, damit macOS selbst wieder eingreifen kann. Bei \"hoch\" bekommst du nur eine Warnung.";
+"stop.waarom.titel" = "Warum du diese drei nicht abschalten kannst";
+"stop.waarom.uitleg" = "Um den Mac bei geschlossenem Deckel wach zu halten, muss Dopamine Code eine Systemeinstellung umlegen: die Schlafsperre (SleepDisabled). Dieselbe Einstellung schaltet auch die Notbremse von macOS ab — den automatischen Schlaf bei fast leerem Akku und bei Überhitzung. Zeitlimit, Akkugrenze und Temperaturüberwachung oben übernehmen diese Aufgabe. Deshalb gehören sie immer dazu.";
+
+/* --- Het schemavenster --- */
+"schema.venster" = "%1$@ von %2$@ bis %3$@";
+"schema.elkedag" = "jeden Tag";
+"schema.werkdag" = "jeden Werktag";
+"schema.weekend" = "jedes Wochenende";
+"schema.nooit" = "nie";
+"schema.probleem.geendag" = "es ist kein einziger Tag angehakt";
+"schema.probleem.zelfdetijd" = "Anfangs- und Endzeit sind gleich";
+
+/* --- Instellingen · Zelf aanzetten: op vaste tijden --- */
+"aan.schema.titel" = "Zu festen Zeiten";
+"aan.schema.toggle" = "Nach Zeitplan einschalten";
+"aan.schema.dagen" = "Tage";
+"aan.schema.van" = "Von";
+"aan.schema.tot" = "Bis";
+"aan.schema.kannooit" = "Dieser Zeitplan kann nie auslösen: %@. Solange das so ist, passiert nichts.";
+"aan.schema.gaataan" = "Das Wachhalten schaltet sich dann von selbst ein: %@.";
+"aan.schema.middernacht" = " Dieses Fenster läuft über Mitternacht; der Tag gehört zum Anfang, ein Fenster, das Freitagabend beginnt, endet also Samstagmorgen.";
+"aan.schema.staart" = " Schlief der Mac, als das Fenster aufging, schaltet es trotzdem ein, sobald er wach ist. Schaltest du es innerhalb des Fensters von Hand aus, bleibt es bis zum nächsten Fenster aus.";
+
+/* --- Instellingen · Zelf aanzetten: als een app gaat draaien --- */
+"aan.app.titel" = "Wenn eine App startet";
+"aan.app.geen" = "Noch keine Apps gewählt.";
+"aan.app.verwijderen" = "Entfernen";
+"aan.app.geendraaiend" = "Keine laufenden Apps gefunden";
+"aan.app.uitleg" = "Die Liste zeigt, was gerade läuft; was du wählst, wird unter dem Namen gespeichert und gilt auch beim nächsten Mal. Das Wachhalten schaltet ein, sobald so eine App startet — läuft sie schon, wenn du sie wählst, passiert nichts, bis sie neu startet. Die Sitzung endet, sobald die App fertig ist, auf genau demselben Weg wie \"dopamine on --until-exit\".";
+
+/* --- Instellingen · Zelf aanzetten: klep en vangnetten --- */
+"aan.klep.titel" = "Sobald du den Deckel schließt";
+"aan.klep.uitleg" = "Das steht im Menüleisten-Panel und nicht hier, denn es gilt einmal: du klickst \"Einschalten, sobald ich den Deckel schließe\", du klappst zu, und das Wachhalten schaltet ein. Tust du es nicht, verfällt es nach fünf Minuten von selbst und die App sagt das auch. Es überlebt bewusst keinen Neustart: dass etwas Stunden später noch auslöst, erwartet niemand.";
+"aan.omheen.titel" = "Was auf jeden Fall drumherum bleibt";
+"aan.omheen.uitleg" = "Alles, was sich hier von selbst einschaltet, nimmt genau denselben Weg wie der Schalter: dasselbe Zeitlimit, dieselbe Akkugrenze und dieselbe Temperaturüberwachung. Kann in dem Moment nicht sicher eingeschaltet werden — Akku zu leer, Mac zu warm oder Passwortfreistellung weg — passiert nichts, und du bekommst eine Mitteilung darüber. Ein Zeitplan läuft nie länger als das Zeitlimit: steht das auf 4 Stunden und das Fenster bis 18:00, endet es um 13:00 und nicht um 18:00. Und innerhalb eines Fensters schaltet der Zeitplan höchstens einmal ein, auch wenn zwischendurch etwas beendet wurde — sonst würde der Zeitplan zurücksetzen, was eine Sicherung gerade fallen ließ.";

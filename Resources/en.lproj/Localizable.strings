@@ -167,3 +167,78 @@
 "alg.opstarten.uitleg" = "The app then sits ready in the menu bar. Keeping awake does not switch on by itself — that stays a click of yours.";
 "alg.opstarten.wacht" = "macOS is still waiting for your approval for this.";
 "alg.opstarten.openen" = "Open";
+
+/* --- Instellingen · Bijwerken --- */
+"bij.titel" = "Updates";
+"bij.versie" = "This version";
+"bij.onbekend" = "unknown";
+"bij.bron" = "Source";
+"bij.toggle" = "Check whether a newer version exists";
+"bij.uitleg" = "Asks GitHub at most once a day what the newest version is. GitHub sees your IP address doing so, as it does on any visit to a website. The app never downloads or installs anything — updating stays a command you run yourself.";
+"bij.nukijken" = "Check now";
+"bij.status.beschikbaar" = "Version %@ available";
+"bij.status.actueel" = "You are up to date";
+"bij.status.nooit" = "Not checked yet";
+"bij.status.laatst" = "Last checked %@";
+
+/* --- Instellingen · Sneltoets --- */
+"snel.titel" = "Keyboard shortcut";
+"snel.aanuit" = "On and off with";
+"snel.druk" = "Press the keys…";
+"snel.geen" = "none";
+"snel.afbreken" = "Cancel";
+"snel.opnemen" = "Record…";
+"snel.wissen" = "Clear";
+"snel.uitleg" = "The shortcut does exactly what the switch in the panel does, and passes exactly the same checks: if the battery is too low, the Mac too warm, or the password exemption missing, it will not switch on either. You hear the error sound and it goes into the log; you get no notification, because you are at the keyboard at that moment.";
+"snel.uitleg.combinatie" = "Record a combination that includes ⌘, ⌥ or ⌃. Without such a key the shortcut would swallow that key in every app. Esc cancels recording.";
+
+/* --- Instellingen · Vanzelf stoppen: na een tijd --- */
+"stop.natijd.titel" = "After a while";
+"stop.uitna" = "Automatically off after";
+"stop.uren" = "%d h";
+"stop.minuten" = "%d min";
+"stop.veelgebruikt" = "Common:";
+"stop.uitleg.duur" = "If you forget to switch it off, the Mac may go back to sleep by itself after %@. The clock runs from the moment you switched on, not from this change — setting it shorter therefore brings the end forward.";
+"stop.uitleg.tot" = " Right now it runs until %@.";
+
+/* --- Instellingen · Vanzelf stoppen: accu en temperatuur --- */
+"stop.accu.titel" = "On a nearly empty battery";
+"stop.accu.onder" = "Stop below";
+"stop.accu.uitleg" = "Working without a charger, the Mac may sleep again as soon as the battery drops below this level. Without that floor the battery simply runs all the way down with the lid closed. You are not asked for your password for this.";
+"stop.warm.titel" = "When the Mac gets too warm";
+"stop.warm.uitleg" = "This happens by itself and cannot be switched off. If the Mac gets critically warm, Dopamine Code stops immediately so macOS can step in again. At \"high\" you only get a warning.";
+"stop.waarom.titel" = "Why you cannot switch these three off";
+"stop.waarom.uitleg" = "To keep the Mac awake with the lid closed, Dopamine Code has to flip one system setting: the sleep block (SleepDisabled). That same setting also disables macOS's emergency brake — the automatic sleep on a nearly empty battery and on overheating. The time limit, the battery floor and the temperature watch above take that job over. That is why they are always part of it.";
+
+/* --- Het schemavenster --- */
+"schema.venster" = "%1$@ from %2$@ to %3$@";
+"schema.elkedag" = "every day";
+"schema.werkdag" = "every weekday";
+"schema.weekend" = "every weekend";
+"schema.nooit" = "never";
+"schema.probleem.geendag" = "no day is ticked";
+"schema.probleem.zelfdetijd" = "the start time and the end time are the same";
+
+/* --- Instellingen · Zelf aanzetten: op vaste tijden --- */
+"aan.schema.titel" = "At set times";
+"aan.schema.toggle" = "Switch on according to a schedule";
+"aan.schema.dagen" = "Days";
+"aan.schema.van" = "From";
+"aan.schema.tot" = "To";
+"aan.schema.kannooit" = "This schedule can never fire: %@. While that is the case, nothing happens.";
+"aan.schema.gaataan" = "Keeping awake then switches on by itself: %@.";
+"aan.schema.middernacht" = " This window runs past midnight; the day belongs to the start, so a window beginning on Friday evening ends on Saturday morning.";
+"aan.schema.staart" = " If the Mac was asleep when the window opened, it still switches on as soon as it wakes. Switch it off by hand inside the window and it stays off until the next window.";
+
+/* --- Instellingen · Zelf aanzetten: als een app gaat draaien --- */
+"aan.app.titel" = "When an app starts running";
+"aan.app.geen" = "No apps chosen yet.";
+"aan.app.verwijderen" = "Remove";
+"aan.app.geendraaiend" = "No running apps found";
+"aan.app.uitleg" = "The list shows what is running now; what you pick is stored by name and applies next time too. Keeping awake switches on as soon as such an app starts — if it is already running when you pick it, nothing happens until it starts again. The session stops once that app has finished, by exactly the same route as \"dopamine on --until-exit\".";
+
+/* --- Instellingen · Zelf aanzetten: klep en vangnetten --- */
+"aan.klep.titel" = "As soon as you close the lid";
+"aan.klep.uitleg" = "This lives in the menu bar panel and not here, because it applies once: you click \"Turn on when I close the lid\", you close it, and keeping awake switches on. If you do not, it expires by itself after five minutes and the app says so. It deliberately does not survive a restart: nobody expects something armed hours ago to still go off.";
+"aan.omheen.titel" = "What stays wrapped around it regardless";
+"aan.omheen.uitleg" = "Everything that switches on by itself here takes exactly the same route as the switch: the same time limit, the same battery floor and the same temperature watch. If it cannot be switched on safely at that moment — the battery too low, the Mac too warm, or the password exemption gone — nothing happens, and you get a notification about it. A schedule never runs longer than the time limit: set that to 4 hours with the window until 18:00, and it stops at 13:00 and not at 18:00. And within one window the schedule fires at most once, even if something stopped in between — otherwise the schedule would put back what a safety net had just released.";

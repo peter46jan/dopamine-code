@@ -215,31 +215,28 @@ struct SettingsView: View {
     /// bijwerken gelukt is. `DCSourceVersion` staat erbij omdat "1.2.0" niet genoeg zegt
     /// zodra je zelf commits bovenop een tag hebt staan — dan wil je weten wélke.
     private var updateSection: some View {
-        Section("Bijwerken") {
-            LabeledContent("Deze versie") {
-                Text(updates.huidige.map(String.init(describing:)) ?? "onbekend")
+        Section("bij.titel") {
+            LabeledContent("bij.versie") {
+                Text(updates.huidige.map(String.init(describing:)) ?? L10n.t("bij.onbekend"))
                     .foregroundStyle(updates.huidige == nil ? .secondary : .primary)
             }
-            LabeledContent("Bron") {
+            LabeledContent("bij.bron") {
                 Text(updates.bron)
                     .font(.system(.body, design: .monospaced))
                     .foregroundStyle(.secondary)
                     .textSelection(.enabled)
             }
 
-            Toggle("Kijken of er een nieuwere versie is", isOn: $updateCheckEnabled)
+            Toggle("bij.toggle", isOn: $updateCheckEnabled)
                 .onChange(of: updateCheckEnabled) { value in
                     Prefs.updateCheckEnabled = value
                 }
-            Text("Vraagt hooguit eens per dag bij GitHub op wat de nieuwste versie is. "
-                 + "GitHub ziet daarbij je IP-adres, zoals bij elk bezoek aan een website. "
-                 + "De app downloadt of installeert nooit iets — bijwerken blijft een "
-                 + "commando dat jij zelf draait.")
+            Text("bij.uitleg")
                 .font(.caption).foregroundStyle(.secondary)
                 .fixedSize(horizontal: false, vertical: true)
 
             HStack {
-                Button("Nu kijken") { updates.controleerNu() }
+                Button("bij.nukijken") { updates.controleerNu() }
                     .disabled(updates.bezig)
                 if updates.bezig {
                     ProgressView().controlSize(.small)
@@ -253,13 +250,17 @@ struct SettingsView: View {
 
     private var updateStatusText: String {
         switch updates.toestand {
-        case .beschikbaar(let versie, _): return "Versie \(versie) beschikbaar"
-        case .actueel: return "Je bent bij"
+        case .beschikbaar(let versie, _): return L10n.t("bij.status.beschikbaar", versie.description)
+        case .actueel: return L10n.t("bij.status.actueel")
         case .onbekend:
-            guard let laatst = Prefs.updateLastCheck else { return "Nog niet gekeken" }
+            guard let laatst = Prefs.updateLastCheck else { return L10n.t("bij.status.nooit") }
             let f = RelativeDateTimeFormatter()
-            f.locale = Locale(identifier: "nl_NL")
-            return "Laatst gekeken \(f.localizedString(for: laatst, relativeTo: Date()))"
+            // Stond hard op nl_NL, wat "3 uur geleden" opleverde midden in een Franse zin.
+            // De taal van de app is `Bundle.main.preferredLocalizations.first`, en niet
+            // `Locale.current`: die volgt de regio-instelling en kan een andere taal zijn dan
+            // waarin de app draait.
+            f.locale = Locale(identifier: Bundle.main.preferredLocalizations.first ?? "nl")
+            return L10n.t("bij.status.laatst", f.localizedString(for: laatst, relativeTo: Date()))
         }
     }
 
@@ -272,18 +273,19 @@ struct SettingsView: View {
     /// gebeurt met een lokale toetsbewaking — die ziet alleen wat er in dít venster gebeurt en
     /// vraagt daarom geen enkel recht. De sneltoets zelf loopt via Carbon; zie `GlobalShortcut`.
     private var shortcutSection: some View {
-        Section("Sneltoets") {
-            LabeledContent("Aan en uit met") {
+        Section("snel.titel") {
+            LabeledContent("snel.aanuit") {
                 HStack(spacing: 8) {
-                    Text(recording ? "Druk de toetsen…" : (model.shortcutOmschrijving ?? "geen"))
+                    Text(recording ? L10n.t("snel.druk")
+                                   : (model.shortcutOmschrijving ?? L10n.t("snel.geen")))
                         .foregroundStyle(recording || model.shortcutOmschrijving == nil
                                          ? Color.secondary : Color.primary)
                         .frame(minWidth: 100, alignment: .leading)
-                    Button(recording ? "Afbreken" : "Opnemen…") {
+                    Button(recording ? "snel.afbreken" : "snel.opnemen") {
                         if recording { stopRecording() } else { startRecording() }
                     }
                     .controlSize(.small)
-                    Button("Wissen") {
+                    Button("snel.wissen") {
                         model.setShortcut(keyCode: nil, modifierFlags: 0)
                     }
                     .controlSize(.small)
@@ -297,15 +299,10 @@ struct SettingsView: View {
                     .fixedSize(horizontal: false, vertical: true)
             }
 
-            Text("De sneltoets doet precies hetzelfde als de schakelaar in het paneel, en loopt "
-                 + "langs precies dezelfde controles: is de accu te leeg, is de Mac te warm, of "
-                 + "ontbreekt de wachtwoordvrijstelling, dan gaat hij net zo goed niet aan. Je "
-                 + "hoort dan het foutgeluid en het staat in het logboek; een melding krijg je "
-                 + "niet, want je staat op dat moment aan het toetsenbord.")
+            Text("snel.uitleg")
                 .font(.caption).foregroundStyle(.secondary)
                 .fixedSize(horizontal: false, vertical: true)
-            Text("Neem een combinatie op met ⌘, ⌥ of ⌃ erin. Zonder zo'n toets zou de sneltoets "
-                 + "die toets in élke app opslokken. Esc breekt het opnemen af.")
+            Text("snel.uitleg.combinatie")
                 .font(.caption).foregroundStyle(.secondary)
                 .fixedSize(horizontal: false, vertical: true)
         }
@@ -343,7 +340,7 @@ struct SettingsView: View {
 
     private var safety: some View {
         Form {
-            Section("Na een tijd") {
+            Section("stop.natijd.titel") {
                 // Bound to the model, not to local @State: the same value is editable from
                 // the menu bar panel, and a private copy here would drift out of sync the
                 // moment it was changed there.
@@ -351,15 +348,15 @@ struct SettingsView: View {
                 // "+" reaches it, so 1440 is a perfectly ordinary value — and it rendered
                 // into a 0...23 stepper as a value outside its own range, which left the
                 // minutes stepper next to it a silent no-op with no explanation.
-                LabeledContent("Automatisch uit na") {
+                LabeledContent("stop.uitna") {
                     HStack(spacing: 16) {
                         Stepper(value: hoursBinding, in: 0...24) {
-                            Text("\(model.autoOffHoursPart) uur")
+                            Text(L10n.t("stop.uren", model.autoOffHoursPart))
                                 .monospacedDigit()
                                 .frame(width: 56, alignment: .leading)
                         }
                         Stepper(value: minutesBinding, in: 0...59, step: 5) {
-                            Text("\(model.autoOffMinutesPart) min")
+                            Text(L10n.t("stop.minuten", model.autoOffMinutesPart))
                                 .monospacedDigit()
                                 .frame(width: 56, alignment: .leading)
                         }
@@ -370,7 +367,7 @@ struct SettingsView: View {
                 }
 
                 HStack(spacing: 6) {
-                    Text("Veelgebruikt:").font(.caption).foregroundStyle(.secondary)
+                    Text("stop.veelgebruikt").font(.caption).foregroundStyle(.secondary)
                     ForEach(presets, id: \.self) { total in
                         Button(label(forMinutes: total)) { model.setAutoOff(minutes: total) }
                             .controlSize(.small)
@@ -383,8 +380,8 @@ struct SettingsView: View {
                     .fixedSize(horizontal: false, vertical: true)
             }
 
-            Section("Bij een bijna lege accu") {
-                LabeledContent("Stoppen onder") {
+            Section("stop.accu.titel") {
+                LabeledContent("stop.accu.onder") {
                     HStack {
                         Slider(
                             value: Binding(
@@ -396,28 +393,19 @@ struct SettingsView: View {
                         Text("\(batteryFloor)%").monospacedDigit().frame(width: 50, alignment: .trailing)
                     }
                 }
-                Text("Werk je zonder lader, dan mag de Mac weer slapen zodra de accu onder deze "
-                     + "stand komt. Zonder die grens loopt de accu met de klep dicht gewoon "
-                     + "helemaal leeg. Er wordt hierbij niet om je wachtwoord gevraagd.")
+                Text("stop.accu.uitleg")
                     .font(.caption).foregroundStyle(.secondary)
                     .fixedSize(horizontal: false, vertical: true)
             }
 
-            Section("Als de Mac te warm wordt") {
-                Text("Dit gaat vanzelf en is niet uit te zetten. Wordt de Mac kritiek warm, dan "
-                     + "stopt Dopamine Code onmiddellijk, zodat macOS zelf weer kan ingrijpen. "
-                     + "Bij \"hoog\" krijg je alleen een waarschuwing.")
+            Section("stop.warm.titel") {
+                Text("stop.warm.uitleg")
                     .font(.caption).foregroundStyle(.secondary)
                     .fixedSize(horizontal: false, vertical: true)
             }
 
-            Section("Waarom je deze drie niet kunt uitzetten") {
-                Text("Om de Mac wakker te houden met de klep dicht moet Dopamine Code één "
-                     + "systeeminstelling omzetten: de slaapblokkade (SleepDisabled). Diezelfde "
-                     + "instelling zet ook de noodrem van macOS uit — de automatische slaap bij "
-                     + "een bijna lege accu en bij oververhitting. De tijdslimiet, de accugrens "
-                     + "en de temperatuurbewaking hierboven nemen die taak over. Daarom horen ze "
-                     + "er altijd bij.")
+            Section("stop.waarom.titel") {
+                Text("stop.waarom.uitleg")
                     .font(.caption).foregroundStyle(.secondary)
                     .fixedSize(horizontal: false, vertical: true)
             }
@@ -451,14 +439,11 @@ struct SettingsView: View {
     }
 
     private var durationExplanation: String {
-        var text = "Vergeet je het uit te zetten, dan mag de Mac na "
-            + label(forMinutes: model.autoOffMinutes)
-            + " vanzelf weer slapen. De teller loopt vanaf het moment dat je aanzette, niet "
-            + "vanaf deze wijziging — korter zetten haalt het einde dus naar voren."
+        var text = L10n.t("stop.uitleg.duur", label(forMinutes: model.autoOffMinutes))
         if let deadline = model.deadline {
             let clock = DateFormatter()
             clock.dateFormat = "HH:mm"
-            text += " Nu loopt hij tot " + clock.string(from: deadline) + "."
+            text += L10n.t("stop.uitleg.tot", clock.string(from: deadline))
         }
         return text
     }
@@ -472,14 +457,14 @@ struct SettingsView: View {
     /// dat iemand dat nog verwacht. De knop zit daarom in het menubalk-paneel.
     private var triggers: some View {
         Form {
-            Section("Op vaste tijden") {
-                Toggle("Aanzetten volgens een schema", isOn: $scheduleEnabled)
+            Section("aan.schema.titel") {
+                Toggle("aan.schema.toggle", isOn: $scheduleEnabled)
                     .onChange(of: scheduleEnabled) { value in
                         Prefs.scheduleEnabled = value
                         model.scheduleSettingsChanged()
                     }
 
-                LabeledContent("Dagen") {
+                LabeledContent("aan.schema.dagen") {
                     HStack(spacing: 3) {
                         // Op maandag beginnen, niet op zondag: zo lezen we hier een week.
                         ForEach([2, 3, 4, 5, 6, 7, 1], id: \.self) { dag in
@@ -491,9 +476,9 @@ struct SettingsView: View {
                 }
                 .disabled(!scheduleEnabled)
 
-                DatePicker("Van", selection: startBinding, displayedComponents: .hourAndMinute)
+                DatePicker("aan.schema.van", selection: startBinding, displayedComponents: .hourAndMinute)
                     .disabled(!scheduleEnabled)
-                DatePicker("Tot", selection: endBinding, displayedComponents: .hourAndMinute)
+                DatePicker("aan.schema.tot", selection: endBinding, displayedComponents: .hourAndMinute)
                     .disabled(!scheduleEnabled)
 
                 Text(scheduleExplanation)
@@ -501,9 +486,9 @@ struct SettingsView: View {
                     .fixedSize(horizontal: false, vertical: true)
             }
 
-            Section("Als een app gaat draaien") {
+            Section("aan.app.titel") {
                 if appTriggers.isEmpty {
-                    Text("Nog geen apps gekozen.")
+                    Text("aan.app.geen")
                         .font(.caption).foregroundStyle(.secondary)
                 } else {
                     ForEach(appTriggers, id: \.self) { bundleID in
@@ -513,7 +498,7 @@ struct SettingsView: View {
                                 .font(.system(.caption2, design: .monospaced))
                                 .foregroundStyle(.secondary)
                             Spacer()
-                            Button("Verwijderen") {
+                            Button("aan.app.verwijderen") {
                                 model.removeAppTrigger(bundleID: bundleID)
                                 appTriggers = Prefs.appTriggerBundleIDs
                             }
@@ -524,7 +509,7 @@ struct SettingsView: View {
 
                 Menu("App toevoegen…") {
                     if addableApps.isEmpty {
-                        Text("Geen draaiende apps gevonden")
+                        Text("aan.app.geendraaiend")
                     } else {
                         ForEach(addableApps) { item in
                             Button(item.naam) {
@@ -537,35 +522,19 @@ struct SettingsView: View {
                 }
                 .frame(width: 200)
 
-                Text("De lijst toont wat er nu draait; wat je kiest wordt op naam bewaard en "
-                     + "geldt ook voor de volgende keer. Het wakker houden gaat aan zodra zo'n "
-                     + "app start — draait hij al op het moment dat je hem kiest, dan gebeurt er "
-                     + "niets tot hij opnieuw start. De sessie stopt weer zodra die app klaar "
-                     + "is, langs precies dezelfde weg als \"dopamine on --until-exit\".")
+                Text("aan.app.uitleg")
                     .font(.caption).foregroundStyle(.secondary)
                     .fixedSize(horizontal: false, vertical: true)
             }
 
-            Section("Zodra je de klep dichtdoet") {
-                Text("Dit staat in het menubalk-paneel en niet hier, want het geldt één keer: "
-                     + "je klikt \"Aanzetten zodra ik de klep dichtdoe\", je klapt dicht, en het "
-                     + "wakker houden gaat aan. Doe je het niet, dan vervalt het na vijf minuten "
-                     + "vanzelf en zegt de app dat ook. Het overleeft met opzet geen herstart: "
-                     + "iets dat klaarstaat en pas uren later afgaat verwacht niemand nog.")
+            Section("aan.klep.titel") {
+                Text("aan.klep.uitleg")
                     .font(.caption).foregroundStyle(.secondary)
                     .fixedSize(horizontal: false, vertical: true)
             }
 
-            Section("Wat er hoe dan ook omheen blijft zitten") {
-                Text("Alles wat hier vanzelf aangaat loopt langs precies dezelfde weg als de "
-                     + "schakelaar: dezelfde tijdslimiet, dezelfde accugrens en dezelfde "
-                     + "temperatuurbewaking. Kan er op dat moment niet veilig aangezet worden — "
-                     + "de accu is te leeg, de Mac is te warm, of de wachtwoordvrijstelling is "
-                     + "weg — dan gebeurt er niets, en krijg je daar een melding van. Een schema "
-                     + "loopt nooit langer dan de tijdslimiet: staat die op 4 uur en het venster "
-                     + "tot 18:00, dan stopt het om 13:00 en niet om 18:00. En binnen één venster "
-                     + "gaat het schema hooguit één keer aan, ook als er iets tussendoor stopte — "
-                     + "anders zou het schema terugzetten wat een vangnet net had laten vallen.")
+            Section("aan.omheen.titel") {
+                Text("aan.omheen.uitleg")
                     .font(.caption).foregroundStyle(.secondary)
                     .fixedSize(horizontal: false, vertical: true)
             }
@@ -635,16 +604,13 @@ struct SettingsView: View {
                                      startMinuut: scheduleStartMinute,
                                      eindMinuut: scheduleEndMinute)
         if let probleem = venster.probleem {
-            return "Dit schema kan nooit afgaan: \(probleem). Zolang dat zo is gebeurt er niets."
+            return L10n.t("aan.schema.kannooit", probleem)
         }
-        var text = "Het wakker houden gaat dan vanzelf aan: \(venster.omschrijving)."
+        var text = L10n.t("aan.schema.gaataan", venster.omschrijving)
         if venster.loopOverMiddernacht {
-            text += " Dit venster loopt over middernacht heen; de dag hoort bij het begin, dus "
-                + "een venster dat vrijdagavond begint loopt zaterdagochtend af."
+            text += L10n.t("aan.schema.middernacht")
         }
-        text += " Sliep de Mac toen het venster openging, dan gaat het alsnog aan zodra hij "
-            + "wakker is. Zet je het handmatig uit binnen het venster, dan blijft het uit tot "
-            + "het volgende venster."
+        text += L10n.t("aan.schema.staart")
         return text
     }
 
