@@ -238,7 +238,25 @@ report() {
     printf '  Opdrachtregel    niet gevonden (bouw met ./build.sh)\n'
   fi
 
-  printf '  Handtekening     %s\n' "$(codesign -dvv '/Applications/Dopamine Code.app' 2>&1 | grep '^Authority' | head -1 | cut -d= -f2-)"
+  # Een ad-hoc handtekening heeft geen Authority-regel. Zonder terugval bleef hier een leeg
+  # veld staan, en dat leest als "niet ondertekend" terwijl er wel degelijk een zegel op zit —
+  # alleen zonder certificaat. Zeg dan wát het is, inclusief het gevolg dat ertoe doet.
+  #
+  # De uitvoer wordt één keer opgehaald en daarna met `case` doorzocht, niet met `grep -q` in
+  # een pijp. Dat is geen stijlkwestie: `grep -q` stopt bij de eerste match en sluit de pijp,
+  # de schrijver ervoor krijgt SIGPIPE en eindigt op 141, en met `set -o pipefail` (regel 20)
+  # is dát de uitkomst van de hele pijp. De test las een ad-hoc bundel daardoor als "onbekend".
+  local cs ondertekening
+  cs="$(codesign -dvv '/Applications/Dopamine Code.app' 2>&1)"
+  ondertekening="$(printf '%s\n' "$cs" | grep '^Authority' | head -1 | cut -d= -f2-)"
+  if [ -z "$ondertekening" ]; then
+    case "$cs" in
+      *"Signature=adhoc"*)
+        ondertekening="ad-hoc (geen certificaat; identiteit is de cdhash en verandert bij elke herbouw)" ;;
+      *) ondertekening="onbekend" ;;
+    esac
+  fi
+  printf '  Handtekening     %s\n' "$ondertekening"
   printf '  Andere wakers    %s\n' "$(pmset -g | grep 'sleep prevented by' | sed 's/.*prevented by //; s/)//' || echo geen)"
 
   # Anything else in sudoers.d is a second passwordless writer to the same global flag.
