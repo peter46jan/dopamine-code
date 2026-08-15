@@ -58,6 +58,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate, UNUserNotificationCent
         UNUserNotificationCenter.current().delegate = self
         watchForSettingsClose()
         AppModel.shared.start()
+        // Kijkt of "start bij inloggen" nog is wat de gebruiker ooit koos. Hier en niet in
+        // SettingsView: die corrigeert alleen de schakelaar op het scherm, en dat gebeurt
+        // pas als je dat venster opent — terwijl het gat juist zichtbaar wordt bij het
+        // inloggen, wanneer er niemand naar Instellingen kijkt.
+        LaunchAtLogin.reconcile()
         // Na `AppModel.shared.start()`, en dat is geen willekeurige volgorde: het wakker
         // houden en zijn vangnetten mogen niet wachten op een netwerkverzoek dat vijftien
         // seconden kan hangen. De updatecontrole is het minst dringende dat deze app doet.

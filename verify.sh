@@ -897,6 +897,54 @@ SWIFT
   fi
 }
 
+# De voorkeur "start bij inloggen" en wat het systeem werkelijk doet, horen hetzelfde te
+# zeggen. Lopen ze uiteen, dan merk je dat pas bij het volgende inloggen — als de app er niet
+# is. `LaunchAtLogin.reconcile()` trekt ze bij elke start gelijk; dit controleert of dat werkt.
+test_login_item() {
+  section "11. Start bij inloggen: zegt de voorkeur hetzelfde als het systeem?"
+
+  local wens systeem hoe
+  wens="$(defaults read "$APP_DOMAIN" launchAtLogin 2>/dev/null || echo 0)"
+
+  systeem=0; hoe="niets"
+  if [ -f "$HOME/Library/LaunchAgents/$APP_DOMAIN.agent.plist" ]; then
+    systeem=1; hoe="LaunchAgent"
+  fi
+  # De app-vermelding in de background-task-database. Alleen het blok met ONZE bundle-id, en
+  # alleen als de dispositie 'enabled' zegt: een vermelding die de gebruiker in
+  # Systeeminstellingen heeft uitgezet blijft staan, maar telt niet als ingeschakeld.
+  #
+  # Regel voor regel, niet blok-voor-blok met een opgespaarde string: in awk ankert `$` op
+  # het einde van de hele string en niet van een regel, dus een patroon met `$` tegen een
+  # meerregelig blok matcht nooit. Dat kostte deze controle eerst een test die niet kón
+  # slagen. De vergelijking is bovendien een exacte string en geen regex — het bundle-id
+  # zit vol punten, en die zijn in een regex geen punten.
+  if sfltool dumpbtm 2>/dev/null | awk -v id="$APP_DOMAIN" '
+        /^ #[0-9]+:/ { disp = 0; zelfde = 0 }
+        /Disposition:.*enabled/ { disp = 1 }
+        {
+          regel = $0
+          sub(/^[[:space:]]+/, "", regel)
+          if (regel == "Bundle Identifier: " id) zelfde = 1
+          if (disp && zelfde) gevonden = 1
+        }
+        END { exit gevonden ? 0 : 1 }'; then
+    systeem=1; [ "$hoe" = "niets" ] && hoe="SMAppService"
+  fi
+
+  if [ "$wens" = "1" ] && [ "$systeem" = "1" ]; then
+    pass "Beide aan (via $hoe)."
+  elif [ "$wens" != "1" ] && [ "$systeem" = "0" ]; then
+    pass "Beide uit."
+  elif [ -z "$(app_pids)" ]; then
+    # Zonder draaiende app heeft reconcile() nog niet kunnen lopen; dan is dit geen fout
+    # maar een nog niet uitgevoerde reparatie.
+    skip "Voorkeur zegt '$wens', systeem zegt '$systeem' — de app draait niet, dus reconcile() heeft nog niet gelopen."
+  else
+    fail "Voorkeur zegt '$wens' maar het systeem zegt '$systeem' ($hoe), terwijl de app draait. LaunchAtLogin.reconcile() had dit gelijk moeten trekken."
+  fi
+}
+
 case "${1:-}" in
   --report)  report; exit 0 ;;
   # Niet in de standaardronde: de kop bovenaan belooft dat die niets kapotmaakt.
@@ -910,6 +958,7 @@ case "${1:-}" in
   # Losse ronde: deze drie hebben geen wachtwoord nodig en geen draaiende sessie, dus ze
   # zijn bruikbaar als snelle controle na een wijziging aan de updatecontrole.
   --update)  test_update_check ;;
+  --login)   test_login_item ;;
   *)
     report
     test_includedir
@@ -921,6 +970,7 @@ case "${1:-}" in
     test_watchdog_purity
     test_display
     test_update_check
+    test_login_item
     ;;
 esac
 

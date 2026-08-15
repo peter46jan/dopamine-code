@@ -92,6 +92,52 @@ enum LaunchAtLogin {
         }
     }
 
+    /// Trekt de opgeslagen wens en wat het systeem werkelijk doet weer gelijk.
+    ///
+    /// Die twee lopen uit elkaar zonder dat iemand iets fout doet. Een hernoeming van het
+    /// bundle-ID laat de oude registratie achter terwijl de nieuwe ontbreekt; macOS laat een
+    /// registratie vallen als de handtekening verandert. In beide gevallen zegt de voorkeur
+    /// "aan" en gebeurt er niets — en dat merk je pas bij de volgende keer inloggen, als de
+    /// app er niet is. Dat is te laat en het verklaart zichzelf niet.
+    ///
+    /// Repareert met opzet maar één kant op:
+    ///
+    /// * **Voorkeur aan, systeem uit** — een wens die niet is uitgekomen. Opnieuw registreren.
+    /// * **Systeem aan, voorkeur uit** — vrijwel altijd iemand die het met de hand aanzette in
+    ///   Systeeminstellingen. Uitschakelen zou dat overrulen, dus hier wint het systeem en
+    ///   wordt de voorkeur bijgetrokken.
+    ///
+    /// Mislukt het herstellen, dan gaat de voorkeur uit. Niet uit gemakzucht: `enable()` geeft
+    /// een fout terug wanneer de gebruiker het in Systeeminstellingen heeft geweigerd, en dat
+    /// is een besluit en geen storing. De voorkeur volgt dat besluit, zodat de app het niet
+    /// elke start opnieuw probeert.
+    static func reconcile() {
+        let systeem = isEnabled
+        let wens = Prefs.launchAtLogin
+        guard systeem != wens else { return }
+
+        guard wens else {
+            EventLog.shared.info(
+                "Start bij inloggen staat aan bij het systeem maar uit in de voorkeuren; "
+                + "voorkeur bijgetrokken naar aan.")
+            Prefs.launchAtLogin = true
+            return
+        }
+
+        EventLog.shared.warn(
+            "Start bij inloggen staat aan in de voorkeuren maar is bij het systeem niet "
+            + "geregistreerd. Opnieuw registreren.")
+        switch enable() {
+        case .success(let mechanism):
+            EventLog.shared.info("Start bij inloggen hersteld via \(mechanism.rawValue).")
+        case .failure(let error):
+            Prefs.launchAtLogin = false
+            EventLog.shared.warn(
+                "Herstellen mislukte; voorkeur op uit gezet zodat dit niet elke start "
+                + "opnieuw gebeurt: \(error.localizedDescription)")
+        }
+    }
+
     static func disable() {
         try? SMAppService.mainApp.unregister()
         guard FileManager.default.fileExists(atPath: plistURL.path) else {
