@@ -35,9 +35,9 @@ rechtenescalatie, niet web.
 | Bouw | `./build.sh`, kale `swiftc`. Geen Xcode-project, geen SwiftPM-manifest |
 | Afhankelijkheden | **Nul externe.** Alleen systeemframeworks: AppKit, SwiftUI, Foundation, Combine, IOKit, IOKit.ps, Network, ServiceManagement, CoreGraphics, UserNotifications, Carbon.HIToolbox, Darwin, Cocoa |
 | Package manager | Geen. Geen `package.json`, geen `Package.swift`, geen lockfile |
-| Ondertekening | `Apple Development: <naam> (<team-id>)`, hardened runtime (`--options runtime`), `--timestamp` |
+| Ondertekening | Ad-hoc; de identiteit is de cdhash. Ten tijde van de audit was dit een `Apple Development`-certificaat met hardened runtime — zie de noot hieronder |
 | Distributie | Geen binaire distributie. Iedereen bouwt zelf uit de bron, op zijn eigen Mac |
-| Repo | `peter46jan/dopamine-code`, privé, GitHub |
+| Repo | `peter46jan/dopamine-code`, publiek, GitHub |
 
 Het ontbreken van externe afhankelijkheden haalt de hele categorie toeleveringsketen
 grotendeels weg: er is geen `npm audit`-oppervlak, geen postinstall-script, geen
@@ -169,10 +169,18 @@ Geen pakketten, dus de keten is: broncode → `swiftc` → `codesign` → `/Appl
 - Ondertekening met een echte Developer-identiteit, niet ad-hoc. Bij terugval op ad-hoc
   waarschuwt `build.sh`.
 - Geen CI. Geen branch protection gecontroleerd. Deploy is `./build.sh --install` met de hand.
-- Repo is privé; push gaat via SSH als `peter46jan`. Hij heeft op 15 augustus 2026 kort
-  publiek gestaan en is daarna weer dichtgezet — nul forks, dus er is geen kopie blijven
-  hangen. De broncode is niettemin ooit leesbaar geweest, en het dreigingsmodel hier is een
-  lokaal proces en geen lezer van de broncode, dus voor de bevindingen maakt dat niets uit.
+- Repo is publiek sinds 15 augustus 2026; push gaat via SSH als `peter46jan`. Ten tijde van
+  de audit was hij privé. Voor de bevindingen maakt dat niets uit — het dreigingsmodel is een
+  lokaal proces en geen lezer van de broncode — maar wie de audit overdoet moet weten dat de
+  aanvaller de bron nu gewoon kan lezen.
+- **De ondertekening is sinds de audit veranderd van een `Apple Development`-certificaat naar
+  ad-hoc.** Dat raakt één bevinding rechtstreeks: de identiteitscontrole van de wachter
+  (`RestartGuard.bundleIdentityProblem`) toetst de bundel op schijf aan de designated
+  requirement van de dráaiende binary. Bij een certificaat is dat een identiteitseis die een
+  herbouw overleeft; bij ad-hoc is het een cdhash-eis die dat niet doet. De controle blijft
+  even streng — een vreemde bundel wordt nog steeds geweigerd — maar hij weigert voortaan ook
+  een nieuwere build van de app zelf, tot die build ook draait. `build.sh --install` bouwt en
+  herstart in één handeling, dus die twee blijven in de pas.
 
 ## Wat ik niet kan zien
 

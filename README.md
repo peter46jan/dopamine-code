@@ -72,11 +72,10 @@ regel onderin het menu. Meer doet hij niet: er wordt niets gedownload en niets
 geïnstalleerd. Bijwerken blijft dat ene commando dat jij zelf draait, in de map waar je de
 bron hebt staan.
 
-> **Staat nu stil.** De repo is privé, en de updatecontrole vraagt anoniem op wat de
-> nieuwste release is — dat geeft op een privé-repo een 404. De app gaat daar netjes mee om
-> (hij logt het en toont niets), maar zolang dit zo is levert de controle nooit iets op.
-> Zet je de repo weer open, dan werkt hij vanaf dat moment vanzelf. Wil je hem tot die tijd
-> niet elke dag voor niets laten proberen: **Instellingen → Bijwerken** uit.
+> **Werkt pas na de eerste release.** `releases/latest` geeft een 404 zolang er nog geen
+> gepubliceerde release is — een concept telt niet mee. De app gaat daar netjes mee om (hij
+> logt het en toont niets), maar tot dat moment levert de controle niets op. Zie
+> [Een versie uitbrengen](#een-versie-uitbrengen).
 
 Dat is een keuze, geen tekortkoming. Een app die zichzelf vervangt heeft een kanaal nodig
 waarlangs code van buiten binnenkomt — en deze app heeft een wachtwoordloze route naar
@@ -124,7 +123,7 @@ De sudoers-route is veilig op deze Mac. Gemeten, niet aangenomen:
 | `profiles status -type enrollment` | `Enrolled via DEP: No` · `MDM enrollment: No` |
 | `/Library/Managed Preferences/` | bestaat niet |
 | `/var/db/ConfigurationProfiles/Settings` | alleen `com.apple.mdm.depnag.plist` (geen profiel) |
-| Jamf / Intune agent | afwezig — Company Portal.app staat er los, zonder inschrijving |
+| Jamf / Intune agent | afwezig — er staat wel een los MDM-hulpprogramma, maar zonder inschrijving |
 | `/etc/sudoers.d/` | bestaat, leeg, `root:wheel 0755`, niet beheerd |
 | Account | lid van `admin` |
 
@@ -807,3 +806,16 @@ een knop om hem te herstellen. Uitzetten kan niet, net als bij de temperatuurbew
 
 Het logboek staat in `~/Library/Logs/Dopamine Code/dopamine-code.log` en roteert vanzelf boven een
 megabyte.
+
+---
+
+## Licentie
+
+[MIT](LICENSE). Gebruiken, aanpassen en verspreiden mag, met of zonder wijzigingen, ook
+commercieel. De enige voorwaarde is dat de licentietekst meegaat.
+
+Zonder garantie, en dat is hier meer dan een formaliteit: deze app zet een systeeminstelling
+om die de noodrem van macOS uitschakelt — de automatische slaap bij een bijna lege accu en
+bij oververhitting. De drie vangnetten nemen die taak over, maar ze zijn op één Mac getest.
+Lees [Waarom je deze drie niet kunt uitzetten](#waarom-je-deze-drie-niet-kunt-uitzetten) en
+[SECURITY-AUDIT.md](SECURITY-AUDIT.md) voordat je hem op een machine zet waar het ertoe doet.
