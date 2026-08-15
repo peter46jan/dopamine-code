@@ -72,3 +72,62 @@
 /* --- Menu : barre inférieure --- */
 "menu.voet.instellingen" = "Réglages…";
 "menu.voet.stop" = "Quitter";
+
+/* --- Kop van het menu: status en resterende tijd --- */
+"kop.uit" = "Le maintien en éveil est désactivé";
+"kop.aan" = "Le Mac reste éveillé";
+"kop.resterend.uren" = "s'arrête tout seul dans %1$d h %2$d min";
+"kop.resterend.minuten" = "s'arrête tout seul dans %d min";
+"kop.resterend.bijna" = "s'arrête tout seul dans moins d'une minute";
+"kop.zondersessie" = "le Mac est maintenu éveillé sans que rien ne tourne — rien n'y mettra fin tout seul";
+"kop.gebonden" = "s'arrête aussi dès que %@ a terminé";
+
+/* --- Duur, zoals hij op de Duur-rij en in de kop staat --- */
+"duur.minuten" = "%d min";
+"duur.uur.een" = "1 heure";
+"duur.uur.meer" = "%d heures";
+"duur.uurmin" = "%1$d h %2$d min";
+
+/* --- Hoe een sessie begonnen is --- */
+"trigger.schakelaar" = "activé avec l'interrupteur";
+"trigger.cli" = "activé depuis la ligne de commande";
+"trigger.kleparming" = "activé parce que vous avez rabattu l'écran";
+"trigger.app" = "activé parce que %@ s'est lancé";
+"trigger.schema" = "activé par la planification (%@)";
+"trigger.sneltoets" = "activé avec le raccourci";
+
+/* --- Wat er tijdens een sessie met slot en scherm gebeurt --- */
+"gedrag.slot.klep" = "se verrouille à la fermeture de l'écran";
+"gedrag.slot.meteen" = "se verrouille immédiatement";
+"gedrag.slot.nooit" = "ne se verrouille pas";
+"gedrag.scherm.klep" = "écran éteint à la fermeture de l'écran";
+"gedrag.scherm.meteen" = "écran éteint immédiatement";
+"gedrag.scherm.aan" = "l'écran reste allumé";
+
+/* --- De wachtwoordvrijstelling --- */
+"grant.actief" = "Dispense de mot de passe active";
+"grant.ontbreekt" = "Dispense de mot de passe absente";
+"grant.kapot" = "La dispense de mot de passe ne fonctionne pas : %@";
+
+/* --- De ondertitel in de kop: accu, klep, netwerk, temperatuur --- */
+"sub.lader" = "secteur";
+"sub.klepdicht" = "écran rabattu";
+"sub.klepopen" = "écran ouvert";
+"sub.verbonden" = "connecté";
+"sub.geenverbinding" = "pas de connexion";
+"sub.temperatuur" = "température %@";
+
+/* --- Temperatuur --- */
+"warmte.normaal" = "normale";
+"warmte.licht" = "légèrement élevée";
+"warmte.hoog" = "élevée";
+"warmte.kritiek" = "critique";
+
+/* --- Als de Mac tóch geslapen heeft --- */
+"slaap.beschrijving" = "le Mac a dormi %1$@, à partir d'environ %2$@";
+"slaap.seconden" = "%d secondes";
+"slaap.minuut.een" = "1 minute";
+"slaap.minuut.meer" = "%d minutes";
+"slaap.uur.een" = "1 heure";
+"slaap.uur.meer" = "%d heures";
+"slaap.uurmin" = "%1$d h %2$d min";

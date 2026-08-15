@@ -72,3 +72,62 @@
 /* --- Menü: untere Leiste --- */
 "menu.voet.instellingen" = "Einstellungen…";
 "menu.voet.stop" = "Beenden";
+
+/* --- Kop van het menu: status en resterende tijd --- */
+"kop.uit" = "Wachhalten ist aus";
+"kop.aan" = "Der Mac bleibt wach";
+"kop.resterend.uren" = "endet von selbst in %1$d Std. %2$d Min.";
+"kop.resterend.minuten" = "endet von selbst in %d Min.";
+"kop.resterend.bijna" = "endet von selbst innerhalb einer Minute";
+"kop.zondersessie" = "der Mac wird wach gehalten, ohne dass etwas läuft — nichts beendet das von selbst";
+"kop.gebonden" = "endet auch, sobald %@ fertig ist";
+
+/* --- Duur, zoals hij op de Duur-rij en in de kop staat --- */
+"duur.minuten" = "%d Min.";
+"duur.uur.een" = "1 Stunde";
+"duur.uur.meer" = "%d Stunden";
+"duur.uurmin" = "%1$d Std. %2$d Min.";
+
+/* --- Hoe een sessie begonnen is --- */
+"trigger.schakelaar" = "mit dem Schalter eingeschaltet";
+"trigger.cli" = "über die Befehlszeile eingeschaltet";
+"trigger.kleparming" = "eingeschaltet, weil du den Deckel geschlossen hast";
+"trigger.app" = "eingeschaltet, weil %@ gestartet ist";
+"trigger.schema" = "vom Zeitplan eingeschaltet (%@)";
+"trigger.sneltoets" = "mit dem Kurzbefehl eingeschaltet";
+
+/* --- Wat er tijdens een sessie met slot en scherm gebeurt --- */
+"gedrag.slot.klep" = "sperrt beim Schließen des Deckels";
+"gedrag.slot.meteen" = "sperrt sofort";
+"gedrag.slot.nooit" = "sperrt nicht";
+"gedrag.scherm.klep" = "Bildschirm aus beim Schließen des Deckels";
+"gedrag.scherm.meteen" = "Bildschirm sofort aus";
+"gedrag.scherm.aan" = "Bildschirm bleibt an";
+
+/* --- De wachtwoordvrijstelling --- */
+"grant.actief" = "Passwortfreistellung aktiv";
+"grant.ontbreekt" = "Passwortfreistellung fehlt";
+"grant.kapot" = "Passwortfreistellung funktioniert nicht: %@";
+
+/* --- De ondertitel in de kop: accu, klep, netwerk, temperatuur --- */
+"sub.lader" = "Netzteil";
+"sub.klepdicht" = "Deckel zu";
+"sub.klepopen" = "Deckel offen";
+"sub.verbonden" = "verbunden";
+"sub.geenverbinding" = "keine Verbindung";
+"sub.temperatuur" = "Temperatur %@";
+
+/* --- Temperatuur --- */
+"warmte.normaal" = "normal";
+"warmte.licht" = "leicht erhöht";
+"warmte.hoog" = "hoch";
+"warmte.kritiek" = "kritisch";
+
+/* --- Als de Mac tóch geslapen heeft --- */
+"slaap.beschrijving" = "der Mac hat %1$@ geschlafen, ab etwa %2$@";
+"slaap.seconden" = "%d Sekunden";
+"slaap.minuut.een" = "1 Minute";
+"slaap.minuut.meer" = "%d Minuten";
+"slaap.uur.een" = "1 Stunde";
+"slaap.uur.meer" = "%d Stunden";
+"slaap.uurmin" = "%1$d Std. %2$d Min.";

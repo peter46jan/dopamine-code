@@ -41,19 +41,21 @@ final class SleepWatch {
         func describe() -> String {
             let clock = DateFormatter()
             clock.dateFormat = "HH:mm:ss"
-            return "de Mac heeft \(Self.length(seconds)) geslapen, vanaf ongeveer \(clock.string(from: began))"
+            return L10n.t("slaap.beschrijving", Self.length(seconds), clock.string(from: began))
         }
 
         /// Bucket on the seconds, not on the rounded minutes. Rounding first made 45 seconds
         /// come out as "1 minuten" — wrong bucket and wrong grammar, in a sentence that goes
         /// straight into a red panel in the menu.
         private static func length(_ seconds: Double) -> String {
-            if seconds < 60 { return "\(Int(seconds.rounded())) seconden" }
+            if seconds < 60 { return L10n.t("slaap.seconden", Int(seconds.rounded())) }
             let minutes = Int((seconds / 60).rounded())
-            if minutes < 60 { return minutes == 1 ? "1 minuut" : "\(minutes) minuten" }
+            if minutes < 60 {
+                return minutes == 1 ? L10n.t("slaap.minuut.een") : L10n.t("slaap.minuut.meer", minutes)
+            }
             let h = minutes / 60, m = minutes % 60
-            if m == 0 { return h == 1 ? "1 uur" : "\(h) uur" }
-            return "\(h) u \(m) m"
+            if m == 0 { return h == 1 ? L10n.t("slaap.uur.een") : L10n.t("slaap.uur.meer", h) }
+            return L10n.t("slaap.uurmin", h, m)
         }
     }
 

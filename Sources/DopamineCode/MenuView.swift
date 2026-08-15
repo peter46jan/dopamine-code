@@ -80,16 +80,16 @@ struct MenuView: View {
     private var subtitle: String {
         var parts: [String] = []
         if let battery = model.battery {
-            parts.append("\(battery.percent)%\(battery.onAC ? " · lader" : "")")
+            parts.append("\(battery.percent)%" + (battery.onAC ? " · " + L10n.t("sub.lader") : ""))
         }
-        parts.append(model.lidClosed ? "klep dicht" : "klep open")
+        parts.append(L10n.t(model.lidClosed ? "sub.klepdicht" : "sub.klepopen"))
         // Only while a session is running. Outside one nothing observes the network at all,
         // and `online` simply holds its last value — so this line cheerfully reported
         // "verbonden" with the wifi switched off, which is worse than saying nothing.
         if model.networkWatched {
-            parts.append(model.online ? "verbonden" : "geen verbinding")
+            parts.append(L10n.t(model.online ? "sub.verbonden" : "sub.geenverbinding"))
         }
-        if model.thermal != .nominal { parts.append("temperatuur \(model.thermal.label)") }
+        if model.thermal != .nominal { parts.append(L10n.t("sub.temperatuur", model.thermal.label)) }
         return parts.joined(separator: " · ")
     }
 

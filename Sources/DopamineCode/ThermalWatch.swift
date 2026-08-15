@@ -30,10 +30,10 @@ final class ThermalWatch {
 
         var label: String {
             switch self {
-            case .nominal: return "normaal"
-            case .fair: return "licht verhoogd"
-            case .serious: return "hoog"
-            case .critical: return "kritiek"
+            case .nominal: return L10n.t("warmte.normaal")
+            case .fair: return L10n.t("warmte.licht")
+            case .serious: return L10n.t("warmte.hoog")
+            case .critical: return L10n.t("warmte.kritiek")
             }
         }
     }

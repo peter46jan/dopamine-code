@@ -1002,6 +1002,33 @@ test_translations() {
     fi
   done
 
+  # Dezelfde invulwaarden in elke taal.
+  #
+  # `String(format:)` leest de opmaakaanduidingen uit de vertaalde zin, niet uit het
+  # Nederlands. Staat er in het Frans één %d minder dan er waarden worden meegegeven, dan
+  # verdwijnt die waarde stil; staat er één méér, dan leest Foundation een argument dat niet
+  # bestaat — en dat is geen typefout maar een crash bij een gebruiker die je taal niet
+  # spreekt. Vergelijken dus, per sleutel, en niet vertrouwen op zorgvuldigheid.
+  local afwijkend=""
+  for taal in en de fr; do
+    bestand="$PROJECT_DIR/Resources/$taal.lproj/Localizable.strings"
+    [ -f "$bestand" ] || continue
+    while IFS= read -r sleutel; do
+      [ -n "$sleutel" ] || continue
+      local bron_spec taal_spec
+      # Alleen de aanduidingen, gesorteerd: de vólgorde mag per taal verschillen (daar zijn
+      # %1$@ en %2$@ voor), de verzameling niet.
+      bron_spec="$(grep -F "\"$sleutel\" = " "$bron" | grep -oE '%[0-9]+\$[@df]|%[@df]' | sort | tr '\n' ' ')"
+      taal_spec="$(grep -F "\"$sleutel\" = " "$bestand" | grep -oE '%[0-9]+\$[@df]|%[@df]' | sort | tr '\n' ' ')"
+      [ "$bron_spec" = "$taal_spec" ] || afwijkend="$afwijkend $taal:$sleutel(nl='${bron_spec% }' $taal='${taal_spec% }')"
+    done <<< "$nl_keys"
+  done
+  if [ -n "${afwijkend// /}" ]; then
+    fail "Invulwaarden komen niet overeen:$afwijkend"
+  else
+    pass "Elke sleutel heeft in alle talen dezelfde invulwaarden."
+  fi
+
   # En andersom: gebruikt de code sleutels die nergens gedefinieerd zijn? Dat levert een knop
   # op waar letterlijk "menu.voet.stop" in staat.
   #

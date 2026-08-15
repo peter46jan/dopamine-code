@@ -276,8 +276,8 @@ final class AppModel: ObservableObject {
 
     var statusText: String {
         switch status {
-        case .off: return "Wakker houden staat uit"
-        case .on: return "De Mac blijft wakker"
+        case .off: return L10n.t("kop.uit")
+        case .on: return L10n.t("kop.aan")
         case .error(let message): return message
         }
     }
@@ -289,9 +289,9 @@ final class AppModel: ObservableObject {
         let seconds = max(0, Int(deadline.timeIntervalSince(now)))
         let hours = seconds / 3600
         let minutes = (seconds % 3600) / 60
-        if hours > 0 { return "stopt vanzelf over \(hours) u \(minutes) min" }
-        if minutes > 0 { return "stopt vanzelf over \(minutes) min" }
-        return "stopt vanzelf binnen een minuut"
+        if hours > 0 { return L10n.t("kop.resterend.uren", hours, minutes) }
+        if minutes > 0 { return L10n.t("kop.resterend.minuten", minutes) }
+        return L10n.t("kop.resterend.bijna")
     }
 
     /// The configured duration, in minutes.
@@ -329,15 +329,18 @@ final class AppModel: ObservableObject {
     var safetyNetLine: String? {
         if let remaining = remainingText { return remaining }
         if kernelFlag == true && !intendedOn {
-            return "de Mac wordt wakker gehouden zonder dat er iets loopt — niets stopt dat vanzelf"
+            return L10n.t("kop.zondersessie")
         }
         return nil
     }
 
     static func durationText(_ total: Int) -> String {
         let h = total / 60, m = total % 60
-        if h == 0 { return "\(m) min" }
-        return m == 0 ? "\(h) uur" : "\(h) u \(m) min"
+        if h == 0 { return L10n.t("duur.minuten", m) }
+        // Enkelvoud apart: "1 uur" is in het Nederlands hetzelfde woord als "2 uur", maar in
+        // het Engels, Duits en Frans niet. Eén sleutel met %d zou daar "1 hours" opleveren.
+        if m == 0 { return h == 1 ? L10n.t("duur.uur.een") : L10n.t("duur.uur.meer", h) }
+        return L10n.t("duur.uurmin", h, m)
     }
 
     /// The wall-clock time the current session would end, for the menu.
@@ -354,7 +357,7 @@ final class AppModel: ObservableObject {
     /// laat slapen, en zijn derde tak (vlag aan zonder sessie) mag niet verwateren.
     var bindingLine: String? {
         guard intendedOn, let binding else { return nil }
-        return "stopt ook zodra \(binding.identity.label) klaar is"
+        return L10n.t("kop.gebonden", binding.identity.label)
     }
 
     /// Hoe de lopende sessie begonnen is, voor het paneel.
@@ -509,23 +512,23 @@ final class AppModel: ObservableObject {
     var behaviourSummary: String {
         var parts: [String] = []
         switch Prefs.lockMoment {
-        case .lidClose: parts.append("gaat op slot bij klep dicht")
-        case .activate: parts.append("gaat meteen op slot")
-        case .never: parts.append("gaat niet op slot")
+        case .lidClose: parts.append(L10n.t("gedrag.slot.klep"))
+        case .activate: parts.append(L10n.t("gedrag.slot.meteen"))
+        case .never: parts.append(L10n.t("gedrag.slot.nooit"))
         }
         switch Prefs.displayOffMoment {
-        case .lidClose: parts.append("scherm uit bij klep dicht")
-        case .activate: parts.append("scherm meteen uit")
-        case .never: parts.append("scherm blijft aan")
+        case .lidClose: parts.append(L10n.t("gedrag.scherm.klep"))
+        case .activate: parts.append(L10n.t("gedrag.scherm.meteen"))
+        case .never: parts.append(L10n.t("gedrag.scherm.aan"))
         }
         return parts.joined(separator: " · ")
     }
 
     var grantText: String {
         switch grantStatus {
-        case .granted: return "Wachtwoordvrijstelling actief"
-        case .missing: return "Wachtwoordvrijstelling ontbreekt"
-        case .present(let why): return "Wachtwoordvrijstelling werkt niet: \(why)"
+        case .granted: return L10n.t("grant.actief")
+        case .missing: return L10n.t("grant.ontbreekt")
+        case .present(let why): return L10n.t("grant.kapot", why)
         }
     }
 

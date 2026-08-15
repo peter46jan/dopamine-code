@@ -25,12 +25,12 @@ enum SessionTrigger: Equatable {
     /// ook los een zin, en dat is precies hoe het paneel hem gebruikt.
     var zin: String {
         switch self {
-        case .schakelaar: return "met de schakelaar aangezet"
-        case .cli: return "vanaf de opdrachtregel aangezet"
-        case .klepArming: return "aangezet doordat je de klep dichtdeed"
-        case .app(_, let naam): return "aangezet doordat \(naam) ging draaien"
-        case .schema(let omschrijving): return "aangezet door het schema (\(omschrijving))"
-        case .sneltoets: return "met de sneltoets aangezet"
+        case .schakelaar: return L10n.t("trigger.schakelaar")
+        case .cli: return L10n.t("trigger.cli")
+        case .klepArming: return L10n.t("trigger.kleparming")
+        case .app(_, let naam): return L10n.t("trigger.app", naam)
+        case .schema(let omschrijving): return L10n.t("trigger.schema", omschrijving)
+        case .sneltoets: return L10n.t("trigger.sneltoets")
         }
     }
 
