@@ -1,13 +1,13 @@
 # Security-audit — Dopamine Code
 
-> **Opgelost 14 augustus 2026 (commit `c1f3d0b`).** De twee KWETSBAAR-bevindingen
+> **Opgelost 14 augustus 2026 (commit `9f349de`).** De twee KWETSBAAR-bevindingen
 > (`f855c2d2` en `a03b4a9e`, met hun ketens) zijn gerepareerd en geïnstalleerd. Beide probes
 > in `audit/tests/` slaan nu om van rood naar groen; de wachter haalde de echte app na een
 > `kill -9` gewoon terug (61 s), dus de identiteitscontrole weigert wél een nepbundel maar
 > niet de legitieme app. De losse bevindingen hieronder staan in hun oorspronkelijke staat
 > beschreven; deze banner is de resolutie.
 
-*Lokale rechtenescalatie-audit, macOS. Uitgevoerd 14 augustus 2026 tegen commit `10cfa16`
+*Lokale rechtenescalatie-audit, macOS. Uitgevoerd 14 augustus 2026 tegen commit `f06f768`
 op <machine> (macOS 26.5.2, M5). Dreigingsmodel: wat kan iets dat al als de
 gebruiker draait — een gedownloade app, een script — via deze app bereiken dat het zonder
 de app niet kon. Zeven subagents, waarvan één falsificatie en één ketening. Read-only op de

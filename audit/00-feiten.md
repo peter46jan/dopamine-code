@@ -1,7 +1,7 @@
 # Feiten — Dopamine Code
 
 *Fase 0 van de diepgaande security-audit. Vastgesteld 14 augustus 2026 tegen commit
-`10cfa16`. Elke subagent leest dit eerst.*
+`f06f768`. Elke subagent leest dit eerst.*
 
 ---
 
