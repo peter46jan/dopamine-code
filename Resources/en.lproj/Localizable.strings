@@ -392,3 +392,11 @@
 "aanleiding.schema" = "the schedule";
 "aanleiding.sneltoets" = "the shortcut";
 "wachter.onleesbaar" = "the bundle at %1$@ could not be read as signed code (%2$d)";
+
+/* --- Instellingen · Taal --- */
+"taal.titel" = "Language";
+"taal.kiezer" = "Language of the app";
+"taal.systeem" = "Follow the system language";
+"taal.uitleg" = "Independent of the language of the rest of your Mac. This writes the same setting as System Settings → Language & Region → Applications, so the two cannot drift apart.";
+"taal.pasnavolgende" = "The new language appears the next time the app starts. Quit it from the menu and open it again.";
+"taal.nuactief" = "Currently active: %@";

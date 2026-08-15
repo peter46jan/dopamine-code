@@ -57,6 +57,12 @@ struct SettingsView: View {
     @State private var syncingLaunchAtLogin = false
     @State private var diagnostics = Diagnostics()
     @State private var updateCheckEnabled = Prefs.updateCheckEnabled
+    /// De gekozen taal, niet de actieve. Die twee lopen na een wijziging uiteen tot de
+    /// volgende start, en juist dat verschil moet de sectie laten zien.
+    @State private var taal = Taal.gekozen
+    /// Wat de keuze was toen dit venster openging. Alleen om te kunnen zien of je hem in deze
+    /// zitting verzet hebt — zie de melding in `taalSection`.
+    @State private var taalBijOpenen = Taal.gekozen
 
     @ObservedObject private var updates = UpdateCheck.shared
 
@@ -192,6 +198,8 @@ struct SettingsView: View {
                 }
             }
 
+            taalSection
+
             updateSection
         }
         .formStyle(.grouped)
@@ -203,6 +211,44 @@ struct SettingsView: View {
             if actual != launchAtLogin {
                 syncingLaunchAtLogin = true
                 launchAtLogin = actual
+            }
+        }
+    }
+
+    // MARK: - Taal
+
+    /// De taalkiezer. Zie `Taal` voor waarom er geen herstartknop bij zit.
+    ///
+    /// De regel "nog niet actief" verschijnt alleen als de keuze en de werkelijkheid uiteen
+    /// lopen. Hem altijd tonen zou hem tot behang maken, precies op het moment dat hij ertoe
+    /// doet; hem nooit tonen laat je denken dat er niets gebeurd is toen je koos.
+    private var taalSection: some View {
+        Section("taal.titel") {
+            Picker("taal.kiezer", selection: $taal) {
+                ForEach(Taal.allCases) { t in Text(t.naam).tag(t) }
+            }
+            .onChange(of: taal) { Taal.kies($0) }
+
+            Text("taal.uitleg")
+                .font(.caption).foregroundStyle(.secondary)
+                .fixedSize(horizontal: false, vertical: true)
+
+            // Twee gevallen, want er valt niet één regel van te maken.
+            //
+            // Bij een vaste taal is wat er na de herstart draait precies die taal, dus dan is
+            // vergelijken met wat er nú draait genoeg — ook als je de keuze vorige week maakte
+            // en sindsdien niet herstart hebt.
+            //
+            // Bij "systeemtaal volgen" is dat niet te zeggen zonder te herstarten: de bundel
+            // onderhandelt dan met de systeemvolgorde en valt bij geen enkele treffer terug op
+            // het Nederlands, en die uitkomst is van buitenaf niet betrouwbaar na te rekenen
+            // (zie `Taal`). Dus dan alleen melden wat zeker is: dat je hem zojuist verzet hebt.
+            if taal == .systeem ? (taal != taalBijOpenen) : (taal != Taal.actief) {
+                Label(L10n.t("taal.pasnavolgende"), systemImage: "arrow.clockwise")
+                    .font(.caption).foregroundStyle(.orange)
+                    .fixedSize(horizontal: false, vertical: true)
+                Text(L10n.t("taal.nuactief", Taal.actief.naam))
+                    .font(.caption2).foregroundStyle(.secondary)
             }
         }
     }

@@ -393,3 +393,11 @@
 "aanleiding.schema" = "la planification";
 "aanleiding.sneltoets" = "le raccourci";
 "wachter.onleesbaar" = "le bundle à %1$@ n'a pas pu être lu comme du code signé (%2$d)";
+
+/* --- Instellingen · Taal --- */
+"taal.titel" = "Langue";
+"taal.kiezer" = "Langue de l'app";
+"taal.systeem" = "Suivre la langue du système";
+"taal.uitleg" = "Indépendant de la langue du reste de votre Mac. Ceci écrit le même réglage que Réglages Système → Langue et région → Applications, les deux ne peuvent donc pas diverger.";
+"taal.pasnavolgende" = "La nouvelle langue apparaîtra au prochain démarrage de l'app. Quittez-la depuis le menu et rouvrez-la.";
+"taal.nuactief" = "Actuellement active : %@";

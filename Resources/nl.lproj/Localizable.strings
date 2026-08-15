@@ -397,3 +397,11 @@
 "aanleiding.schema" = "het schema";
 "aanleiding.sneltoets" = "de sneltoets";
 "wachter.onleesbaar" = "de bundel op %1$@ kon niet als ondertekende code gelezen worden (%2$d)";
+
+/* --- Instellingen · Taal --- */
+"taal.titel" = "Taal";
+"taal.kiezer" = "Taal van de app";
+"taal.systeem" = "Systeemtaal volgen";
+"taal.uitleg" = "Los van de taal van de rest van je Mac. Dit schrijft dezelfde instelling als Systeeminstellingen → Taal en regio → Apps, dus de twee kunnen niet uit de pas lopen.";
+"taal.pasnavolgende" = "De nieuwe taal verschijnt bij de volgende start van de app. Stop hem via het menu en open hem opnieuw.";
+"taal.nuactief" = "Nu actief: %@";

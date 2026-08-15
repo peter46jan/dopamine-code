@@ -393,3 +393,11 @@
 "aanleiding.schema" = "den Zeitplan";
 "aanleiding.sneltoets" = "den Kurzbefehl";
 "wachter.onleesbaar" = "das Bundle unter %1$@ konnte nicht als signierter Code gelesen werden (%2$d)";
+
+/* --- Instellingen · Taal --- */
+"taal.titel" = "Sprache";
+"taal.kiezer" = "Sprache der App";
+"taal.systeem" = "Systemsprache folgen";
+"taal.uitleg" = "Unabhängig von der Sprache des restlichen Macs. Das schreibt dieselbe Einstellung wie Systemeinstellungen → Sprache & Region → Apps, die beiden können also nicht auseinanderlaufen.";
+"taal.pasnavolgende" = "Die neue Sprache erscheint beim nächsten Start der App. Beende sie über das Menü und öffne sie erneut.";
+"taal.nuactief" = "Jetzt aktiv: %@";
