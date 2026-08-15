@@ -1,5 +1,832 @@
 # Dopamine Code
 
+**English** · [Nederlands](#nederlands)
+
+*Was called "Wakker" until 11 August 2026. The sudoers rule and the log moved along with it.
+Coming from an older install with a different bundle ID? The app starts with empty settings;
+move them across with `defaults export <old-id> - | defaults import <new-id> -`.*
+
+A macOS menu bar app. Two things: keeping the Mac awake with the lid closed and no external
+display, and switching the keyboard backlight. Built as personal tooling for one Mac, and
+written on that assumption — there is no installer, no automatic update, and it has been
+tested on one machine.
+
+Available in **Dutch, English, German and French**. The app follows the macOS language order
+and falls back to Dutch when none of the four is present. Translations live in
+[Resources/](Resources/), one `.lproj` per language; `./verify.sh --talen` checks that all
+four carry the same keys and the same format placeholders. The log stays Dutch: it is
+diagnostic tooling, and `verify.sh` and the audit read those lines back.
+
+```
+./build.sh --install     build, sign, put in /Applications and launch
+./verify.sh --report     read status, no password and no side effects
+./verify.sh              every check, including the two that need your password
+./verify.sh --after      after a real session: did the Mac sleep anyway?
+./release.sh 1.1.0       cut a release (tag + draft release on GitHub)
+./verify.sh --talen      check that the four languages stay in step
+```
+
+---
+
+## Building it yourself
+
+```bash
+git clone https://github.com/peter46jan/dopamine-code.git
+cd dopamine-code
+./build.sh --install
+```
+
+You need **macOS 14 or newer** and the Xcode command line tools (`xcode-select --install`).
+No Xcode project, no Apple Developer account. There is no Gatekeeper warning either: a
+locally built app never gets a `com.apple.quarantine` attribute, so the right-click-Open
+detour is not needed.
+
+On first use the app asks once for your admin password, for a sudoers rule that makes exactly
+two `pmset` commands passwordless. What that rule does and does not allow is written out in
+[The sudoers rule](#the-sudoers-rule); why it is that narrow, in
+[SECURITY-AUDIT.md](SECURITY-AUDIT.md) (Dutch).
+
+**About signing.** Without an identity `build.sh` signs ad-hoc, and that is the default. It
+works, but an ad-hoc signature is pinned to the cdhash: if you ever grant the app
+Accessibility permission, that grant lapses on every rebuild. If you have an
+`Apple Development` certificate in your keychain, pass its name and the grant survives a
+rebuild:
+
+```bash
+# once, stays out of git
+echo "Apple Development: Your Name (XXXXXXXXXX)" > .signing-identity
+
+# or per build
+DOPAMINE_SIGN_IDENTITY="Apple Development: Your Name (XXXXXXXXXX)" ./build.sh --install
+```
+
+`security find-identity -v -p codesigning` shows which ones you have.
+
+---
+
+## Updating
+
+```bash
+git pull && ./build.sh --install
+```
+
+The app checks once a day whether a newer version exists and puts that in the menu as a quiet
+line. That is all it does: nothing is downloaded and nothing is installed. Updating stays
+that one command you run yourself, in the folder holding the source.
+
+> **Only works after the first release.** `releases/latest` returns a 404 as long as there is
+> no published release — a draft does not count. The app handles that gracefully (it logs it
+> and shows nothing), but until then the check yields nothing. See
+> [Cutting a release](#cutting-a-release).
+
+That is a choice, not a shortcoming. An app that replaces itself needs a channel along which
+code arrives from outside — and this app has a passwordless route to root. Whoever can forge
+that channel gets that route thrown in. As long as GitHub's answer only produces a version
+number and a link that are merely *displayed*, that problem does not exist. `verify.sh`
+enforces it too: [UpdateCheck.swift](Sources/DopamineCode/UpdateCheck.swift) may not contain
+`Process`, `pmset` or any writing file call.
+
+You can switch it off under **Settings → Updates**. That is also where you see which version
+you are running, and the button to check right now.
+
+**Without a certificate, updating costs you one extra step.** An ad-hoc signature is pinned
+to the binary's cdhash, so every rebuild produces a new one — and macOS ties the Accessibility
+grant to it. After updating you have to grant that again. With an `Apple Development`
+certificate this does not apply: the designated requirement stays the same and the grant
+survives a rebuild.
+
+### Cutting a release
+
+For whoever maintains the repository:
+
+```bash
+./release.sh 1.1.0
+```
+
+That tags the current commit, pushes the tag, and turns it into a **draft** release with the
+commit subjects since the previous tag as a starting point for the notes. You read that text
+over and publish it yourself. While it is a draft the update check does not see it —
+`releases/latest` skips drafts and pre-releases. That way you can still retract a wrong tag
+before anyone gets a notification about it.
+
+The version number in the app comes from that tag. `build.sh` stamps `git describe` into the
+bundle's Info.plist on every build; the file in `Resources/` is left alone. Without git or
+without tags it becomes `0.0.0`, and then the app honestly says it does not know which version
+it is instead of claiming you are up to date.
+
+---
+
+## Step 0: the feasibility check, and what it produced
+
+The sudoers route is safe on this Mac. Measured, not assumed:
+
+| Check | Outcome |
+|---|---|
+| `profiles status -type enrollment` | `Enrolled via DEP: No` · `MDM enrollment: No` |
+| `/Library/Managed Preferences/` | does not exist |
+| `/var/db/ConfigurationProfiles/Settings` | only `com.apple.mdm.depnag.plist` (no profile) |
+| Jamf / Intune agent | absent — there is a standalone MDM helper, but no enrolment |
+| `/etc/sudoers.d/` | exists, empty, `root:wheel 0755`, unmanaged |
+| Account | member of `admin` |
+
+Nothing reverts a sudoers rule. The AppleScript fallback from the spec therefore stayed a
+fallback rather than becoming the main route — but it is in there and it genuinely gets used
+the moment `sudo -n` refuses.
+
+---
+
+## What differs from the spec, and why
+
+Five points. All five because measuring produced something other than what the spec assumed.
+
+### 1. Verification goes through IOKit, not `pmset -g`
+
+The spec says: verify after every switch with `pmset -g`. On this Mac `pmset -g` does **not
+print the `SleepDisabled` line at all**:
+
+```
+pmset -g | grep -ci sleepdisabled   →  0
+```
+
+That is not a macOS 26 regression. In Apple's `pmset.m` the print line sits behind an
+`if (key exists in dict)`, and the key only comes into being once `disablesleep` has been set
+at least once. On a fresh machine the output is therefore silent — indistinguishable from
+"0". An app relying on that reports "off" forever. That exact bug is in the Sleepless project
+the spec refers to.
+
+The kernel value itself is always there:
+
+```swift
+IORegistryEntryCreateCFProperty(IOPMrootDomain, "SleepDisabled", …)   // CFBoolean
+```
+
+No root, no entitlement, no signature needed. That is the source of truth now.
+
+### 2. `pmset` returns exit code 0 while the write failed
+
+This is the most dangerous of the five, because it fails silently. On a failed write `pmset`
+writes `'pmset' must be run as root...` or `failed to set the value` to **stdout** and then
+still returns exit code 0. Going by exit code alone therefore produces a green icon on a Mac
+that simply falls asleep.
+
+The app checks three things: exit code, the text output, *and* the kernel flag.
+
+### 3. The kernel takes the value asynchronously
+
+`pmset` does not write the flag itself. It stores a preference and posts a notification;
+`powerd` picks that up and only then sets the IORegistry property. A `read()` straight after
+the command returns the **old** value. Verification is therefore a retry ladder of just over
+five seconds, not a single check.
+
+### 4. The toggle keycode for the keyboard backlight is dead
+
+The spec suggests `CGEvent` with the illumination keycodes. Measured on this M5:
+
+| | |
+|---|---|
+| Physical illumination keys on the function row | **gone** (F1–F12 are brightness, Mission Control, Spotlight, dictation, DND, media) |
+| `NX_KEYTYPE_ILLUMINATION_UP` (21) / `DOWN` (22) | **work**, in steps of exactly 1/16 |
+| `NX_KEYTYPE_ILLUMINATION_TOGGLE` (23) | **does nothing** — posted twice, zero change |
+
+So the OS handler is still alive and independent of the hardware, but precisely the keycode a
+"toggle" would rest on is a no-op.
+
+That is why the main route is `CoreBrightness.KeyboardBrightnessClient`, loaded dynamically.
+It is still not an SMC write — it is Apple's own brightness client. Advantages measuring
+turned up: absolute values instead of steps, a genuine read-back so that on/off can be a real
+toggle, and **zero TCC permission**. The CGEvent route is in there as a fallback, and that one
+does ask for Accessibility.
+
+Two things that can go wrong there, both caught by the app:
+
+- The ambient light sensor pulls a manually set value back within a minute. Every write
+  therefore sets `enableAutoBrightness:false` first.
+- Once the display sleeps, the system suppresses the backlight. Writing succeeds, reading is
+  correct, and nothing lights up. The app reads `isBacklightSuppressedOnKeyboard:` and says so.
+
+### 5. `disablesleep` also switches off the thermal emergency sleep
+
+This was not in the spec and is the most important addition. In `IOPMrootDomain`,
+`SleepDisabled` becomes `userDisabledAllSleep`, which `checkSystemSleepAllowed()` rejects —
+the same check the kernel's **empty-battery** and **overheating** emergency sleeps pass
+through.
+
+So the flag does not just stop the lid. It switches off the kernel's last line of defence
+against overheating. The original rule ("not a closed lid in a bag with a heavy run
+underneath") describes exactly the scenario where that counts.
+
+The spec already covered the battery side with the floor. The thermal side is now the software
+replacement for what the flag took away: `ProcessInfo.thermalState` is watched, `serious`
+produces a warning with sound, and at `critical` the flag comes off immediately — without a
+password prompt, because with the lid closed that would hang behind the login screen.
+
+---
+
+## How it fits together
+
+| File | Responsibility |
+|---|---|
+| `DopamineCodeApp.swift` | `MenuBarExtra` in `.window` style, app delegate, launch and shutdown |
+| `AppModel.swift` | the single source of truth; everything is event-driven, nothing is polled |
+| `SleepFlag.swift` | reading the kernel flag (IOKit) and writing it (pmset), with verification |
+| `SudoersGrant.swift` | installing, checking and removing the rule |
+| `DisplayControl.swift` | `pmset displaysleepnow` |
+| `ScreenLock.swift` | `SACLockScreenImmediate` via `dlopen` |
+| `KeyboardBacklight.swift` | CoreBrightness as the main route, CGEvent as fallback |
+| `ThermalWatch.swift` | replaces the emergency sleep the flag switches off |
+| `PowerSource.swift` | battery and mains power via IOKit notifications |
+| `ClamshellMonitor.swift` | lid state via `kIOPMMessageClamshellStateChange` |
+| `NetworkMonitor.swift` | `NWPathMonitor` plus a captive-portal check |
+| `LaunchAtLogin.swift` | `SMAppService`, with a LaunchAgent as fallback |
+| `RestartGuard.swift` | the watchdog that brings the app back if it disappears with the block on |
+| `EventLog.swift` | the log that lets you judge last night's session tomorrow |
+| `ConflictWatch.swift` | notices that Amphetamine is running too |
+| `ScreenState.swift` | whether the login window is up, so no dialog is ever left stranded behind it |
+| `ProcessWatch.swift` | facts about a process: does it still exist, and is it still the same one |
+| `RunningApps.swift` | the list of running apps for the process picker in the menu |
+| `SessionTrigger.swift` | who started the running session |
+| `LidArm.swift` | the one-shot "turn on when I close the lid", valid for five minutes |
+| `ScheduleWindow.swift` | pure date arithmetic: does this moment fall in the schedule window, and when did it start |
+| `AppTriggerWatch.swift` | notices a chosen app starting or stopping; only nudges the guardian |
+| `GlobalShortcut.swift` | the global shortcut via Carbon; keeps no state and calls one closure |
+| `SessionHistory.swift` | reads the log back into a list of sessions; starts and stops nothing |
+| `ControlServer.swift` | listens on the socket the `dopamine` command line talks to |
+| `Sources/Shared/ControlProtocol.swift` | the message format, compiled into both the app and the CLI |
+| `Sources/dopamine/main.swift` | the command line; switches nothing itself, asks the app to act |
+
+### The central rule: safety nets watch the kernel, not the app
+
+This is the most important design decision, and it came out of a review that found three
+blockers around it.
+
+The first design had the timer, the battery floor and the thermal protection fire on the app's
+own status. That is exactly backwards. If the app thinks it is off but `SleepDisabled` is
+still 1, the Mac still does not sleep — and *that* is the moment those safety nets have to
+work. Every check on `status == .on` stops looking at the moment it matters.
+
+Now there is one guardian that reads the kernel flag every twenty seconds and decides on that:
+
+- Flag is 0 → all quiet, bring status in line.
+- Flag is 1 with no active session → put it back, keep trying.
+- Flag is 1 with a session → check deadline, battery and heat; intervene if one of the three
+  asks for it.
+
+Around that hang event sources (battery notification, thermal notification, lid notification)
+that nudge the guardian immediately instead of waiting for the next tick.
+
+Two consequences of that are visible in the app:
+
+- **Anything needing privileges runs off the main thread.** The admin prompt waits for a human
+  and can take minutes; on the main thread that would freeze every timer in the app, including
+  the guardian itself.
+- **Never a dialog behind the login screen.** Prompts wait until the screen is genuinely
+  unlocked. A modal window nobody can dismiss blocks the main thread, and with it exactly the
+  code that has to put the flag back.
+
+And when the safety nets *cannot* do anything: without the sudoers rule the flag can only be
+put back with a password, and with the lid closed nobody can type one. The app then says so in
+as many words ("Stopping by itself will not work") instead of pretending everything is fine.
+
+### Triggers are statements, not actors
+
+Phase 3 added three ways to start a session without touching the switch: closing the lid, an
+app starting to run, and a schedule. The temptation is to give each of them its own little
+timer that switches on at the right moment. That is exactly the second source of truth the
+guardian exists to prevent — and it does not work anyway: a schedule that switches on by
+itself at 09:00 does not fire if the Mac was asleep at 09:00.
+
+So `ScheduleWindow`, `AppTriggerWatch` and `LidArm` are all three *facts* without a clock of
+their own. There is exactly one place that switches on by itself, and that is
+`AppModel.evaluateTriggers()`, called from the guardian tick in the branch where the kernel
+flag is demonstrably 0. From there, starting goes through the same `startSession` as the
+switch, and therefore through the same battery floor, heat limit, time limit and password
+exemption.
+
+**The stopping side deliberately sits elsewhere**: in `releaseReason()`, which only runs when
+the flag is 1. Phase 3 added no clause to it whatsoever. A schedule window ends via the end
+time (the window end is the ceiling, the time limit always overrides it), and an app trigger
+ends via the process binding from phase 1 — the same clause as `dopamine on --until-exit`.
+Starting is a decision about a quiet machine, stopping is a decision about a running session,
+and one function doing both is a function that can bypass the safety nets.
+
+**Every trigger is an edge, never a level.** That is the most important rule of this phase. A
+schedule saying "it is a weekday, it is 15:29, nothing is running" would put the Mac back
+awake twenty seconds after a battery floor intervened at 15:29 — and then the time limit, the
+battery floor and the heat limit are all three worthless within one tick. So:
+
+- The schedule remembers in `Prefs.scheduleLastArmedWindowStart` which window it has already
+  had. Persistent, because restarting the app inside the same window must not re-arm it
+  either. Every session start inside that window — including a manual one — ticks it off.
+- The app trigger only fires on the not-running → running transition, and whatever was already
+  running when Dopamine Code started counts as seen.
+- The arming is one-shot and is consumed when it fires; otherwise it expires after five
+  minutes.
+
+And because a trigger fires while you are not there, hard rule 3 weighs heavier here: every
+refused automatic start gets a log line *with the name of the trigger* and a notification. A
+successful start gets the log and the panel, but no notification — that one would arrive every
+weekday at 09:00 and dilute the six that do matter.
+
+A few choices that are not self-evident:
+
+- **`.window` and not `.menu`.** Menu style drops non-text views and does not redraw its body
+  on opening (FB13683957), which makes a live countdown impossible.
+- **Lid detection through IOKit.** `NSWorkspace.willSleepNotification` *cannot* fire: the
+  whole point is that the system does not sleep. `screensDidSleepNotification` cannot tell a
+  closed lid from a display switched off by inactivity. `kIOPMMessageClamshellStateChange`
+  fires on the sensor itself. A slow poll runs alongside it, because a missed notification
+  during an overnight run defeats the entire purpose.
+- **Lock before display-off.** The other way round, the panel lights up again while the login
+  window is being built.
+- **Display-off is repeated.** `displaysleepnow` is a request, not a latch. With system sleep
+  off the Mac runs at full power and all sorts of things can switch the panel back on —
+  invisibly, for hours. While the lid is closed the request is repeated every 30 seconds.
+- **Sound, not blinking, as confirmation.** The spec offered both. With the lid closed a
+  blinking keyboard backlight is invisible by definition; sound is not.
+
+### The shortcut, the countdown and the history
+
+Phase 4 added three things to the controls and one to looking back. What they have in common:
+none of the four keeps any state.
+
+**The shortcut** you set yourself under Settings → General; none is shipped. A default
+combination can clash on first launch with something you already use, and you only notice such
+a clash when *that other thing* stops working. It runs through Carbon's `RegisterEventHotKey`
+rather than `NSEvent.addGlobalMonitorForEvents`: the latter reads every keystroke on the whole
+system and therefore asks for Accessibility, and that grant is off on this Mac. Carbon asks for
+nothing and links in automatically — `build.sh` needed no change for it. On the keypress it
+reads `intendedOn` and then goes through exactly the same route as the switch: the same time
+limit, battery floor, temperature watch and password-exemption check. If it does not go
+through you hear the error sound and it is in the log; no notification comes, because you are
+at the keyboard at that moment.
+
+**The countdown** in the menu bar (`3:15`, on by default, switchable under Settings → General)
+works from the same end time the limit itself works from — no timer of its own, no starting
+point of its own. Change the duration mid-session and it moves along. It only appears while a
+session is running: with the block on and no session, nothing is running down, and a number
+there would make a promise nobody keeps. You then only see the lightning icon, which says
+exactly that.
+
+**"Until 18:00"** in the panel is the same setting as the duration, phrased differently. The
+clock time is converted to minutes and goes through the same path as the duration buttons, so
+no second end time is stored anywhere. During a running session the arithmetic starts from the
+moment you switched on and not from now — otherwise a session started at 14:00, for which you
+pick "until 18:00" at 15:00, would stop at 17:00. Ask for more than 24 hours and it is clamped,
+and the panel says which end time you get instead. And because it writes the ordinary duration
+setting, that odd duration stays put for the next session too.
+
+**The history** (Settings → History) is the log, made readable. Nothing is kept separately and
+there is not a single button that switches anything on or off. Sessions whose end is not in
+the log do not disappear but get a line of their own: that is the case where the app fell away
+— exactly what the phase 2 safety net exists for. Whether something is running right now does
+*not* come from that text but from the app itself; the log only knows something about an end
+once the end exists.
+
+---
+
+## The command line (`dopamine`)
+
+A build or an agent knows precisely when it starts and when it is done. Guessing up front how
+long you will be busy is therefore the crudest safety net there is, and the command line
+replaces that guesswork with the real answer:
+
+```
+dopamine on --until-exit $$      # stay awake as long as this script runs
+dopamine on --for 2h             # or just a duration
+dopamine on --until 18:00        # or an end time
+dopamine off
+dopamine status --json
+```
+
+The binary lives in the bundle (`Contents/MacOS/dopamine`) and never ends up on your PATH by
+itself. `build.sh` and Settings → Diagnostics show an `ln -sfn` line to paste — an app that
+puts something in a system directory on its own is doing something nobody asked for.
+
+**It switches nothing itself.** It does not link IOKit, does not know `pmset` and does not
+launch the app: it opens a socket, asks a question and prints the answer. Two processes both
+managing the kernel flag is exactly the conflict this project holds against Amphetamine, and
+that must not sneak in here through a back door. `verify.sh` checks that with `otool -L` and
+with a grep over the sources; the moment anything creeps in there, the test fails.
+
+Every request goes through the same `startSession`/`stopSession` as the switch in the menu
+bar, and therefore through the same refusals: an empty battery, a Mac that is too warm, and a
+missing password exemption. A duration is clamped to between 5 minutes and 24 hours, and the
+answer reports what you actually got. A running session is never extended — a build script
+calling `dopamine on` in a loop would otherwise push the time limit forward indefinitely and
+silently disable the safety net. Shorter is allowed, and so is setting a binding.
+
+Exit codes: `0` succeeded, `1` refused by a safety net, `2` wrong usage, `4` the app is not
+running. With `--json` the output is always valid JSON, including on an error.
+
+### Why a unix socket, and not XPC or a file
+
+- **XPC** requires a Mach service name, and you can only register one through a launchd job.
+  This app does not have one guaranteed — `LaunchAtLogin` writes one at most as a fallback —
+  so XPC would make a LaunchAgent mandatory and thereby settle a choice that has to stay open.
+- **A file as a mailbox** has no reply channel. Then `dopamine on` cannot report *that* the
+  kernel write failed, and a command is left lying around to be executed later in a situation
+  nobody asked for.
+- **A socket** only exists while the app is running. "The app is not running" becomes an
+  ordinary `connect()` error that can be reported honestly (exit code 4) instead of guessed.
+
+The socket lives at `~/Library/Application Support/Dopamine Code/beheer.sock` — measured at 74
+bytes against a limit of 103 in `sun_path`, and the app refuses cleanly with a log line if that
+path ever grows longer. The directory is `0700`, the socket `0600`, and every connection is
+checked against your own uid through `LOCAL_PEERCRED`.
+
+One surprise the test rig produced that is worth mentioning: on BSD — and therefore on macOS —
+**an accepted socket inherits the listener's `O_NONBLOCK`**. Without clearing that flag the
+first `read()` returns EAGAIN straight away, the app reports "connection with no readable
+request" and the CLI sees an EPIPE: everything looks broken while nothing is wrong.
+
+### Stopping when a process finishes
+
+`--until-exit 4711` binds the session to a process id, and in the menu bar panel you can do
+the same for a running app. Alongside the pid, the process's **start time** is stored: a pid
+gets reused, and without that start time a session would stay bound to a pid that now belongs
+to an entirely different program.
+
+The binding is an extra reason to stop, never a reason to keep going. The time limit, the
+battery floor and the temperature watch sit *above* it in `releaseReason()`: a process that
+hangs must not postpone the timer. A process-bound session therefore ends at the process or at
+the timer, whichever comes first.
+
+Two routes notice the process is gone, and that is deliberate: a `DispatchSource` on the exit
+reports it immediately, and the 20-second guardian tick looks in the kernel table itself. The
+poll is the guarantee, the notification only the speed — exactly the construction
+`ClamshellMonitor` already uses. Measured: that notification also fires immediately for a pid
+that does not exist (which is why a non-existent pid is refused at start), and never for a
+process belonging to another user (which is why a log line then records that only the poll is
+watching). If the poll notices an exit the notification did not report, a WARN line is added:
+silent degradation is still degradation.
+
+The binding does not survive a restart of the app and is *not* in the settings. A session
+reviving without the battery, heat and permission checks that started it is precisely what
+this app must not do.
+
+---
+
+## The sudoers rule
+
+Path `/etc/sudoers.d/dopamine-code-disablesleep`, `root:wheel`, `0440`. Contents:
+
+```
+<your-username> ALL=(root) NOPASSWD: /usr/bin/pmset -a disablesleep 1, /usr/bin/pmset -a disablesleep 0
+```
+
+That the arguments are spelled out is the whole point. `man sudoers` on this Mac:
+
+> *If no command line arguments are specified, the user may run the command with any
+> arguments they choose. … If a Cmnd has associated command line arguments, the arguments
+> in the Cmnd must match those given by the user on the command line.*
+
+Without those arguments the rule would passwordlessly allow `pmset restoredefaults`,
+`pmset -a hibernatemode 0` and `pmset schedule wake` — effectively all of power management as
+root. `verify.sh` tests that explicitly: it tries four other pmset commands and fails if even
+one gets through.
+
+Deliberately left out:
+
+- **No `sha256:` digest.** `/usr/bin/pmset` sits on the sealed system volume and cannot be
+  replaced; a digest would only break on every macOS update.
+- **No wildcard** (`disablesleep [01]`). Two literal commands are strictly narrower.
+- **No helper script as the sudo target.** Running a user-writable script as root is the
+  classic sudoers trap. The rule points straight at `pmset`.
+- **`displaysleepnow` is not in it.** That needs no root; adding it would enlarge the
+  privilege surface without solving anything.
+
+### Two things the review found here
+
+**The check on the rule was too credulous.** The app asked `sudo -n -l <command>` and read
+exit code 0 as "rule active". That is wrong: `man sudo` says exit code 0 means *the command is
+permitted*, not that it may run without a password. And `man sudoers` says that a single
+NOPASSWD rule already makes the `sudo -l` command itself passwordless. Together with macOS's
+default `%admin ALL=(ALL) ALL` that means: as soon as any NOPASSWD rule exists anywhere, the
+check succeeds for *every* pmset command — even when the Dopamine Code rule is absent.
+
+The consequence would be: green icon, "rule active", and then no safety net intervenes at all
+when the battery runs down. The app now uses `sudo -n -l -l`, which per `man sudo` shows "the
+matching rule in expanded form", and explicitly demands `!authenticate` or `NOPASSWD` in the
+output. If it does not recognise the format it reports "not working" — erring towards a
+needless warning is infinitely better than erring towards a Mac that never sleeps again.
+
+**The script ran as root from a path you can overwrite.** `grant.sh` lived in
+`Contents/Resources`, and that bundle sits in `/Applications` owned by you. Any process
+running as you could modify that file; you then type your admin password for a dialog saying
+"a sudoers rule for exactly two pmset commands", and something else entirely runs as root.
+Checking the signature beforehand does not fix it — root reopens the path afterwards, so the
+file can be swapped in between.
+
+Now `build.sh` bakes the script text into the binary and the app pipes it to the root shell —
+both the button in Settings and the fallback line for Terminal. There is no path left to
+replace. The readable copy stays in the bundle, because you can inspect it, but it is no
+longer executed as root anywhere: no route runs a file from disk.
+
+That last part was not right first time. A security audit caught that the Terminal fallback
+and the removal line below both still showed `sudo <bundle>/grant.sh` — a user-writable file,
+as root. Both were converted: the fallback pipes the baked-in payload, and removal is now one
+transparent line you can read yourself.
+
+The filename has no dot and does not end in `~`. That is not a matter of taste: sudo skips
+such files **silently** — no error, no log line, just a rule that never works. `grant.sh`
+therefore refuses to install if the name would violate that pattern, checks that
+`/etc/sudoers` reads the directory at all, validates with `visudo -cf` before installing, and
+rolls the rule back if `visudo -c` no longer parses cleanly afterwards.
+
+You remove it with the button under Settings → Diagnostics (which pipes the baked-in payload
+with `--remove`), or by hand — the rule is nothing more than deleting the file, so you can
+read it before you run it:
+
+```
+sudo rm -f /etc/sudoers.d/dopamine-code-disablesleep
+```
+
+---
+
+## Signing
+
+By default the app is signed **ad-hoc**: no certificate, and the identity is the cdhash.
+
+```
+designated => cdhash H"…"
+```
+
+That works and needs nothing from you. The price is that the identity changes on every
+rebuild, which matters in one place: TCC ties the Accessibility grant to the designated
+requirement, so if you ever grant it, that grant lapses on the next build. On this Mac
+Accessibility is off — the brightness route runs through CoreBrightness, which asks for no TCC
+— so in practice the price is zero.
+
+With an `Apple Development` identity from your own keychain you get a requirement that does
+survive a rebuild:
+
+```
+designated => identifier "com.peter46jan.dopaminecode" and anchor apple generic
+              and certificate leaf[subject.CN] = "Apple Development: <name> (<team-id>)"
+```
+
+No `cdhash` there. If the certificate expires the signature stays valid thanks to
+`--timestamp`, and a renewal yields the same CN, so the requirement does not change and the
+grant stays put. Which identity `build.sh` picks is described under
+[Building it yourself](#building-it-yourself).
+
+There is one more place the difference shows: the watchdog checks the bundle on disk against
+the designated requirement of the *running* binary. Under a certificate that is an identity
+requirement; under ad-hoc it is a cdhash requirement, which also refuses a *newer* build of
+the app itself until that build is the one running. `build.sh --install` builds and relaunches
+in one action, so those two stay in step.
+
+Gatekeeper plays no part: a locally built app never gets a `com.apple.quarantine` attribute.
+The right-click-Open ritual from the spec is not needed.
+
+---
+
+## Testing
+
+`./verify.sh` does everything that can be done automatically. Two steps ask something of you:
+your password for the `disablesleep` round trip, and consent for the display-off test (which
+locks your screen, because your system is set to `immediate`).
+
+What the script checks:
+
+1. Does `/etc/sudoers` read the `sudoers.d` directory at all?
+2. Does `sudo pmset -a disablesleep 1` genuinely set the kernel flag to 1 on this M5, and does
+   `AppleClamshellCausesSleep` go to `false` with it? Then neatly back to 0.
+3. Is the rule `root:wheel 0440`, does `visudo -c` parse cleanly, are exactly the two allowed
+   commands passwordless and no other pmset command at all?
+4. Does `pmset displaysleepnow` work without root?
+5. Is `CoreBrightness.KeyboardBrightnessClient` reachable?
+6. Does `SACLockScreenImmediate` exist, and is locking set to `immediate`?
+7. Does the command line stay away from the kernel flag — does no file of `dopamine` touch
+   `pmset`, IOKit or the flag, and is there still exactly one place in the whole source tree
+   that switches the block on?
+8. Does the watchdog stay away from the kernel flag? It runs as the same binary and therefore
+   has the same password exemption within reach; it may only read.
+9. Do the four translations carry the same keys and the same format placeholders, and does
+   every key the code uses exist?
+10. Do the stored "start at login" preference and what the system actually does agree?
+
+Separately, and deliberately not in the standard round because it ends your running session:
+
+```
+./verify.sh --killtest
+```
+
+That kills the app outright during a session and checks whether the watchdog clears the sleep
+block within two minutes. It is the only gap `SIGTERM` does not cover, so it is also the only
+one you cannot demonstrate without actually doing it.
+
+### The scenarios from the spec that can only be done by hand
+
+| Scenario | How you check it |
+|---|---|
+| Lid closed, no external display, awake for hours | Switch "Keep this Mac awake" on, close the lid, let a run go. Then `./verify.sh --after`: every `Clamshell Sleep` in the pmset log is a failure |
+| Display really was off, battery not abnormally drained | Note the battery level before and after; the log contains the timestamp of every `displaysleepnow` |
+| Password on opening the lid | Open the lid; it must ask for a password or Touch ID |
+| Wi-Fi off during a session | Switch Wi-Fi off, wait a bit, switch it on. On opening the lid, "connection was gone for X minutes at HH:MM" appears |
+| Forgot to switch it off | Set the timer in the settings to 5 or 30 minutes, wait it out, check with `./verify.sh --report` that `SleepDisabled false` |
+| Battery below the floor | Temporarily set the floor to, say, 60%, unplug, wait |
+| Sudoers missing or blocked | `sudo rm /etc/sudoers.d/dopamine-code-disablesleep`, then switch: an admin prompt should appear, not silence |
+| Force-quitting the app with the flag on | `./verify.sh --killtest` while "Keep this Mac awake" is on. The app is killed with `kill -9`; the safety net should bring it back within two minutes, after which the block is cleaned up by itself. Without the safety net the flag stays set until you start the app yourself |
+| A clean quit does not provoke a restart | Switch "Keep this Mac awake" off, then quit the app via Quit. Wait two minutes: nothing should come back, and the log names no safety-net line at all |
+| macOS update | Run `./verify.sh` again. The sudoers rule and the permission usually survive an update, but the private symbols from `CoreBrightness` and `login.framework` are exactly what Apple can change unnoticed |
+
+---
+
+## What has not been proven yet
+
+Honestly, because this is exactly the category the spec calls out.
+
+**Setting the flag has by now been proven on this hardware.** Measured there and back with the
+installed sudoers rule:
+
+```
+before:  SleepDisabled=false
+→ sudo -n /usr/bin/pmset -a disablesleep 1   exit code 0
+   kernel followed after 0.25 s
+after:   SleepDisabled=true
+pmset -g now shows:  SleepDisabled  1      ← exactly as the source analysis predicted
+→ sudo -n /usr/bin/pmset -a disablesleep 0
+restored: SleepDisabled=false
+```
+
+And that same test produced unplanned evidence that two safety nets work. From the log:
+
+```
+07:36:00 [WARN] Signaal 15 ontvangen met vlag aan — terugzetten naar 0.
+07:37:43 [INFO] Blijf actief UIT (vlag stond aan zonder actieve sessie).
+```
+
+The first line is the SIGTERM handling that cleared the flag when `build.sh --install` shut
+the app down. The second is the guardian catching the flag I had set outside the app and
+putting it back. Neither was part of the test.
+
+**The lid-closed run has by now been done.** 2026-08-11, 17:58:26 → 19:43:44: one hour and 45
+minutes with the lid closed and no external display. The Mac did not sleep. Three independent
+checks, because the filter in `verify.sh --after` was written that same day and must not judge
+itself:
+
+```
+sysctl kern.waketime  →  17:53:33   last kernel wake, before the session began
+pmset -g log          →  the day's last Sleep/Wake is 17:53:34, nothing after
+                         (831 Assertions lines in the window, zero sleep events)
+negative control      →  the same query does find four Clamshell Sleeps earlier
+                         that day: 14:03:47, 14:22:59, 15:21:41, 17:03:55
+```
+
+The third line is the important one: the method demonstrably sees exactly the failure mode
+being tested for, and does not see it during the session.
+
+So the source chain that predicted this holds: `SleepDisabled` → `userDisabledAllSleep` →
+`checkSystemSleepAllowed()` blocks the `privateSleepSystem(kIOPMSleepReasonClamshell)` that
+this Mac's pmset log demonstrably uses. Longer than 1 h 45 has not been measured; the veto does
+not wear off, but proven is proven up to there.
+
+**`AppleClamshellCausesSleep` is not a gauge.** I first used it as confirmation that the flag
+worked. Measured: it was `Yes` before setting, `Yes` after, and `Yes` after putting it back. It
+follows the lid/desktop-mode policy, not the sleep veto — that sits further along in
+`checkSystemSleepAllowed()`. Both the app and `verify.sh` would have reported a working
+mechanism as broken on that assumption.
+
+**`pmset displaysleepnow` as an ordinary user works.** Executed by the app itself, which runs
+as the logged-in user without root and without an entitlement — log 17:58:27 and 16:40:01,
+both `Displayslaap geforceerd`, which is only logged when both the exit code and the text
+output are clean. The privilege does indeed sit as an entitlement on `pmset`'s binary, not on
+the caller. The sudoers rule does not need widening for it.
+
+**Whether the lid notification fired still cannot be established.** The app reacted to the lid
+closing within the same second at 17:58:26, which fits the notification — but the ten-second
+poll may have coincided, and `ClamshellMonitor.handle()` does not log *which* of the two saw
+the change. While that is so, any statement about it is a guess. (The code note in
+`ClamshellMonitor.swift` says "never seen it fire"; a working document claimed the opposite for
+a while. Neither is substantiated.) If you want to know: have `handle()` log the source and
+close the lid once. Practically it makes no difference — the poll catches it either way, with
+at most ten seconds' delay.
+
+**Whether the lid arming is in time has not been measured — and that is the weak spot of phase
+3.1.** The arming fires as soon as the app sees the lid is closed. With the sleep block still
+at 0 that is a race: macOS starts going to sleep within seconds of the lid closing, and in that
+time the app has to see the lid change, run through `evaluateTriggers()` and have `pmset` set
+the flag. The lid notification therefore nudges the guardian immediately rather than waiting
+for the next tick (`handleLid`), but whether that is enough depends on the question above —
+whether `kIOPMMessageClamshellStateChange` fires on this hardware at all. If it does not, only
+the ten-second poll remains, and by then the Mac is long asleep. The outcome in that case is
+not dangerous but it is disappointing: nothing happens, and after five minutes the app writes
+"the arming has expired" in the log and in the panel. To measure it: arm, close the lid once,
+and look in `~/Library/Logs/Dopamine Code/dopamine-code.log` for "Klep dicht … gewapend" and
+how many seconds later "Wakker houden AAN" follows. The other two triggers do not have this
+problem: they fire while the Mac is plainly awake.
+
+**`SMAppService` on a dev-cert-signed, non-notarised bundle** has not been exercised, because
+that writes to the background task database. The error handling now does distinguish between
+"already registered" (no error), "refused by the user" (do not route around it) and a genuine
+refusal (only then the LaunchAgent). You can check with `sfltool dumpbtm | grep -A12 dopamine`,
+without sudo.
+
+**Amphetamine is still running.** While that is the case it cannot be established which of the
+two is keeping the Mac awake. The app notices and offers to quit Amphetamine. Do that before
+the first real test, otherwise it proves nothing.
+
+**Whether `open` works from a launchd agent with a locked screen and the lid closed has not
+been measured.** That is precisely the case the phase 2 safety net was built for, so as long as
+that is unmeasured, the safety net is only proven for when you are sitting there. A fallback is
+built in: if the app is not back 55 seconds after `open`, the watchdog launches the binary
+directly with `posix_spawn` (in its own session, so launchd does not immediately reap it) and
+writes a WARN line about it. To demonstrate it, use `./verify.sh --killtest`, once with the
+screen unlocked and once with the lid closed and the screen locked. That second run is the only
+real evidence.
+
+**The watchdog round itself has been measured.** Called manually during a running session: 0.4
+seconds, conclusion "the app is running", not a single write, and its own process correctly
+filtered out of `pgrep -x DopamineCode`. That last part is the quietest way this safety net
+would never fire: the watchdog *is* the same binary as the app. With a copy that saw itself as
+the only DopamineCode process, the whole decision chain ran through as well: one confirmation,
+two confirmations, and then the signature check refusing to launch a tampered bundle.
+
+**That launchd genuinely runs a 30-second agent every 30 seconds with the lid closed, the
+screen locked and the Mac on battery, has been measured.** With exactly the plist `RestartGuard`
+writes, in `~/Library/LaunchAgents`: `run interval = 30 seconds`, and three runs in 75 seconds.
+That is the assumption this entire safety net rests on, so it had no business staying
+unmeasured.
+
+One trap found along the way, because the first three measurements did nothing: in the old
+ASCII plist form (`{ "RunAtLoad" = true; }`) there are no booleans and no numbers. `plutil`
+turns those into the strings `"true"` and `"30"`, launchd ignores both keys without saying a
+word, and the agent is then present but never runs. You can see it in `launchctl print`:
+without the `run interval` line there is no timer. The app writes the plist through
+`PropertyListSerialization` from a Swift dictionary, so with real types — checked with
+`plutil -p`.
+
+**That `RegisterEventHotKey` works without Accessibility has been measured; that the shortcut
+also fires while another app is in front has not.** Rebuilt separately with exactly the
+`swiftc` line from `build.sh`: Carbon links in automatically, `InstallEventHandler` returns 0,
+`RegisterEventHotKey` returns 0 and yields a valid reference, without any permission dialog.
+What that does not yet settle is the case that matters — you are in Xcode, you press the
+combination, and Dopamine Code (a menu bar app with no Dock icon) hears it. That can only be
+seen after installing, and that was not allowed while building this phase: a real session was
+running from `/Applications`, and a second instance quits itself immediately. If it turns out
+not to fire, the log says so: `Sneltoets ⌃⌥⌘D staat klaar.` means registration succeeded, and
+then registration is not the problem.
+
+**The menu bar countdown and the two new panels have not been checked visually.** For the same
+reason. What *has* been verified: the image itself (rendered separately — 46 pt wide at `3:15`,
+53 pt at `12:00`, template flag on, countdown legible next to the mark), and the arithmetic
+behind "until 18:00" with five cases, including the one that matters: session started at 14:00,
+"until 18:00" chosen at 15:00, result 18:00. The history parser has been run against this Mac's
+real log: six sessions, of which the 08:59:51 one correctly appears as "no closing line".
+
+---
+
+## If something gets stuck
+
+The flag is system-wide and survives quitting the app and a restart. If it ever hangs:
+
+```
+sudo pmset -a disablesleep 0
+ioreg -r -d 1 -c IOPMrootDomain | grep SleepDisabled     # must be "No"
+```
+
+The app cleans this up itself on every launch, catches `SIGTERM`, `SIGINT` and `SIGHUP`, and
+responds to `willPowerOffNotification`. `SIGKILL` cannot be caught — which is why since phase 2
+there is a watchdog: a LaunchAgent (`com.peter46jan.dopaminecode.watchdog`) that starts the same
+binary with `--vangnet` every 30 seconds. It reads the kernel, checks whether an app is still
+running, and relaunches the app if the block is on with no app. The app then cleans up whatever
+was left hanging when it starts.
+
+The watchdog never writes the flag itself and keeps no session state; it decides on the kernel
+and on process presence. A clean shutdown leaves a marker behind
+(`~/Library/Application Support/Dopamine Code/afsluiting.json`) with the state of the block: if
+it was properly off, the app does not come back. If it was still on, it comes back after two
+minutes anyway — without the app there is no time limit, no battery floor and no temperature
+watch, and that weighs more heavily than "stopped is stopped".
+
+Whether the watchdog is still looking shows in `./verify.sh --report` and under Settings →
+Diagnostics, with a button to repair it. It cannot be switched off, just like the temperature
+watch.
+
+The log lives at `~/Library/Logs/Dopamine Code/dopamine-code.log` and rotates by itself above a
+megabyte.
+
+---
+
+## Licence
+
+[MIT](LICENSE). Use, modify and distribute it, with or without changes, commercially too. The
+only condition is that the licence text travels with it.
+
+No warranty, and here that is more than a formality: this app flips a system setting that
+disables macOS's emergency brake — the automatic sleep on a nearly empty battery and on
+overheating. The three safety nets take that job over, but they have been tested on one Mac.
+Read [Why you cannot switch these three off](#5-disablesleep-also-switches-off-the-thermal-emergency-sleep)
+and [SECURITY-AUDIT.md](SECURITY-AUDIT.md) before putting it on a machine where it matters.
+
+---
+---
+
+# Nederlands
+
+[English](#dopamine-code) · **Nederlands**
+
 *Heette tot 11 augustus 2026 "Wakker". Sudoers-regel en logboek zijn meeverhuisd. Kom je van
 een oudere installatie met een ander bundle-ID, dan begint de app met lege instellingen:
 verhuizen kan met `defaults export <oud-id> - | defaults import <nieuw-id> -`.*
@@ -545,36 +1372,37 @@ sudo rm -f /etc/sudoers.d/dopamine-code-disablesleep
 
 ## Ondertekening
 
-De app wordt ondertekend met een `Apple Development`-identiteit uit je eigen sleutelhanger.
-Dat is geen kosmetiek: TCC koppelt de Toegankelijkheid-toestemming aan de designated
-requirement. Welke identiteit `build.sh` pakt, staat in [Zelf bouwen](#zelf-bouwen) — kort:
-`DOPAMINE_SIGN_IDENTITY`, of een `.signing-identity`-bestand dat buiten git blijft.
+De app wordt standaard **ad-hoc** ondertekend: geen certificaat, en de identiteit is de
+cdhash.
+
+```
+designated => cdhash H"…"
+```
+
+Dat werkt en vraagt niets van je. De prijs is dat de identiteit bij elke herbouw verandert, en
+dat telt op één plek: TCC koppelt de Toegankelijkheid-toestemming aan de designated
+requirement, dus geef je die ooit, dan vervalt hij bij de volgende build. Op deze Mac staat
+Toegankelijkheid uit — de helderheidsroute loopt via CoreBrightness, dat geen TCC vraagt — dus
+in de praktijk is die prijs nul.
+
+Met een `Apple Development`-identiteit uit je eigen sleutelhanger krijg je een requirement die
+een herbouw wél overleeft:
 
 ```
 designated => identifier "com.peter46jan.dopaminecode" and anchor apple generic
               and certificate leaf[subject.CN] = "Apple Development: <naam> (<team-id>)"
 ```
 
-Geen `cdhash`. Dat betekent dat de toestemming een herbouw overleeft — bij ad-hoc
-ondertekenen verandert de cdhash bij elke build en moet je na elke herbouw opnieuw
-toestemming geven. `build.sh` controleert dit en waarschuwt als het ooit terugvalt.
+Daar staat geen `cdhash` in. Verloopt het certificaat, dan blijft de handtekening geldig
+dankzij `--timestamp`, en een vernieuwing levert dezelfde CN op, dus de requirement verandert
+niet en de toestemming blijft staan. Welke identiteit `build.sh` pakt, staat in
+[Zelf bouwen](#zelf-bouwen).
 
-Verloopt het certificaat, dan blijft de handtekening geldig dankzij `--timestamp`. Een
-vernieuwing levert dezelfde CN op, dus de requirement verandert niet en de toestemming
-blijft staan.
-
-**Dit wijkt bewust af van de oorspronkelijke opzet**, die "geen code signing, geen Apple
-Developer-account" zei. De reden: een Apple Development-certificaat kost niets als je al
-een Apple-ID hebt, en zonder handtekening moet je na elke herbouw opnieuw Toegankelijkheid
-toestaan. Zonder kan prima — geef geen identiteit op, of forceer het:
-
-```
-DOPAMINE_SIGN_IDENTITY=none ./build.sh --install
-```
-
-Dan valt `build.sh` terug op ad-hoc en waarschuwt hij dat de toestemming een herbouw niet
-overleeft. Functioneel maakt het voor de hoofdfunctie niets uit — de sudoers-route en
-CoreBrightness hebben geen handtekening nodig.
+Er is nog één plek waar het verschil zichtbaar wordt: de wachter toetst de bundel op schijf aan
+de designated requirement van de dráaiende binary. Bij een certificaat is dat een
+identiteitseis; bij ad-hoc een cdhash-eis, en die weigert ook een níeuwere build van de app
+zelf tot die build ook degene is die draait. `build.sh --install` bouwt en herstart in één
+handeling, dus die twee blijven in de pas.
 
 Gatekeeper speelt geen rol: een lokaal gebouwde app krijgt nooit een
 `com.apple.quarantine`-attribuut. Het rechtsklik-Open-ritueel uit de spec is niet nodig.
@@ -602,6 +1430,10 @@ Wat het script controleert:
    die de blokkade aanzet?
 8. Blijft de wachter van de kernelvlag af? Hij draait als dezelfde binary en heeft dus
    dezelfde wachtwoordvrijstelling binnen handbereik; hij mag uitsluitend lezen.
+9. Hebben de vier vertalingen dezelfde sleutels en dezelfde invulwaarden, en bestaat elke
+   sleutel die de code gebruikt?
+10. Zeggen de opgeslagen voorkeur voor "start bij inloggen" en wat het systeem werkelijk doet
+    hetzelfde?
 
 Los daarvan, en met opzet niet in de standaardronde omdat hij je lopende sessie beëindigt:
 
