@@ -55,7 +55,24 @@ if ! git merge-base --is-ancestor HEAD "origin/$BRANCH" 2>/dev/null; then
 fi
 
 command -v gh >/dev/null 2>&1 || die "gh (de GitHub CLI) is niet geïnstalleerd."
-REPO="$(git remote get-url origin | sed -E 's#.*[:/]([^/]+/[^/]+?)(\.git)?$#\1#')"
+# "owner/repo" uit de remote-URL, met gewone parameteruitbreiding.
+#
+# Niet met `sed -E` en een luie kwantor: `+?` bestaat niet in BSD sed, en dat is de sed die
+# op macOS staat. Dat brak hier op de eerste echte run — de wachtposten hierboven sloegen bij
+# het testen altijd eerder af, dus deze regel was nog nooit uitgevoerd.
+#
+# Werkt voor beide vormen die git teruggeeft:
+#   git@github.com:owner/repo.git
+#   https://github.com/owner/repo(.git)
+REPO_URL="$(git remote get-url origin)"
+REPO_URL="${REPO_URL%.git}"
+REPO_URL="${REPO_URL%/}"
+REPO_NAAM="${REPO_URL##*/}"
+REPO_REST="${REPO_URL%/*}"
+REPO_EIGENAAR="${REPO_REST##*[:/]}"
+REPO="$REPO_EIGENAAR/$REPO_NAAM"
+[ -n "$REPO_NAAM" ] && [ -n "$REPO_EIGENAAR" ] \
+  || die "Kon 'owner/repo' niet uit de remote-URL halen: $(git remote get-url origin)"
 gh repo view "$REPO" >/dev/null 2>&1 \
   || die "gh kan $REPO niet zien. Draait het juiste account? Kijk met 'gh auth status'."
 
