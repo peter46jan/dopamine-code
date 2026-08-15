@@ -58,6 +58,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate, UNUserNotificationCent
         UNUserNotificationCenter.current().delegate = self
         watchForSettingsClose()
         AppModel.shared.start()
+        // Na `AppModel.shared.start()`, en dat is geen willekeurige volgorde: het wakker
+        // houden en zijn vangnetten mogen niet wachten op een netwerkverzoek dat vijftien
+        // seconden kan hangen. De updatecontrole is het minst dringende dat deze app doet.
+        UpdateCheck.shared.start()
     }
 
     /// Zakt terug naar `.accessory` zodra het instellingenvenster sluit.

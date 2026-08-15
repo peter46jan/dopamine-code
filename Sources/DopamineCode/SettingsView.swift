@@ -56,6 +56,9 @@ struct SettingsView: View {
     @State private var launchAtLogin = LaunchAtLogin.isEnabled
     @State private var syncingLaunchAtLogin = false
     @State private var diagnostics = Diagnostics()
+    @State private var updateCheckEnabled = Prefs.updateCheckEnabled
+
+    @ObservedObject private var updates = UpdateCheck.shared
 
     // Zelf aanzetten (fase 3). Lokale kopieën, net als de andere instellingen hierboven:
     // `Prefs` is geen `ObservableObject`, dus een weergave die er rechtstreeks uit leest
@@ -207,6 +210,8 @@ struct SettingsView: View {
                     }
                 }
             }
+
+            updateSection
         }
         .formStyle(.grouped)
         .onAppear {
@@ -218,6 +223,62 @@ struct SettingsView: View {
                 syncingLaunchAtLogin = true
                 launchAtLogin = actual
             }
+        }
+    }
+
+    // MARK: - Bijwerken
+
+    /// Wat de app over versies weet, en de schakelaar om te stoppen met kijken.
+    ///
+    /// Het versienummer staat er niet als opsmuk: zonder dat kun je niet nagaan of het
+    /// bijwerken gelukt is. `DCSourceVersion` staat erbij omdat "1.2.0" niet genoeg zegt
+    /// zodra je zelf commits bovenop een tag hebt staan — dan wil je weten wélke.
+    private var updateSection: some View {
+        Section("Bijwerken") {
+            LabeledContent("Deze versie") {
+                Text(updates.huidige.map(String.init(describing:)) ?? "onbekend")
+                    .foregroundStyle(updates.huidige == nil ? .secondary : .primary)
+            }
+            LabeledContent("Bron") {
+                Text(updates.bron)
+                    .font(.system(.body, design: .monospaced))
+                    .foregroundStyle(.secondary)
+                    .textSelection(.enabled)
+            }
+
+            Toggle("Kijken of er een nieuwere versie is", isOn: $updateCheckEnabled)
+                .onChange(of: updateCheckEnabled) { value in
+                    Prefs.updateCheckEnabled = value
+                }
+            Text("Vraagt hooguit eens per dag bij GitHub op wat de nieuwste versie is. "
+                 + "GitHub ziet daarbij je IP-adres, zoals bij elk bezoek aan een website. "
+                 + "De app downloadt of installeert nooit iets — bijwerken blijft een "
+                 + "commando dat jij zelf draait.")
+                .font(.caption).foregroundStyle(.secondary)
+                .fixedSize(horizontal: false, vertical: true)
+
+            HStack {
+                Button("Nu kijken") { updates.controleerNu() }
+                    .disabled(updates.bezig)
+                if updates.bezig {
+                    ProgressView().controlSize(.small)
+                }
+                Spacer()
+                Text(updateStatusText)
+                    .font(.caption).foregroundStyle(.secondary)
+            }
+        }
+    }
+
+    private var updateStatusText: String {
+        switch updates.toestand {
+        case .beschikbaar(let versie, _): return "Versie \(versie) beschikbaar"
+        case .actueel: return "Je bent bij"
+        case .onbekend:
+            guard let laatst = Prefs.updateLastCheck else { return "Nog niet gekeken" }
+            let f = RelativeDateTimeFormatter()
+            f.locale = Locale(identifier: "nl_NL")
+            return "Laatst gekeken \(f.localizedString(for: laatst, relativeTo: Date()))"
         }
     }
 

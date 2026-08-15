@@ -118,6 +118,42 @@ cp Resources/grant.sh "$APP/Contents/Resources/grant.sh"
 chmod 0755 "$APP/Contents/Resources/grant.sh"
 printf 'APPL????' > "$APP/Contents/PkgInfo"
 
+# --- version ------------------------------------------------------------------
+
+# The version is stamped into the bundle's plist, never into the tracked one. A version
+# that lives in git is a version somebody has to remember to bump, and the one thing worse
+# than no version number is a wrong one.
+#
+# Three values, because they answer different questions:
+#   CFBundleShortVersionString  what you tell people you run  -> 1.2.0
+#   CFBundleVersion             something that always climbs  -> 47
+#   DCSourceVersion             exactly which source this is  -> v1.2.0-3-gabc1234-dirty
+#
+# Built from a tarball with no git, or from a checkout with no tags, the short version
+# stays 0.0.0. That is not a placeholder anyone has to notice: UpdateCheck reads 0.0.0 as
+# "this build does not know what it is" and then refuses to claim you are up to date.
+SHORT_VERSION="0.0.0"
+BUILD_NUMBER="0"
+SOURCE_VERSION="onbekend"
+if git rev-parse --git-dir >/dev/null 2>&1; then
+  SOURCE_VERSION="$(git describe --tags --always --dirty 2>/dev/null || echo onbekend)"
+  BUILD_NUMBER="$(git rev-list --count HEAD 2>/dev/null || echo 0)"
+  if TAG="$(git describe --tags --abbrev=0 2>/dev/null)"; then
+    # Only a bare `1.2.3` or `v1.2.3` counts. A tag like `probe-2026-08` is a real tag and
+    # a useless version, and shipping it as one would have UpdateCheck comparing nonsense.
+    case "${TAG#v}" in
+      *[!0-9.]*|''|*..*|.*|*.) warn "Tag '$TAG' is geen versienummer — versie blijft 0.0.0." ;;
+      *) SHORT_VERSION="${TAG#v}" ;;
+    esac
+  fi
+fi
+
+PB=/usr/libexec/PlistBuddy
+"$PB" -c "Set :CFBundleShortVersionString $SHORT_VERSION" "$APP/Contents/Info.plist"
+"$PB" -c "Set :CFBundleVersion $BUILD_NUMBER" "$APP/Contents/Info.plist"
+"$PB" -c "Add :DCSourceVersion string $SOURCE_VERSION" "$APP/Contents/Info.plist"
+say "Versie: $SHORT_VERSION (build $BUILD_NUMBER, bron $SOURCE_VERSION)"
+
 # --- app icon -----------------------------------------------------------------
 
 # Without an .icns in Resources and CFBundleIconFile in Info.plist, Finder and the Dock

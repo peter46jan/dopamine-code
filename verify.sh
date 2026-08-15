@@ -784,6 +784,119 @@ test_killtest() {
   tail -14 "$HOME/Library/Logs/Dopamine Code/dopamine-code.log" 2>/dev/null | sed 's/^/    /'
 }
 
+# De updatecontrole is het enige waarlangs iets van buiten deze app binnenkomt. Bij een app
+# met een wachtwoordloze root-route is dat de plek om streng op te zijn — niet omdat er nu
+# iets mis is, maar omdat een latere wijziging het stil kan bederven.
+test_update_check() {
+  section "10. Bijwerken: de versievergelijking, de stempeling, en de grens van UpdateCheck"
+
+  # --- 1. De vergelijking -------------------------------------------------------------
+  #
+  # Dit is de enige plek in de updatecontrole waar fout gaan géén storing oplevert maar
+  # stil verkeerd gedrag: "1.9.0 is nieuwer dan 1.10.0" is precies wat je krijgt als iemand
+  # dit ooit vervangt door een string-vergelijking, en dat merk je pas als niemand meer een
+  # update aangeboden krijgt.
+  local src="$PROJECT_DIR/Sources/DopamineCode/Version.swift"
+  if [ ! -f "$src" ]; then
+    fail "Version.swift ontbreekt."
+  else
+    local dir; dir="$(mktemp -d)"
+    cat > "$dir/main.swift" <<'SWIFT'
+import Foundation
+
+var fouten = 0
+func eis(_ voorwaarde: Bool, _ wat: String) {
+    if !voorwaarde { print("FOUT: \(wat)"); fouten += 1 }
+}
+func v(_ s: String) -> Version? { Version(s) }
+
+// Gewone volgorde.
+eis(v("1.0.0")! < v("1.0.1")!, "1.0.0 < 1.0.1")
+eis(v("1.0.0")! < v("1.1.0")!, "1.0.0 < 1.1.0")
+eis(v("1.0.0")! < v("2.0.0")!, "1.0.0 < 2.0.0")
+// Het geval dat een string-vergelijking omgooit.
+eis(v("1.9.0")! < v("1.10.0")!, "1.9.0 < 1.10.0")
+eis(v("2.0.0")! > v("1.99.99")!, "2.0.0 > 1.99.99")
+// Gelijkheid, en de vormen die hetzelfde betekenen.
+eis(v("1.2.3")! == v("1.2.3")!, "1.2.3 == 1.2.3")
+eis(v("v1.2.3")! == v("1.2.3")!, "v-prefix telt niet mee")
+eis(v("1.2")! == v("1.2.0")!, "1.2 == 1.2.0")
+eis(v("1")! == v("1.0.0")!, "1 == 1.0.0")
+eis(!(v("1.2.3")! < v("1.2.3")!), "gelijk is niet kleiner")
+// Alles wat geen versie is, moet nil worden — niet een gok.
+for rommel in ["", "  ", "release-final", "1.2.3-beta", "1.-2.0", "1.2.3.4",
+               "abc", "1..2", ".1.2", "1.2.", "v", "99999999999999999999.0.0"] {
+    eis(v(rommel) == nil, "'\(rommel)' hoort nil te zijn, werd \(String(describing: v(rommel)))")
+}
+print(fouten == 0 ? "OK" : "FOUTEN=\(fouten)")
+exit(fouten == 0 ? 0 : 1)
+SWIFT
+    local build
+    if ! command -v swiftc >/dev/null 2>&1; then
+      # Geen toolchain: de app heeft die niet nodig om te draaien, dus dit is geen fout.
+      skip "swiftc niet gevonden; de versievergelijking is niet getest."
+    elif ! build="$(swiftc -O -o "$dir/probe" "$src" "$dir/main.swift" 2>&1)"; then
+      # Wél een compiler, maar de proef bouwt niet. Dat is een echte fout: hier stil OVER
+      # melden liet de eindregel "alles is in orde" zeggen terwijl er niets getest was.
+      fail "De versieproef compileert niet: $(printf '%s' "$build" | grep error: | head -2 | tr '\n' ' ')"
+    else
+      local uit
+      if uit="$("$dir/probe" 2>&1)"; then
+        pass "Versievergelijking klopt op alle gevallen, inclusief 1.9.0 < 1.10.0."
+      else
+        fail "Versievergelijking deugt niet: $(printf '%s' "$uit" | tr '\n' ' ')"
+      fi
+    fi
+    rm -rf "$dir"
+  fi
+
+  # --- 2. De stempeling ---------------------------------------------------------------
+  #
+  # Een app die de verkeerde versie over zichzelf zegt, biedt updates aan die er niet zijn
+  # of verzwijgt updates die er wel zijn.
+  local app="$PROJECT_DIR/build/Dopamine Code.app"
+  [ -d "$app" ] || app="/Applications/Dopamine Code.app"
+  if [ ! -d "$app" ]; then
+    skip "Geen gebouwde app gevonden; bouw eerst met ./build.sh."
+  else
+    local gestempeld verwacht
+    gestempeld="$(/usr/libexec/PlistBuddy -c 'Print :DCSourceVersion' "$app/Contents/Info.plist" 2>/dev/null || echo ONTBREEKT)"
+    if [ "$gestempeld" = "ONTBREEKT" ]; then
+      fail "De bundel draagt geen DCSourceVersion. Is hij met een oude build.sh gemaakt?"
+    else
+      verwacht="$(cd "$PROJECT_DIR" && git describe --tags --always --dirty 2>/dev/null || echo onbekend)"
+      if [ "$gestempeld" = "$verwacht" ]; then
+        pass "Bundelversie komt overeen met de bron ($gestempeld)."
+      else
+        # Geen fout: na een commit klopt een eerder gebouwde bundel gewoon niet meer.
+        skip "Bundel zegt '$gestempeld', de bron staat op '$verwacht' — opnieuw bouwen om gelijk te trekken."
+      fi
+    fi
+  fi
+
+  # --- 3. De grens --------------------------------------------------------------------
+  #
+  # UpdateCheck leest een antwoord van een server die deze app niet beheert. Zolang daar
+  # niets anders uitkomt dan twee strings om te tónen, kan een gekaapt of vervalst antwoord
+  # niets. Die eigenschap is de hele veiligheidsredenering, dus hij hoort afgedwongen te
+  # worden en niet alleen opgeschreven in het commentaar erboven.
+  local f="$PROJECT_DIR/Sources/DopamineCode/UpdateCheck.swift"
+  if [ ! -f "$f" ]; then
+    fail "UpdateCheck.swift ontbreekt."
+  else
+    # Commentaar eraf: juist dit bestand legt in zijn commentaar uit wat het NIET doet.
+    local verboden
+    verboden="$(sed 's://.*::' "$f" \
+      | grep -oE 'Process\(|NSTask|posix_spawn|\bsystem\(|dlopen|SleepFlag|pmset|disablesleep|createFile|write\(to:|removeItem|copyItem|\.launch\(\)' \
+      | sort -u | tr '\n' ' ')"
+    if [ -n "${verboden// /}" ]; then
+      fail "UpdateCheck.swift raakt dingen aan die buiten zijn grens vallen: $verboden"
+    else
+      pass "UpdateCheck.swift voert niets uit, schrijft niets weg en raakt de vlag niet aan."
+    fi
+  fi
+}
+
 case "${1:-}" in
   --report)  report; exit 0 ;;
   # Niet in de standaardronde: de kop bovenaan belooft dat die niets kapotmaakt.
@@ -794,6 +907,9 @@ case "${1:-}" in
   --after)   test_afterwards "${2:-}" "${3:-}"; exit "$FAILURES" ;;
   --flag)    test_flag_roundtrip ;;
   --display) test_display ;;
+  # Losse ronde: deze drie hebben geen wachtwoord nodig en geen draaiende sessie, dus ze
+  # zijn bruikbaar als snelle controle na een wijziging aan de updatecontrole.
+  --update)  test_update_check ;;
   *)
     report
     test_includedir
@@ -804,6 +920,7 @@ case "${1:-}" in
     test_cli_purity
     test_watchdog_purity
     test_display
+    test_update_check
     ;;
 esac
 

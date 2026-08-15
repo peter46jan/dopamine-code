@@ -33,6 +33,11 @@ enum Prefs {
         static let showCountdownInMenuBar = "showCountdownInMenuBar"
         static let shortcutKeyCode = "shortcutKeyCode"
         static let shortcutModifiers = "shortcutModifiers"
+        // Bijwerken.
+        static let updateCheckEnabled = "updateCheckEnabled"
+        static let updateLastCheck = "updateLastCheck"
+        static let updateLastSeenVersion = "updateLastSeenVersion"
+        static let updateNoticeShown = "updateNoticeShown"
     }
 
     /// The app used to be called Wakker, under a different bundle identifier. UserDefaults
@@ -100,6 +105,13 @@ enum Prefs {
             // de hele reden dat dit punt op de roadmap stond. De sneltoets staat er met opzet
             // niet bij — zie `shortcutKeyCode`.
             Key.showCountdownInMenuBar: true,
+            // De updatecontrole staat standaard AAN, en dat is een afweging en geen
+            // vanzelfsprekendheid. Uit is netter tegenover het netwerk, maar in de praktijk
+            // vindt bijna niemand de schakelaar en hoort dus nooit dat er een versie is —
+            // dan kun je de functie net zo goed weglaten. Aan, mét een eenmalige melding bij
+            // de eerste start die zegt dat hij dit doet en waar je hem uitzet.
+            Key.updateCheckEnabled: true,
+            Key.updateNoticeShown: false,
         ])
     }
 
@@ -338,5 +350,33 @@ enum Prefs {
     static var shortcutModifiers: Int {
         get { d.integer(forKey: Key.shortcutModifiers) }
         set { d.set(newValue, forKey: Key.shortcutModifiers) }
+    }
+
+    /// Of de app eens per etmaal bij GitHub mag kijken of er een nieuwere versie is.
+    static var updateCheckEnabled: Bool {
+        get { d.bool(forKey: Key.updateCheckEnabled) }
+        set { d.set(newValue, forKey: Key.updateCheckEnabled) }
+    }
+
+    /// Wanneer er voor het laatst gekeken is — of de poging nu lukte of niet.
+    ///
+    /// Ook een mislukte controle telt mee. Anders zou een Mac die een dag zonder internet
+    /// staat bij elke start opnieuw een verzoek doen dat toch niet aankomt.
+    static var updateLastCheck: Date? {
+        get { d.object(forKey: Key.updateLastCheck) as? Date }
+        set { d.set(newValue, forKey: Key.updateLastCheck) }
+    }
+
+    /// De nieuwste versie die de app al eens gezien heeft. Alleen om te voorkomen dat
+    /// dezelfde vondst elke dag opnieuw in het logboek belandt.
+    static var updateLastSeenVersion: String? {
+        get { d.string(forKey: Key.updateLastSeenVersion) }
+        set { d.set(newValue, forKey: Key.updateLastSeenVersion) }
+    }
+
+    /// Of de eenmalige uitleg over de updatecontrole al getoond is.
+    static var updateNoticeShown: Bool {
+        get { d.bool(forKey: Key.updateNoticeShown) }
+        set { d.set(newValue, forKey: Key.updateNoticeShown) }
     }
 }

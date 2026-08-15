@@ -24,6 +24,13 @@ struct MenuView: View {
     @State private var untilTime = Date()
     @State private var untilExplanation: String?
 
+    @ObservedObject private var updates = UpdateCheck.shared
+
+    /// De eenmalige uitleg dat de app bij GitHub kijkt. Lokaal en niet uit `Prefs` gelezen
+    /// in de body: die body draait elke seconde door de kloktik, en dan zou elke tik een
+    /// UserDefaults-uitlezing zijn voor een vraag die per paneelopening één keer telt.
+    @State private var showUpdateNotice = false
+
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
             header
@@ -36,7 +43,10 @@ struct MenuView: View {
         }
         .padding(14)
         .frame(width: 320)
-        .onAppear { runningApps = RunningApps.list() }
+        .onAppear {
+            runningApps = RunningApps.list()
+            showUpdateNotice = !Prefs.updateNoticeShown
+        }
     }
 
     // MARK: - Header
@@ -510,9 +520,105 @@ struct MenuView: View {
         }
     }
 
+    // MARK: - Bijwerken
+
+    /// Het commando dat je zelf draait om bij te werken.
+    ///
+    /// Zonder pad ervoor, en dat is geen slordigheid. De app weet niet waar jij de bron
+    /// hebt staan — hij draait uit `/Applications` en de kloonmap kan overal zijn. Een
+    /// gegokt pad dat er net naast zit is erger dan geen pad: dan plak je een commando dat
+    /// in de verkeerde map iets anders doet.
+    private static let updateCommand = "git pull && ./build.sh --install"
+
+    /// Eén keer, bij de eerste keer dat het paneel opengaat.
+    ///
+    /// De app doet iets met het netwerk dat de gebruiker niet gevraagd heeft, dus hoort hij
+    /// het te weten vóórdat het opvalt — en niet via een regel in een instellingenvenster
+    /// dat hij misschien nooit opent. Met de uitknop er direct naast, want een mededeling
+    /// zonder keuze is geen mededeling maar een aankondiging.
+    @ViewBuilder
+    private var updateNotice: some View {
+        if showUpdateNotice {
+            VStack(alignment: .leading, spacing: 6) {
+                Label("Deze app kijkt of er updates zijn", systemImage: "info.circle")
+                    .font(.caption)
+                Text("Eens per dag vraagt hij bij GitHub op wat de nieuwste versie is. "
+                     + "Er wordt niets gedownload en niets geïnstalleerd — je ziet alleen "
+                     + "een versienummer. Uitzetten kan in Instellingen → Bijwerken.")
+                    .font(.caption2)
+                    .foregroundStyle(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
+                HStack {
+                    Button("Prima") { dismissUpdateNotice(disable: false) }
+                    Button("Nu uitzetten") { dismissUpdateNotice(disable: true) }
+                }
+                .controlSize(.small)
+            }
+            .padding(8)
+            .background(Color.secondary.opacity(0.10), in: RoundedRectangle(cornerRadius: 6))
+        }
+    }
+
+    private func dismissUpdateNotice(disable: Bool) {
+        if disable { Prefs.updateCheckEnabled = false }
+        Prefs.updateNoticeShown = true
+        showUpdateNotice = false
+    }
+
+    /// Alleen zichtbaar als er werkelijk een nieuwere versie is. Geen "je bent bij"-regel:
+    /// dat is de normale toestand, en die hoeft geen ruimte in een paneel dat over iets
+    /// anders gaat.
+    @ViewBuilder
+    private var updateRow: some View {
+        if case let .beschikbaar(versie, notities) = updates.toestand {
+            VStack(alignment: .leading, spacing: 6) {
+                Label(updates.huidige == nil
+                      ? "Nieuwste versie is \(versie)"
+                      : "Versie \(versie) beschikbaar",
+                      systemImage: "arrow.down.circle")
+                    .font(.caption)
+                Text(updates.huidige == nil
+                     ? "Deze build draagt geen versienummer, dus of dit nieuwer is dan wat "
+                       + "je draait valt hier niet te zeggen. Bijwerken doe je in de map "
+                       + "waar je de bron hebt staan:"
+                     : "Bijwerken doe je zelf, in de map waar je de bron hebt staan:")
+                    .font(.caption2)
+                    .foregroundStyle(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
+                Text(Self.updateCommand)
+                    .font(.system(.caption2, design: .monospaced))
+                    .textSelection(.enabled)
+                    .foregroundStyle(.secondary)
+                HStack {
+                    Button("Kopieer commando") {
+                        NSPasteboard.general.clearContents()
+                        NSPasteboard.general.setString(Self.updateCommand, forType: .string)
+                    }
+                    // Ontbreekt als de URL uit het antwoord de controle in `UpdateCheck`
+                    // niet haalde. Dan blijft het versienummer staan en verdwijnt alleen
+                    // deze knop — zie `veiligeNotitieURL`.
+                    if let notities {
+                        Button("Wat is er nieuw") { NSWorkspace.shared.open(notities) }
+                    }
+                }
+                .controlSize(.small)
+            }
+            .padding(8)
+            .background(Color.accentColor.opacity(0.10), in: RoundedRectangle(cornerRadius: 6))
+        }
+    }
+
     // MARK: - Footer
 
     private var footer: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            updateNotice
+            updateRow
+            footerButtons
+        }
+    }
+
+    private var footerButtons: some View {
         HStack {
             Button("Instellingen…") {
                 // Een accessory-app kan geen venster naar voren halen; even naar `.regular`,

@@ -13,6 +13,7 @@ update, en getest is er op één machine.
 ./verify.sh --report     status lezen, zonder wachtwoord en zonder bijwerkingen
 ./verify.sh              alle controles, inclusief de twee die je wachtwoord nodig hebben
 ./verify.sh --after      na een echte sessie: heeft de Mac tóch geslapen?
+./release.sh 1.1.0       een versie uitbrengen (tag + concept-release op GitHub)
 ```
 
 ---
@@ -49,6 +50,54 @@ DOPAMINE_SIGN_IDENTITY="Apple Development: Jouw Naam (XXXXXXXXXX)" ./build.sh --
 ```
 
 `security find-identity -v -p codesigning` laat zien welke je hebt.
+
+---
+
+## Bijwerken
+
+```bash
+git pull && ./build.sh --install
+```
+
+De app kijkt eens per dag bij GitHub of er een nieuwere versie is en zet dat als een stille
+regel onderin het menu. Meer doet hij niet: er wordt niets gedownload en niets
+geïnstalleerd. Bijwerken blijft dat ene commando dat jij zelf draait, in de map waar je de
+bron hebt staan.
+
+Dat is een keuze, geen tekortkoming. Een app die zichzelf vervangt heeft een kanaal nodig
+waarlangs code van buiten binnenkomt — en deze app heeft een wachtwoordloze route naar
+root. Wie dat kanaal kan vervalsen, krijgt die route erbij. Zolang het antwoord van GitHub
+alleen een versienummer en een link oplevert die getóónd worden, bestaat dat probleem niet.
+`verify.sh` controleert dat ook: [UpdateCheck.swift](Sources/DopamineCode/UpdateCheck.swift)
+mag geen `Process`, geen `pmset` en geen schrijvende bestandsaanroep bevatten.
+
+Uitzetten kan in **Instellingen → Bijwerken**. Daar staat ook welke versie je draait, en de
+knop om meteen te kijken.
+
+**Zonder certificaat kost bijwerken je één handeling extra.** Een ad-hoc handtekening zit
+vast aan de cdhash van de binary, dus elke herbouw levert een nieuwe op — en macOS koppelt
+de Toegankelijkheid-toestemming daaraan. Na het bijwerken moet je die dus opnieuw geven.
+Met een `Apple Development`-certificaat speelt dat niet: dan blijft de designated
+requirement gelijk en overleeft de toestemming een herbouw.
+
+### Een versie uitbrengen
+
+Voor wie de repo beheert:
+
+```bash
+./release.sh 1.1.0
+```
+
+Dat tagt de huidige commit, duwt de tag, en maakt er een **concept**-release van met de
+commits sinds de vorige tag als opzet voor de notities. Je leest die tekst na en publiceert
+zelf. Zolang het een concept is, ziet de updatecontrole in de app hem niet — `releases/latest`
+slaat concepten en pre-releases over. Zo kun je een verkeerde tag nog terugtrekken voordat
+er iemand een melding van krijgt.
+
+Het versienummer in de app komt uit die tag. `build.sh` stempelt bij elke build
+`git describe` in de Info.plist van de bundel; het bestand in `Resources/` blijft ongemoeid.
+Zonder git of zonder tags wordt dat `0.0.0`, en dan zegt de app eerlijk dat hij niet weet
+welke versie hij is in plaats van te beweren dat je bij bent.
 
 ---
 
