@@ -37,7 +37,7 @@ rechtenescalatie, niet web.
 | Package manager | Geen. Geen `package.json`, geen `Package.swift`, geen lockfile |
 | Ondertekening | `Apple Development: <naam> (<team-id>)`, hardened runtime (`--options runtime`), `--timestamp` |
 | Distributie | Geen binaire distributie. Iedereen bouwt zelf uit de bron, op zijn eigen Mac |
-| Repo | `peter46jan/dopamine-code`, publiek, GitHub |
+| Repo | `peter46jan/dopamine-code`, privé, GitHub |
 
 Het ontbreken van externe afhankelijkheden haalt de hele categorie toeleveringsketen
 grotendeels weg: er is geen `npm audit`-oppervlak, geen postinstall-script, geen
@@ -169,10 +169,10 @@ Geen pakketten, dus de keten is: broncode → `swiftc` → `codesign` → `/Appl
 - Ondertekening met een echte Developer-identiteit, niet ad-hoc. Bij terugval op ad-hoc
   waarschuwt `build.sh`.
 - Geen CI. Geen branch protection gecontroleerd. Deploy is `./build.sh --install` met de hand.
-- Repo is publiek; push gaat via SSH als `peter46jan`. Ten tijde van de audit was hij privé —
-  de audit is dus uitgevoerd tegen een boom die niemand anders kon inzien. Dat verandert niets
-  aan de bevindingen (het dreigingsmodel is een lokaal proces, geen lezer van de broncode),
-  maar wie de audit overdoet moet weten dat de aanvaller nu ook de bron heeft.
+- Repo is privé; push gaat via SSH als `peter46jan`. Hij heeft op 15 augustus 2026 kort
+  publiek gestaan en is daarna weer dichtgezet — nul forks, dus er is geen kopie blijven
+  hangen. De broncode is niettemin ooit leesbaar geweest, en het dreigingsmodel hier is een
+  lokaal proces en geen lezer van de broncode, dus voor de bevindingen maakt dat niets uit.
 
 ## Wat ik niet kan zien
 

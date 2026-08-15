@@ -64,6 +64,12 @@ regel onderin het menu. Meer doet hij niet: er wordt niets gedownload en niets
 geïnstalleerd. Bijwerken blijft dat ene commando dat jij zelf draait, in de map waar je de
 bron hebt staan.
 
+> **Staat nu stil.** De repo is privé, en de updatecontrole vraagt anoniem op wat de
+> nieuwste release is — dat geeft op een privé-repo een 404. De app gaat daar netjes mee om
+> (hij logt het en toont niets), maar zolang dit zo is levert de controle nooit iets op.
+> Zet je de repo weer open, dan werkt hij vanaf dat moment vanzelf. Wil je hem tot die tijd
+> niet elke dag voor niets laten proberen: **Instellingen → Bijwerken** uit.
+
 Dat is een keuze, geen tekortkoming. Een app die zichzelf vervangt heeft een kanaal nodig
 waarlangs code van buiten binnenkomt — en deze app heeft een wachtwoordloze route naar
 root. Wie dat kanaal kan vervalsen, krijgt die route erbij. Zolang het antwoord van GitHub
