@@ -963,6 +963,71 @@ test_login_item() {
   fi
 }
 
+# Vier talen die met de hand bijgehouden worden lopen uit de pas. Niet misschien: gegarandeerd,
+# want een nieuwe tekst voeg je toe waar je bezig bent en de andere drie bestanden staan ergens
+# anders. Een ontbrekende sleutel is bovendien niet stil — macOS toont dan de sleutel zelf in
+# de knop — maar dat merk je alleen als je die taal draait, en dat doe je niet.
+test_translations() {
+  section "12. Vertalingen: hebben alle vier de talen dezelfde sleutels?"
+
+  local bron="$PROJECT_DIR/Resources/nl.lproj/Localizable.strings"
+  if [ ! -f "$bron" ]; then
+    fail "Resources/nl.lproj/Localizable.strings ontbreekt — dat is de bron."
+    return
+  fi
+
+  # Alleen echte sleutelregels: "sleutel" = "waarde"; Commentaar en lege regels vallen af.
+  sleutels_van() { grep -oE '^[[:space:]]*"[^"]+"[[:space:]]*=' "$1" | tr -d ' "=' | sort; }
+
+  local nl_keys; nl_keys="$(sleutels_van "$bron")"
+  local aantal; aantal="$(printf '%s\n' "$nl_keys" | grep -c . )"
+  pass "Bron (nl) heeft $aantal sleutels."
+
+  local taal bestand mist extra
+  for taal in en de fr; do
+    bestand="$PROJECT_DIR/Resources/$taal.lproj/Localizable.strings"
+    if [ ! -f "$bestand" ]; then
+      fail "$taal: Localizable.strings ontbreekt."
+      continue
+    fi
+    mist="$(comm -23 <(printf '%s\n' "$nl_keys") <(sleutels_van "$bestand") | tr '\n' ' ')"
+    extra="$(comm -13 <(printf '%s\n' "$nl_keys") <(sleutels_van "$bestand") | tr '\n' ' ')"
+    if [ -n "${mist// /}" ]; then
+      fail "$taal mist: ${mist% }"
+    elif [ -n "${extra// /}" ]; then
+      # Geen fout maar wel rommel: een sleutel die nergens meer gebruikt wordt, of een typefout.
+      skip "$taal heeft sleutels die nl niet kent: ${extra% }"
+    else
+      pass "$taal: compleet."
+    fi
+  done
+
+  # En andersom: gebruikt de code sleutels die nergens gedefinieerd zijn? Dat levert een knop
+  # op waar letterlijk "menu.voet.stop" in staat.
+  #
+  # Commentaar eerst weg, net als bij test_cli_purity. Zonder dat telt een sleutel die in een
+  # documentatievoorbeeld staat mee als "in gebruik" — en dan meldt deze controle een fout
+  # over een sleutel die nergens in de app voorkomt. Precies dat gebeurde bij het schrijven
+  # ervan, met een voorbeeld in de doc-commentaar van L10n.swift.
+  local gebruikt onbekend f
+  gebruikt="$(for f in "$PROJECT_DIR/Sources"/*/*.swift; do
+        [ -f "$f" ] || continue
+        sed 's://.*::' "$f"
+      done \
+      | grep -oE '(Text|Label|Button|LabeledContent|Section)\("[a-z]+(\.[a-z]+)+"|L10n\.t\("[a-z]+(\.[a-z]+)+"' \
+      | grep -oE '"[a-z]+(\.[a-z]+)+"' | tr -d '"' | sort -u)"
+  if [ -z "$gebruikt" ]; then
+    skip "Geen sleutelgebruik in de bronnen gevonden; nog niets omgezet?"
+    return
+  fi
+  onbekend="$(comm -23 <(printf '%s\n' "$gebruikt") <(printf '%s\n' "$nl_keys") | tr '\n' ' ')"
+  if [ -n "${onbekend// /}" ]; then
+    fail "De code gebruikt sleutels die in nl ontbreken: ${onbekend% }"
+  else
+    pass "Elke sleutel die de code gebruikt, bestaat ($(printf '%s\n' "$gebruikt" | grep -c .) in gebruik)."
+  fi
+}
+
 case "${1:-}" in
   --report)  report; exit 0 ;;
   # Niet in de standaardronde: de kop bovenaan belooft dat die niets kapotmaakt.
@@ -977,6 +1042,7 @@ case "${1:-}" in
   # zijn bruikbaar als snelle controle na een wijziging aan de updatecontrole.
   --update)  test_update_check ;;
   --login)   test_login_item ;;
+  --talen)   test_translations ;;
   *)
     report
     test_includedir
@@ -989,6 +1055,7 @@ case "${1:-}" in
     test_display
     test_update_check
     test_login_item
+    test_translations
     ;;
 esac
 

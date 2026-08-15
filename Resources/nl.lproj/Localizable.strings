@@ -1,0 +1,78 @@
+/* Nederlands — de ontwikkeltaal. Dit bestand is de bron: hier staat de tekst zoals hij
+   bedoeld is, en de andere drie volgen hem.
+
+   Sleutels zijn symbolisch (menu.duur.titel), niet de zin zelf. Een zin bijschaven raakt
+   daardoor geen enkele vertaling. Blijft een sleutel ongebruikt of ontbreekt hij in een
+   taal, dan meldt `./verify.sh --talen` dat.
+
+   Meer dan één invulwaarde in een zin? Nummer ze (%1$@, %2$@), zodat een vertaling ze mag
+   omdraaien zonder de betekenis te verliezen. */
+
+/* --- Menu: kop en hoofdschakelaar --- */
+"menu.kop.titel" = "Mac wakker houden";
+"menu.nuslapen" = "Nu slapen";
+
+/* --- Menu: aanzetten bij het dichtklappen --- */
+"menu.arm.actief" = "Gaat aan zodra je de klep dichtdoet";
+"menu.arm.intrekken" = "Intrekken";
+"menu.arm.aanzetten" = "Aanzetten zodra ik de klep dichtdoe";
+
+/* --- Menu: hoe lang --- */
+"menu.duur.titel" = "Duur";
+"menu.duur.tot" = "tot %@";
+"menu.tot.titel" = "Tot";
+"menu.tot.zetten" = "Zetten";
+
+/* --- Menu: stoppen zodra een programma klaar is --- */
+"menu.stoppenals.titel" = "Stoppen als";
+"menu.stoppenals.geenapps" = "Geen apps gevonden";
+"menu.stoppenals.klaar" = "%@ klaar is";
+"menu.stoppenals.placeholder" = "een app klaar is…";
+
+/* --- Menu: waarschuwing dat de vangnetten niet kunnen werken --- */
+"menu.ontwapend.titel" = "Vanzelf stoppen werkt nu niet";
+"menu.ontwapend.uitleg" = "De tijdslimiet, de accugrens en de temperatuurbewaking kunnen de Mac niet zelf weer laten slapen: daar is een wachtwoord voor nodig dat met de klep dicht niemand kan invullen. Zet het zo nodig zelf terug — plak deze regel in Terminal:";
+
+/* --- Menu: de Mac heeft toch geslapen --- */
+"menu.gebroken.wel" = "De Mac heeft tóch geslapen";
+"menu.gebroken.niet" = "Mac sliep — de blokkade stond niet aan";
+"menu.gebroken.uitleg.wel" = "Dat hoort niet te kunnen terwijl de slaapblokkade aan stond: op deze Mac houdt de belofte dus niet.";
+"menu.gebroken.uitleg.niet" = "De slaapblokkade was buiten Dopamine Code om uitgezet, dus dit zegt niets over de blokkade zelf.";
+
+/* --- Menu: de sudoers-regel ontbreekt --- */
+"menu.grant.uitleg" = "Zonder deze eenmalige regel vraagt macOS bij elke schakeling om je wachtwoord. Met de klep dicht kan niemand dat invullen, dus kan de Mac daarna niet vanzelf weer gaan slapen.";
+"menu.grant.installeren" = "Regel installeren…";
+"menu.grant.opnieuw" = "Opnieuw controleren";
+"menu.grant.terminal" = "Of in Terminal:";
+
+/* --- Menu: een ander programma houdt de Mac ook wakker --- */
+"menu.conflict.deelt" = "%@ schakelt dezelfde instelling";
+"menu.conflict.draait" = "%@ draait ook";
+"menu.conflict.afsluiten" = "%@ afsluiten";
+"menu.conflict.nietmelden" = "Niet meer melden";
+
+/* --- Menu: internetstoringen --- */
+"menu.storing.vorige" = "Internet — vorige keer";
+"menu.storing.nu" = "Internet — nu actief";
+
+/* --- Menu: toetsenbordverlichting --- */
+"menu.verlichting.titel" = "Toetsenbordverlichting";
+"menu.verlichting.schermuit" = "Het toetsenbord blijft nu donker omdat het scherm uit staat. Wat je hier instelt zie je pas als het scherm weer aan gaat.";
+"menu.verlichting.geendirect" = "Deze Mac laat de verlichting niet rechtstreeks instellen. Dopamine Code kan hem alleen schakelen door de helderheidstoetsen na te bootsen, en daarvoor is toestemming nodig bij Privacy → Toegankelijkheid.";
+"menu.verlichting.instellingen" = "Systeeminstellingen openen";
+
+/* --- Menu: bijwerken --- */
+"menu.update.mededeling.titel" = "Deze app kijkt of er updates zijn";
+"menu.update.mededeling.tekst" = "Eens per dag vraagt hij bij GitHub op wat de nieuwste versie is. Er wordt niets gedownload en niets geïnstalleerd — je ziet alleen een versienummer. Uitzetten kan in Instellingen → Bijwerken.";
+"menu.update.mededeling.prima" = "Prima";
+"menu.update.mededeling.uit" = "Nu uitzetten";
+"menu.update.beschikbaar" = "Versie %@ beschikbaar";
+"menu.update.nieuwste" = "Nieuwste versie is %@";
+"menu.update.uitleg" = "Bijwerken doe je zelf, in de map waar je de bron hebt staan:";
+"menu.update.uitleg.onbekend" = "Deze build draagt geen versienummer, dus of dit nieuwer is dan wat je draait valt hier niet te zeggen. Bijwerken doe je in de map waar je de bron hebt staan:";
+"menu.update.kopieer" = "Kopieer commando";
+"menu.update.watnieuw" = "Wat is er nieuw";
+
+/* --- Menu: onderste balk --- */
+"menu.voet.instellingen" = "Instellingen…";
+"menu.voet.stop" = "Stop";

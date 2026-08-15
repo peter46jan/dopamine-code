@@ -22,6 +22,15 @@
 	<string>0</string>
 	<key>CFBundleInfoDictionaryVersion</key>
 	<string>6.0</string>
+	<key>CFBundleDevelopmentRegion</key>
+	<string>nl</string>
+	<key>CFBundleLocalizations</key>
+	<array>
+		<string>nl</string>
+		<string>en</string>
+		<string>de</string>
+		<string>fr</string>
+	</array>
 	<key>LSMinimumSystemVersion</key>
 	<string>14.0</string>
 	<key>LSUIElement</key>

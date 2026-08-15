@@ -116,6 +116,26 @@ swiftc \
 cp Resources/Info.plist "$APP/Contents/Info.plist"
 cp Resources/grant.sh "$APP/Contents/Resources/grant.sh"
 chmod 0755 "$APP/Contents/Resources/grant.sh"
+
+# --- translations -------------------------------------------------------------
+#
+# One .lproj per language, copied verbatim. macOS picks the one matching the user's
+# language order and falls back to CFBundleDevelopmentRegion when none matches.
+#
+# Verified to work in a bundle built by plain swiftc — no Xcode project, no ibtool, no
+# String Catalog compilation step. A .strings file is read at runtime, so this is a copy
+# and nothing more.
+LANG_COUNT=0
+for LPROJ in Resources/*.lproj; do
+  [ -d "$LPROJ" ] || continue
+  cp -R "$LPROJ" "$APP/Contents/Resources/"
+  LANG_COUNT=$((LANG_COUNT + 1))
+done
+if [ "$LANG_COUNT" -eq 0 ]; then
+  warn "Geen .lproj-mappen gevonden — de app toont overal de sleutels in plaats van tekst."
+else
+  say "Talen: $(cd Resources && ls -d *.lproj 2>/dev/null | sed 's/\.lproj//' | tr '\n' ' ')"
+fi
 printf 'APPL????' > "$APP/Contents/PkgInfo"
 
 # --- version ------------------------------------------------------------------

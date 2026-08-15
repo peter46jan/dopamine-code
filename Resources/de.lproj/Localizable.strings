@@ -1,0 +1,74 @@
+/* Deutsch. Folgt nl.lproj/Localizable.strings, das die Quelle ist.
+
+   Deutsche Sätze werden regelmäßig länger als die niederländischen. Das Menü ist 320 Punkte
+   breit und bricht um, aber Knopfbeschriftungen haben diesen Spielraum nicht — dort lieber
+   kurz als vollständig. */
+
+/* --- Menü: Kopf und Hauptschalter --- */
+"menu.kop.titel" = "Mac wach halten";
+"menu.nuslapen" = "Jetzt schlafen";
+
+/* --- Menü: beim Zuklappen einschalten --- */
+"menu.arm.actief" = "Schaltet sich ein, sobald du den Deckel schließt";
+"menu.arm.intrekken" = "Abbrechen";
+"menu.arm.aanzetten" = "Einschalten, sobald ich den Deckel schließe";
+
+/* --- Menü: wie lange --- */
+"menu.duur.titel" = "Dauer";
+"menu.duur.tot" = "bis %@";
+"menu.tot.titel" = "Bis";
+"menu.tot.zetten" = "Setzen";
+
+/* --- Menü: aufhören, sobald ein Programm fertig ist --- */
+"menu.stoppenals.titel" = "Aufhören, wenn";
+"menu.stoppenals.geenapps" = "Keine Apps gefunden";
+"menu.stoppenals.klaar" = "%@ fertig ist";
+"menu.stoppenals.placeholder" = "eine App fertig ist…";
+
+/* --- Menü: Warnung, dass die Sicherungen nicht greifen können --- */
+"menu.ontwapend.titel" = "Automatisches Beenden geht gerade nicht";
+"menu.ontwapend.uitleg" = "Zeitlimit, Akkugrenze und Temperaturüberwachung können den Mac nicht von selbst wieder schlafen legen: dafür braucht es ein Passwort, und bei geschlossenem Deckel kann das niemand eingeben. Setz es nötigenfalls selbst zurück — füge diese Zeile im Terminal ein:";
+
+/* --- Menü: der Mac hat trotzdem geschlafen --- */
+"menu.gebroken.wel" = "Der Mac hat trotzdem geschlafen";
+"menu.gebroken.niet" = "Mac schlief — die Sperre war nicht aktiv";
+"menu.gebroken.uitleg.wel" = "Das dürfte bei aktiver Schlafsperre nicht möglich sein: auf diesem Mac hält das Versprechen also nicht.";
+"menu.gebroken.uitleg.niet" = "Die Schlafsperre war außerhalb von Dopamine Code abgeschaltet worden, das sagt also nichts über die Sperre selbst aus.";
+
+/* --- Menü: die sudoers-Regel fehlt --- */
+"menu.grant.uitleg" = "Ohne diese einmalige Regel fragt macOS bei jedem Umschalten nach deinem Passwort. Bei geschlossenem Deckel kann das niemand eingeben, also kann der Mac danach nicht von selbst wieder einschlafen.";
+"menu.grant.installeren" = "Regel installieren…";
+"menu.grant.opnieuw" = "Erneut prüfen";
+"menu.grant.terminal" = "Oder im Terminal:";
+
+/* --- Menü: ein anderes Programm hält den Mac ebenfalls wach --- */
+"menu.conflict.deelt" = "%@ ändert dieselbe Einstellung";
+"menu.conflict.draait" = "%@ läuft ebenfalls";
+"menu.conflict.afsluiten" = "%@ beenden";
+"menu.conflict.nietmelden" = "Nicht mehr melden";
+
+/* --- Menü: Internetausfälle --- */
+"menu.storing.vorige" = "Internet — letztes Mal";
+"menu.storing.nu" = "Internet — diese Sitzung";
+
+/* --- Menü: Tastaturbeleuchtung --- */
+"menu.verlichting.titel" = "Tastaturbeleuchtung";
+"menu.verlichting.schermuit" = "Die Tastatur bleibt gerade dunkel, weil der Bildschirm aus ist. Was du hier einstellst, siehst du erst, wenn er wieder angeht.";
+"menu.verlichting.geendirect" = "Dieser Mac lässt die Beleuchtung nicht direkt einstellen. Dopamine Code kann sie nur schalten, indem es die Helligkeitstasten nachahmt, und dafür braucht es die Erlaubnis unter Datenschutz → Bedienungshilfen.";
+"menu.verlichting.instellingen" = "Systemeinstellungen öffnen";
+
+/* --- Menü: Aktualisierungen --- */
+"menu.update.mededeling.titel" = "Diese App sucht nach Aktualisierungen";
+"menu.update.mededeling.tekst" = "Einmal am Tag fragt sie bei GitHub nach der neuesten Version. Es wird nichts heruntergeladen und nichts installiert — du siehst nur eine Versionsnummer. Abschalten kannst du das unter Einstellungen → Aktualisieren.";
+"menu.update.mededeling.prima" = "In Ordnung";
+"menu.update.mededeling.uit" = "Jetzt abschalten";
+"menu.update.beschikbaar" = "Version %@ verfügbar";
+"menu.update.nieuwste" = "Neueste Version ist %@";
+"menu.update.uitleg" = "Aktualisieren machst du selbst, in dem Ordner, in dem der Quelltext liegt:";
+"menu.update.uitleg.onbekend" = "Dieser Build trägt keine Versionsnummer, also lässt sich hier nicht sagen, ob das neuer ist als das, was du benutzt. Aktualisieren machst du in dem Ordner, in dem der Quelltext liegt:";
+"menu.update.kopieer" = "Befehl kopieren";
+"menu.update.watnieuw" = "Was ist neu";
+
+/* --- Menü: untere Leiste --- */
+"menu.voet.instellingen" = "Einstellungen…";
+"menu.voet.stop" = "Beenden";

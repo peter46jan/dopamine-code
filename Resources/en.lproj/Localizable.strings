@@ -1,0 +1,73 @@
+/* English. Follows nl.lproj/Localizable.strings, which is the source.
+
+   This is also the fallback most people will understand when their own language is
+   missing a key, so leaving something untranslated here is worse than elsewhere. */
+
+/* --- Menu: header and main switch --- */
+"menu.kop.titel" = "Keep this Mac awake";
+"menu.nuslapen" = "Sleep now";
+
+/* --- Menu: arm on lid close --- */
+"menu.arm.actief" = "Turns on when you close the lid";
+"menu.arm.intrekken" = "Cancel";
+"menu.arm.aanzetten" = "Turn on when I close the lid";
+
+/* --- Menu: for how long --- */
+"menu.duur.titel" = "Duration";
+"menu.duur.tot" = "until %@";
+"menu.tot.titel" = "Until";
+"menu.tot.zetten" = "Set";
+
+/* --- Menu: stop when a program finishes --- */
+"menu.stoppenals.titel" = "Stop when";
+"menu.stoppenals.geenapps" = "No apps found";
+"menu.stoppenals.klaar" = "%@ has finished";
+"menu.stoppenals.placeholder" = "an app has finished…";
+
+/* --- Menu: warning that the safety nets cannot work --- */
+"menu.ontwapend.titel" = "Stopping by itself will not work";
+"menu.ontwapend.uitleg" = "The time limit, the battery floor and the temperature watch cannot put the Mac back to sleep on their own: that needs a password, and with the lid closed nobody can type one. Put it back yourself if you need to — paste this line into Terminal:";
+
+/* --- Menu: the Mac slept anyway --- */
+"menu.gebroken.wel" = "The Mac slept anyway";
+"menu.gebroken.niet" = "Mac slept — the block was not on";
+"menu.gebroken.uitleg.wel" = "That should not be possible while the sleep block was on: on this Mac the promise does not hold.";
+"menu.gebroken.uitleg.niet" = "The sleep block had been switched off outside Dopamine Code, so this says nothing about the block itself.";
+
+/* --- Menu: the sudoers rule is missing --- */
+"menu.grant.uitleg" = "Without this one-time rule, macOS asks for your password every time it switches. With the lid closed nobody can type it, so the Mac cannot go back to sleep by itself afterwards.";
+"menu.grant.installeren" = "Install rule…";
+"menu.grant.opnieuw" = "Check again";
+"menu.grant.terminal" = "Or in Terminal:";
+
+/* --- Menu: another program is holding the Mac awake too --- */
+"menu.conflict.deelt" = "%@ changes the same setting";
+"menu.conflict.draait" = "%@ is running too";
+"menu.conflict.afsluiten" = "Quit %@";
+"menu.conflict.nietmelden" = "Stop telling me";
+
+/* --- Menu: internet outages --- */
+"menu.storing.vorige" = "Internet — last time";
+"menu.storing.nu" = "Internet — this session";
+
+/* --- Menu: keyboard backlight --- */
+"menu.verlichting.titel" = "Keyboard backlight";
+"menu.verlichting.schermuit" = "The keyboard stays dark right now because the display is off. What you set here shows once the display comes back on.";
+"menu.verlichting.geendirect" = "This Mac does not let the backlight be set directly. Dopamine Code can only switch it by imitating the brightness keys, and that needs permission under Privacy → Accessibility.";
+"menu.verlichting.instellingen" = "Open System Settings";
+
+/* --- Menu: updates --- */
+"menu.update.mededeling.titel" = "This app checks for updates";
+"menu.update.mededeling.tekst" = "Once a day it asks GitHub what the newest version is. Nothing is downloaded and nothing is installed — you only see a version number. You can switch this off under Settings → Updates.";
+"menu.update.mededeling.prima" = "Fine";
+"menu.update.mededeling.uit" = "Switch off";
+"menu.update.beschikbaar" = "Version %@ available";
+"menu.update.nieuwste" = "Newest version is %@";
+"menu.update.uitleg" = "Updating is something you do yourself, in the folder holding the source:";
+"menu.update.uitleg.onbekend" = "This build carries no version number, so whether that is newer than what you are running cannot be said here. Updating is something you do in the folder holding the source:";
+"menu.update.kopieer" = "Copy command";
+"menu.update.watnieuw" = "What's new";
+
+/* --- Menu: bottom bar --- */
+"menu.voet.instellingen" = "Settings…";
+"menu.voet.stop" = "Quit";

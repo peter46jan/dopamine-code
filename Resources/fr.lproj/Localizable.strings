@@ -1,0 +1,74 @@
+/* Français. Suit nl.lproj/Localizable.strings, qui est la source.
+
+   Le français est nettement plus long que le néerlandais — comptez un tiers en plus. Le
+   menu fait 320 points de large et passe à la ligne, mais les libellés de boutons n'ont pas
+   cette marge : là, mieux vaut court que complet. */
+
+/* --- Menu : en-tête et interrupteur principal --- */
+"menu.kop.titel" = "Garder ce Mac éveillé";
+"menu.nuslapen" = "Veille immédiate";
+
+/* --- Menu : activer à la fermeture de l'écran --- */
+"menu.arm.actief" = "S'active dès que vous rabattez l'écran";
+"menu.arm.intrekken" = "Annuler";
+"menu.arm.aanzetten" = "Activer dès que je rabats l'écran";
+
+/* --- Menu : pour combien de temps --- */
+"menu.duur.titel" = "Durée";
+"menu.duur.tot" = "jusqu'à %@";
+"menu.tot.titel" = "Jusqu'à";
+"menu.tot.zetten" = "Définir";
+
+/* --- Menu : arrêter dès qu'un programme se termine --- */
+"menu.stoppenals.titel" = "Arrêter quand";
+"menu.stoppenals.geenapps" = "Aucune app trouvée";
+"menu.stoppenals.klaar" = "%@ a terminé";
+"menu.stoppenals.placeholder" = "une app a terminé…";
+
+/* --- Menu : avertissement que les garde-fous ne peuvent pas agir --- */
+"menu.ontwapend.titel" = "L'arrêt automatique ne fonctionne pas";
+"menu.ontwapend.uitleg" = "La limite de temps, le seuil de batterie et la surveillance de température ne peuvent pas rendormir le Mac tout seuls : cela demande un mot de passe, et écran rabattu personne ne peut le saisir. Rétablissez-le vous-même si besoin — collez cette ligne dans Terminal :";
+
+/* --- Menu : le Mac s'est endormi quand même --- */
+"menu.gebroken.wel" = "Le Mac s'est endormi quand même";
+"menu.gebroken.niet" = "Le Mac a dormi — le blocage n'était pas actif";
+"menu.gebroken.uitleg.wel" = "Cela ne devrait pas être possible avec le blocage de veille actif : sur ce Mac, la promesse ne tient donc pas.";
+"menu.gebroken.uitleg.niet" = "Le blocage de veille avait été désactivé en dehors de Dopamine Code : cela ne dit donc rien sur le blocage lui-même.";
+
+/* --- Menu : la règle sudoers est absente --- */
+"menu.grant.uitleg" = "Sans cette règle à installer une seule fois, macOS demande votre mot de passe à chaque changement. Écran rabattu, personne ne peut le saisir : le Mac ne pourra donc plus se rendormir tout seul ensuite.";
+"menu.grant.installeren" = "Installer la règle…";
+"menu.grant.opnieuw" = "Vérifier à nouveau";
+"menu.grant.terminal" = "Ou dans Terminal :";
+
+/* --- Menu : un autre programme garde aussi le Mac éveillé --- */
+"menu.conflict.deelt" = "%@ modifie le même réglage";
+"menu.conflict.draait" = "%@ tourne aussi";
+"menu.conflict.afsluiten" = "Quitter %@";
+"menu.conflict.nietmelden" = "Ne plus me prévenir";
+
+/* --- Menu : coupures d'internet --- */
+"menu.storing.vorige" = "Internet — la dernière fois";
+"menu.storing.nu" = "Internet — cette session";
+
+/* --- Menu : rétroéclairage du clavier --- */
+"menu.verlichting.titel" = "Rétroéclairage du clavier";
+"menu.verlichting.schermuit" = "Le clavier reste éteint pour l'instant parce que l'écran est éteint. Ce que vous réglez ici apparaîtra au rallumage.";
+"menu.verlichting.geendirect" = "Ce Mac ne permet pas de régler le rétroéclairage directement. Dopamine Code ne peut que l'allumer en imitant les touches de luminosité, ce qui demande une autorisation dans Confidentialité → Accessibilité.";
+"menu.verlichting.instellingen" = "Ouvrir Réglages Système";
+
+/* --- Menu : mises à jour --- */
+"menu.update.mededeling.titel" = "Cette app vérifie les mises à jour";
+"menu.update.mededeling.tekst" = "Une fois par jour, elle demande à GitHub quelle est la version la plus récente. Rien n'est téléchargé et rien n'est installé — vous voyez seulement un numéro de version. Vous pouvez désactiver cela dans Réglages → Mise à jour.";
+"menu.update.mededeling.prima" = "D'accord";
+"menu.update.mededeling.uit" = "Désactiver";
+"menu.update.beschikbaar" = "Version %@ disponible";
+"menu.update.nieuwste" = "La version la plus récente est %@";
+"menu.update.uitleg" = "La mise à jour, vous la faites vous-même, dans le dossier où se trouvent les sources :";
+"menu.update.uitleg.onbekend" = "Cette version ne porte pas de numéro : impossible de dire ici si celle-ci est plus récente que la vôtre. La mise à jour se fait dans le dossier où se trouvent les sources :";
+"menu.update.kopieer" = "Copier la commande";
+"menu.update.watnieuw" = "Nouveautés";
+
+/* --- Menu : barre inférieure --- */
+"menu.voet.instellingen" = "Réglages…";
+"menu.voet.stop" = "Quitter";

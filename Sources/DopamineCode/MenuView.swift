@@ -106,7 +106,7 @@ struct MenuView: View {
                 get: { model.intendedOn },
                 set: { model.setKeepAwake($0) }
             )) {
-                Text("Mac wakker houden").fontWeight(.medium)
+                Text("menu.kop.titel").fontWeight(.medium)
             }
             .toggleStyle(.switch)
             .disabled(model.busy)
@@ -164,7 +164,7 @@ struct MenuView: View {
             Button {
                 model.sleepNow()
             } label: {
-                Label("Nu slapen", systemImage: "powersleep")
+                Label("menu.nuslapen", systemImage: "powersleep")
             }
             .buttonStyle(.link)
             .disabled(model.busy)
@@ -183,7 +183,7 @@ struct MenuView: View {
     @ViewBuilder private var armingRow: some View {
         if let arm = model.lidArm {
             HStack(spacing: 6) {
-                Label("Gaat aan zodra je de klep dichtdoet", systemImage: "laptopcomputer.and.arrow.down")
+                Label("menu.arm.actief", systemImage: "laptopcomputer.and.arrow.down")
                     .font(.caption)
                     .foregroundStyle(Color.accentColor)
                     .fixedSize(horizontal: false, vertical: true)
@@ -192,7 +192,7 @@ struct MenuView: View {
                     .monospacedDigit()
                     .foregroundStyle(.secondary)
                 Spacer()
-                Button("Intrekken") { model.cancelArming() }
+                Button("menu.arm.intrekken") { model.cancelArming() }
                     .buttonStyle(.link)
                     .font(.caption)
             }
@@ -200,7 +200,7 @@ struct MenuView: View {
             Button {
                 model.armForLidClose()
             } label: {
-                Label("Aanzetten zodra ik de klep dichtdoe", systemImage: "laptopcomputer.and.arrow.down")
+                Label("menu.arm.aanzetten", systemImage: "laptopcomputer.and.arrow.down")
                     .font(.caption)
             }
             .buttonStyle(.link)
@@ -217,7 +217,7 @@ struct MenuView: View {
     private var durationRow: some View {
         VStack(alignment: .leading, spacing: 6) {
             HStack(spacing: 8) {
-                Text("Duur")
+                Text("menu.duur.titel")
                     .font(.callout)
                     .foregroundStyle(.secondary)
 
@@ -257,7 +257,7 @@ struct MenuView: View {
                 }
                 Spacer()
                 if let ends = model.deadlineText {
-                    Text("tot \(ends)")
+                    Text(L10n.t("menu.duur.tot", ends))
                         .font(.caption)
                         .monospacedDigit()
                         .foregroundStyle(.secondary)
@@ -281,14 +281,14 @@ struct MenuView: View {
     private var untilRow: some View {
         VStack(alignment: .leading, spacing: 4) {
             HStack(spacing: 8) {
-                Text("Tot")
+                Text("menu.tot.titel")
                     .font(.callout)
                     .foregroundStyle(.secondary)
                 DatePicker("", selection: $untilTime, displayedComponents: .hourAndMinute)
                     .labelsHidden()
                     .datePickerStyle(.field)
                     .controlSize(.small)
-                Button("Zetten") { untilExplanation = model.setAutoOffUntil(untilTime) }
+                Button("menu.tot.zetten") { untilExplanation = model.setAutoOffUntil(untilTime) }
                     .buttonStyle(.link)
                     .font(.caption)
                 Spacer()
@@ -321,19 +321,20 @@ struct MenuView: View {
     /// honderden regels systeemwerk waar niemand iets aan heeft.
     private var processRow: some View {
         HStack(spacing: 8) {
-            Text("Stoppen als")
+            Text("menu.stoppenals.titel")
                 .font(.callout)
                 .foregroundStyle(.secondary)
             Menu {
                 if runningApps.isEmpty {
-                    Text("Geen apps gevonden")
+                    Text("menu.stoppenals.geenapps")
                 } else {
                     ForEach(runningApps) { item in
                         Button("\(item.naam) (\(item.pid))") { model.keepAwakeUntilQuit(of: item) }
                     }
                 }
             } label: {
-                Text(model.binding.map { "\($0.identity.naam) klaar is" } ?? "een app klaar is…")
+                Text(model.binding.map { L10n.t("menu.stoppenals.klaar", $0.identity.naam) }
+                     ?? L10n.t("menu.stoppenals.placeholder"))
                     .font(.callout)
             }
             .menuStyle(.borderlessButton)
@@ -346,13 +347,10 @@ struct MenuView: View {
     /// nothing running unattended is able to change that.
     private var disarmedWarning: some View {
         VStack(alignment: .leading, spacing: 6) {
-            Label("Vanzelf stoppen werkt nu niet", systemImage: "shield.slash.fill")
+            Label("menu.ontwapend.titel", systemImage: "shield.slash.fill")
                 .font(.caption.weight(.semibold))
                 .foregroundStyle(.red)
-            Text("De tijdslimiet, de accugrens en de temperatuurbewaking kunnen de Mac niet zelf "
-                 + "weer laten slapen: daar is een wachtwoord voor nodig dat met de klep dicht "
-                 + "niemand kan invullen. Zet het zo nodig zelf terug — plak deze regel in "
-                 + "Terminal:")
+            Text("menu.ontwapend.uitleg")
                 .font(.caption2)
                 .foregroundStyle(.secondary)
                 .fixedSize(horizontal: false, vertical: true)
@@ -374,14 +372,14 @@ struct MenuView: View {
         // false alarm dressed in red.
         let broke = model.sleepBrokeThePromise
         return VStack(alignment: .leading, spacing: 6) {
-            Label(broke ? "De Mac heeft tóch geslapen" : "Mac sliep — de blokkade stond niet aan",
+            Label(broke ? "menu.gebroken.wel" : "menu.gebroken.niet",
                   systemImage: broke ? "exclamationmark.octagon.fill" : "exclamationmark.triangle.fill")
                 .font(.caption.weight(.semibold))
                 .foregroundStyle(broke ? .red : .orange)
+            // `episode.describe()` levert nog Nederlands; die zin wordt in SleepWatch
+            // samengesteld en verhuist mee zodra dat bestand aan de beurt is.
             Text(episode.describe().prefix(1).uppercased() + episode.describe().dropFirst() + ". "
-                 + (broke
-                    ? "Dat hoort niet te kunnen terwijl de slaapblokkade aan stond: op deze Mac houdt de belofte dus niet."
-                    : "De slaapblokkade was buiten Dopamine Code om uitgezet, dus dit zegt niets over de blokkade zelf."))
+                 + L10n.t(broke ? "menu.gebroken.uitleg.wel" : "menu.gebroken.uitleg.niet"))
                 .font(.caption2)
                 .foregroundStyle(.secondary)
                 .fixedSize(horizontal: false, vertical: true)
@@ -400,23 +398,21 @@ struct MenuView: View {
             Label(model.grantText, systemImage: "lock.trianglebadge.exclamationmark")
                 .font(.caption)
                 .foregroundStyle(.orange)
-            Text("Zonder deze eenmalige regel vraagt macOS bij elke schakeling om je wachtwoord. "
-                 + "Met de klep dicht kan niemand dat invullen, dus kan de Mac daarna niet "
-                 + "vanzelf weer gaan slapen.")
+            Text("menu.grant.uitleg")
                 .font(.caption2)
                 .foregroundStyle(.secondary)
                 .fixedSize(horizontal: false, vertical: true)
             HStack {
-                Button("Regel installeren…") { model.installGrant() }
+                Button("menu.grant.installeren") { model.installGrant() }
                     .disabled(model.busy)
-                Button("Opnieuw controleren") { model.refreshGrant() }
+                Button("menu.grant.opnieuw") { model.refreshGrant() }
             }
             .controlSize(.small)
 
             // The Terminal route, for when the authorisation sheet misbehaves. It is also
             // the honest one: you get to read the script before running it as root.
             if !SudoersGrant.manualCommand.isEmpty {
-                Text("Of in Terminal:")
+                Text("menu.grant.terminal")
                     .font(.caption2).foregroundStyle(.secondary)
                 Text(SudoersGrant.manualCommand)
                     .font(.system(.caption2, design: .monospaced))
@@ -436,9 +432,8 @@ struct MenuView: View {
     private func conflictWarning(_ conflict: ConflictWatch.Conflict) -> some View {
         let tint: Color = conflict.sharesTheFlag ? .red : .orange
         return VStack(alignment: .leading, spacing: 6) {
-            Label(conflict.sharesTheFlag
-                  ? "\(conflict.name) schakelt dezelfde instelling"
-                  : "\(conflict.name) draait ook",
+            Label(L10n.t(conflict.sharesTheFlag ? "menu.conflict.deelt" : "menu.conflict.draait",
+                         conflict.name),
                   systemImage: conflict.sharesTheFlag ? "exclamationmark.octagon.fill" : "exclamationmark.2")
                 .font(.caption.weight(conflict.sharesTheFlag ? .semibold : .regular))
                 .foregroundStyle(tint)
@@ -448,8 +443,8 @@ struct MenuView: View {
                 .foregroundStyle(.secondary)
                 .fixedSize(horizontal: false, vertical: true)
             HStack {
-                Button("\(conflict.name) afsluiten") { model.quitAmphetamine() }
-                Button("Niet meer melden") { model.dismissConflictWarning() }
+                Button(L10n.t("menu.conflict.afsluiten", conflict.name)) { model.quitAmphetamine() }
+                Button("menu.conflict.nietmelden") { model.dismissConflictWarning() }
             }
             .controlSize(.small)
         }
@@ -463,7 +458,7 @@ struct MenuView: View {
             // but the heading has to say which session it belongs to. "Netwerk deze sessie"
             // above last night's outages, at two in the afternoon with keep-awake off, is
             // simply a false statement.
-            Text(model.outagesFromFinishedSession ? "Internet — vorige keer" : "Internet — nu actief")
+            Text(model.outagesFromFinishedSession ? "menu.storing.vorige" : "menu.storing.nu")
                 .font(.caption).foregroundStyle(.secondary)
             ForEach(model.outages.suffix(3)) { outage in
                 Text("• " + outage.describe())
@@ -482,7 +477,7 @@ struct MenuView: View {
                 get: { model.backlightOn ?? false },
                 set: { _ in model.toggleBacklight() }
             )) {
-                Text("Toetsenbordverlichting").fontWeight(.medium)
+                Text("menu.verlichting.titel").fontWeight(.medium)
             }
             .toggleStyle(.switch)
 
@@ -498,20 +493,18 @@ struct MenuView: View {
                     .controlSize(.small)
                 }
                 if model.backlightSuppressed {
-                    Text("Het toetsenbord blijft nu donker omdat het scherm uit staat. Wat je hier instelt zie je pas als het scherm weer aan gaat.")
+                    Text("menu.verlichting.schermuit")
                         .font(.caption2)
                         .foregroundStyle(.orange)
                         .fixedSize(horizontal: false, vertical: true)
                 }
             } else if !KeyboardBacklight.canPostEvents {
                 VStack(alignment: .leading, spacing: 4) {
-                    Text("Deze Mac laat de verlichting niet rechtstreeks instellen. Dopamine Code "
-                         + "kan hem alleen schakelen door de helderheidstoetsen na te bootsen, en "
-                         + "daarvoor is toestemming nodig bij Privacy → Toegankelijkheid.")
+                    Text("menu.verlichting.geendirect")
                         .font(.caption2)
                         .foregroundStyle(.secondary)
                         .fixedSize(horizontal: false, vertical: true)
-                    Button("Systeeminstellingen openen") {
+                    Button("menu.verlichting.instellingen") {
                         KeyboardBacklight.openAccessibilitySettings()
                     }
                     .controlSize(.small)
@@ -540,17 +533,15 @@ struct MenuView: View {
     private var updateNotice: some View {
         if showUpdateNotice {
             VStack(alignment: .leading, spacing: 6) {
-                Label("Deze app kijkt of er updates zijn", systemImage: "info.circle")
+                Label("menu.update.mededeling.titel", systemImage: "info.circle")
                     .font(.caption)
-                Text("Eens per dag vraagt hij bij GitHub op wat de nieuwste versie is. "
-                     + "Er wordt niets gedownload en niets geïnstalleerd — je ziet alleen "
-                     + "een versienummer. Uitzetten kan in Instellingen → Bijwerken.")
+                Text("menu.update.mededeling.tekst")
                     .font(.caption2)
                     .foregroundStyle(.secondary)
                     .fixedSize(horizontal: false, vertical: true)
                 HStack {
-                    Button("Prima") { dismissUpdateNotice(disable: false) }
-                    Button("Nu uitzetten") { dismissUpdateNotice(disable: true) }
+                    Button("menu.update.mededeling.prima") { dismissUpdateNotice(disable: false) }
+                    Button("menu.update.mededeling.uit") { dismissUpdateNotice(disable: true) }
                 }
                 .controlSize(.small)
             }
@@ -573,15 +564,13 @@ struct MenuView: View {
         if case let .beschikbaar(versie, notities) = updates.toestand {
             VStack(alignment: .leading, spacing: 6) {
                 Label(updates.huidige == nil
-                      ? "Nieuwste versie is \(versie)"
-                      : "Versie \(versie) beschikbaar",
+                      ? L10n.t("menu.update.nieuwste", versie.description)
+                      : L10n.t("menu.update.beschikbaar", versie.description),
                       systemImage: "arrow.down.circle")
                     .font(.caption)
                 Text(updates.huidige == nil
-                     ? "Deze build draagt geen versienummer, dus of dit nieuwer is dan wat "
-                       + "je draait valt hier niet te zeggen. Bijwerken doe je in de map "
-                       + "waar je de bron hebt staan:"
-                     : "Bijwerken doe je zelf, in de map waar je de bron hebt staan:")
+                     ? "menu.update.uitleg.onbekend"
+                     : "menu.update.uitleg")
                     .font(.caption2)
                     .foregroundStyle(.secondary)
                     .fixedSize(horizontal: false, vertical: true)
@@ -590,7 +579,7 @@ struct MenuView: View {
                     .textSelection(.enabled)
                     .foregroundStyle(.secondary)
                 HStack {
-                    Button("Kopieer commando") {
+                    Button("menu.update.kopieer") {
                         NSPasteboard.general.clearContents()
                         NSPasteboard.general.setString(Self.updateCommand, forType: .string)
                     }
@@ -598,7 +587,7 @@ struct MenuView: View {
                     // niet haalde. Dan blijft het versienummer staan en verdwijnt alleen
                     // deze knop — zie `veiligeNotitieURL`.
                     if let notities {
-                        Button("Wat is er nieuw") { NSWorkspace.shared.open(notities) }
+                        Button("menu.update.watnieuw") { NSWorkspace.shared.open(notities) }
                     }
                 }
                 .controlSize(.small)
@@ -620,7 +609,7 @@ struct MenuView: View {
 
     private var footerButtons: some View {
         HStack {
-            Button("Instellingen…") {
+            Button("menu.voet.instellingen") {
                 // Een accessory-app kan geen venster naar voren halen; even naar `.regular`,
                 // en `SettingsView.onDisappear` zet hem weer terug op `.accessory` zodat er
                 // geen Dock-icoon blijft hangen. Daarna de scene openen via de nette API.
@@ -629,7 +618,7 @@ struct MenuView: View {
                 openSettings()
             }
             Spacer()
-            Button("Stop") {
+            Button("menu.voet.stop") {
                 NSApp.terminate(nil)
             }
         }
