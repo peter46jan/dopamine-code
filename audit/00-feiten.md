@@ -1,7 +1,7 @@
 # Feiten — Dopamine Code
 
 *Fase 0 van de diepgaande security-audit. Vastgesteld 14 augustus 2026 tegen commit
-`1dba930`. Elke subagent leest dit eerst.*
+`10cfa16`. Elke subagent leest dit eerst.*
 
 ---
 
@@ -36,8 +36,8 @@ rechtenescalatie, niet web.
 | Afhankelijkheden | **Nul externe.** Alleen systeemframeworks: AppKit, SwiftUI, Foundation, Combine, IOKit, IOKit.ps, Network, ServiceManagement, CoreGraphics, UserNotifications, Carbon.HIToolbox, Darwin, Cocoa |
 | Package manager | Geen. Geen `package.json`, geen `Package.swift`, geen lockfile |
 | Ondertekening | `Apple Development: <naam> (<team-id>)`, hardened runtime (`--options runtime`), `--timestamp` |
-| Distributie | Geen. Persoonlijk gereedschap, één Mac, lokaal gebouwd |
-| Repo | `peter46jan/dopamine-code`, privé, GitHub |
+| Distributie | Geen binaire distributie. Iedereen bouwt zelf uit de bron, op zijn eigen Mac |
+| Repo | `peter46jan/dopamine-code`, publiek, GitHub |
 
 Het ontbreken van externe afhankelijkheden haalt de hele categorie toeleveringsketen
 grotendeels weg: er is geen `npm audit`-oppervlak, geen postinstall-script, geen
@@ -169,7 +169,10 @@ Geen pakketten, dus de keten is: broncode → `swiftc` → `codesign` → `/Appl
 - Ondertekening met een echte Developer-identiteit, niet ad-hoc. Bij terugval op ad-hoc
   waarschuwt `build.sh`.
 - Geen CI. Geen branch protection gecontroleerd. Deploy is `./build.sh --install` met de hand.
-- Repo is privé; push gaat via SSH als `peter46jan`.
+- Repo is publiek; push gaat via SSH als `peter46jan`. Ten tijde van de audit was hij privé —
+  de audit is dus uitgevoerd tegen een boom die niemand anders kon inzien. Dat verandert niets
+  aan de bevindingen (het dreigingsmodel is een lokaal proces, geen lezer van de broncode),
+  maar wie de audit overdoet moet weten dat de aanvaller nu ook de bron heeft.
 
 ## Wat ik niet kan zien
 

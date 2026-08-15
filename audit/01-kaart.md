@@ -1,7 +1,7 @@
 # Fase 1 — de kaart
 
 *Feiten, geen oordeel. Vastgesteld 14 augustus 2026 op <machine>,
-macOS 26.5.2, Mac17,2 / M5, tegen commit `1dba930`. Eén gebruiker: `<gebruiker>`,
+macOS 26.5.2, Mac17,2 / M5, tegen commit `10cfa16`. Eén gebruiker: `<gebruiker>`,
 lid van `admin`.*
 
 **Uitgangssituatie zonder de app:** de gebruiker is beheerder en heeft `(ALL) ALL` in
