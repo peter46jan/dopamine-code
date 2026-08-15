@@ -185,9 +185,9 @@ enum Prefs {
 
         var label: String {
             switch self {
-            case .lidClose: return "Zodra ik de klep dichtdoe"
-            case .activate: return "Meteen bij aanzetten"
-            case .never: return "Nooit"
+            case .lidClose: return L10n.t("moment.klep")
+            case .activate: return L10n.t("moment.meteen")
+            case .never: return L10n.t("moment.nooit")
             }
         }
     }

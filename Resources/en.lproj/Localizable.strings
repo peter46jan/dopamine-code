@@ -130,3 +130,40 @@
 "slaap.uur.een" = "1 hour";
 "slaap.uur.meer" = "%d hours";
 "slaap.uurmin" = "%1$d h %2$d m";
+
+/* --- Instellingen: de tabbladen --- */
+"tab.algemeen" = "General";
+"tab.stoppen" = "Stopping by itself";
+"tab.diagnose" = "Diagnostics";
+"tab.aanzetten" = "Turning on by itself";
+"tab.geschiedenis" = "History";
+
+/* --- Wanneer slot en scherm reageren --- */
+"moment.klep" = "As soon as I close the lid";
+"moment.meteen" = "Right away when switched on";
+"moment.nooit" = "Never";
+
+/* --- Instellingen · Algemeen: slot en scherm --- */
+"alg.wakker.titel" = "What happens while the Mac stays awake";
+"alg.vergrendelen" = "Lock the Mac";
+"alg.vergrendelen.uitleg" = "Locking means: back to the login screen, so a password is needed to carry on. macOS normally does that by itself once the Mac goes to sleep — but while Dopamine Code keeps it awake it never sleeps, so it never happens either. By default this waits until you close the lid, so you can keep working with the lid open.";
+"alg.schermuit" = "Turn the display off";
+"alg.schermuit.uitleg" = "Set this to \"never\" and the built-in display keeps burning at full brightness under the closed lid. You see nothing of it, but it costs power.";
+
+/* --- Instellingen · Algemeen: hoe de app zich meldt --- */
+"alg.meldt.titel" = "How the app speaks up";
+"alg.melding" = "Notify me when something happens while I am away";
+"alg.melding.uitleg" = "You get a notification when keeping awake stopped by itself, when that stopping failed, when the Mac got too warm, when the Mac went to sleep anyway, when the safety net had to bring the app back, and when something wanted to switch on by itself but could not. The notification waits until your screen is unlocked and then stays — nobody hears a chime at 03:12. There is no notification when switching on by itself did work: that is in the panel and in the log, and a daily notification at 09:00 would dilute the six above.";
+"alg.geluid" = "Sound when switching on and off";
+"alg.geluid.netwerk" = "Sound when the internet connection drops";
+"alg.knipper" = "Blink the keyboard backlight briefly";
+"alg.geluid.uitleg" = "Sound is on by default: you cannot see a blinking keyboard with the lid closed.";
+"alg.aftellen" = "Time remaining next to the menu bar icon";
+"alg.aftellen.uitleg" = "Then it shows something like \"3:15\" next to the icon: three hours and fifteen minutes to go. The number comes from the same end time the limit itself works with, so it can never drift from what is really going to happen. It only appears while a session is running — with the Mac awake and nothing running, nothing is counting down, and a number there would make a promise nobody keeps.";
+
+/* --- Instellingen · Algemeen: opstarten --- */
+"alg.opstarten.titel" = "Startup";
+"alg.opstarten.toggle" = "Start Dopamine Code as soon as I log in";
+"alg.opstarten.uitleg" = "The app then sits ready in the menu bar. Keeping awake does not switch on by itself — that stays a click of yours.";
+"alg.opstarten.wacht" = "macOS is still waiting for your approval for this.";
+"alg.opstarten.openen" = "Open";

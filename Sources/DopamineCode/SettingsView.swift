@@ -84,11 +84,11 @@ struct SettingsView: View {
 
     var body: some View {
         TabView {
-            general.tabItem { Label("Algemeen", systemImage: "gearshape") }
-            safety.tabItem { Label("Vanzelf stoppen", systemImage: "shield") }
-            diagnosticsTab.tabItem { Label("Diagnose", systemImage: "stethoscope") }
-            triggers.tabItem { Label("Zelf aanzetten", systemImage: "wand.and.stars") }
-            historyTab.tabItem { Label("Geschiedenis", systemImage: "clock.arrow.circlepath") }
+            general.tabItem { Label("tab.algemeen", systemImage: "gearshape") }
+            safety.tabItem { Label("tab.stoppen", systemImage: "shield") }
+            diagnosticsTab.tabItem { Label("tab.diagnose", systemImage: "stethoscope") }
+            triggers.tabItem { Label("tab.aanzetten", systemImage: "wand.and.stars") }
+            historyTab.tabItem { Label("tab.geschiedenis", systemImage: "clock.arrow.circlepath") }
         }
         .frame(width: 480, height: 380)
         .overlay(alignment: .bottom) { messageBar }
@@ -119,70 +119,52 @@ struct SettingsView: View {
 
     private var general: some View {
         Form {
-            Section("Wat er gebeurt als de Mac wakker blijft") {
-                Picker("Mac vergrendelen", selection: $lockMoment) {
+            Section("alg.wakker.titel") {
+                Picker("alg.vergrendelen", selection: $lockMoment) {
                     ForEach(Prefs.ActionMoment.allCases) { m in Text(m.label).tag(m) }
                 }
                 .onChange(of: lockMoment) { Prefs.lockMoment = $0 }
-                Text("Vergrendelen betekent: terug naar het inlogscherm, zodat er een wachtwoord "
-                     + "nodig is om verder te kunnen. Normaal doet macOS dat vanzelf zodra de Mac "
-                     + "gaat slapen — maar zolang Dopamine Code hem wakker houdt slaapt hij nooit, "
-                     + "dus gebeurt het ook nooit. Standaard wacht het tot je de klep dichtdoet, "
-                     + "zodat je met de klep open gewoon door kunt werken.")
+                Text("alg.vergrendelen.uitleg")
                     .font(.caption).foregroundStyle(.secondary)
                     .fixedSize(horizontal: false, vertical: true)
 
-                Picker("Scherm uitzetten", selection: $displayOffMoment) {
+                Picker("alg.schermuit", selection: $displayOffMoment) {
                     ForEach(Prefs.ActionMoment.allCases) { m in Text(m.label).tag(m) }
                 }
                 .onChange(of: displayOffMoment) { Prefs.displayOffMoment = $0 }
-                Text("Zet je dit op \"nooit\", dan brandt het ingebouwde scherm onder de dichte "
-                     + "klep op volle helderheid door. Je ziet er niets van, maar het kost stroom.")
+                Text("alg.schermuit.uitleg")
                     .font(.caption).foregroundStyle(.secondary)
                     .fixedSize(horizontal: false, vertical: true)
             }
 
-            Section("Hoe de app zich meldt") {
-                Toggle("Melding als er iets gebeurt terwijl je weg bent", isOn: $notifications)
+            Section("alg.meldt.titel") {
+                Toggle("alg.melding", isOn: $notifications)
                     .onChange(of: notifications) { Prefs.notifications = $0 }
-                Text("Er komt een melding als het wakker houden vanzelf is gestopt, als dat "
-                     + "stoppen niet lukte, als de Mac te warm werd, als de Mac tóch in slaap is "
-                     + "gegaan, als het vangnet de app heeft moeten terughalen, en als iets "
-                     + "vanzelf wilde aangaan maar dat niet kon. De melding wacht tot je scherm "
-                     + "ontgrendeld is en blijft daarna staan — een geluidje om 03:12 hoort "
-                     + "niemand. Er komt géén melding als het vanzelf aangaan wél lukte: dat "
-                     + "staat in het paneel en in het logboek, en een dagelijkse melding om "
-                     + "09:00 laat de zes hierboven verwateren.")
+                Text("alg.melding.uitleg")
                     .font(.caption).foregroundStyle(.secondary)
                     .fixedSize(horizontal: false, vertical: true)
 
-                Toggle("Geluidje bij aan- en uitzetten", isOn: $sound)
+                Toggle("alg.geluid", isOn: $sound)
                     .onChange(of: sound) { Prefs.soundFeedback = $0 }
-                Toggle("Geluidje als de internetverbinding wegvalt", isOn: $networkSound)
+                Toggle("alg.geluid.netwerk", isOn: $networkSound)
                     .onChange(of: networkSound) { Prefs.soundOnNetworkLoss = $0 }
-                Toggle("Toetsenbordverlichting kort laten knipperen", isOn: $blink)
+                Toggle("alg.knipper", isOn: $blink)
                     .onChange(of: blink) { Prefs.blinkBacklightOnToggle = $0 }
-                Text("Geluid staat standaard aan: een knipperend toetsenbord zie je niet als de "
-                     + "klep dicht is.")
+                Text("alg.geluid.uitleg")
                     .font(.caption).foregroundStyle(.secondary)
                     .fixedSize(horizontal: false, vertical: true)
 
-                Toggle("Resterende tijd naast het icoon in de menubalk", isOn: $countdown)
+                Toggle("alg.aftellen", isOn: $countdown)
                     .onChange(of: countdown) { Prefs.showCountdownInMenuBar = $0 }
-                Text("Dan staat er bijvoorbeeld \"3:15\" naast het icoon: nog drie uur en vijftien "
-                     + "minuten. Het getal komt van dezelfde eindtijd waar de tijdslimiet mee "
-                     + "rekent, dus het loopt nooit uit de pas met wat er echt gaat gebeuren. Het "
-                     + "verschijnt alleen als er een sessie loopt — staat de Mac wakker zonder dat "
-                     + "er iets loopt, dan telt er niets af en zou een getal daar een belofte doen "
-                     + "die niemand waarmaakt.")
+                Text("alg.aftellen.uitleg")
                     .font(.caption).foregroundStyle(.secondary)
                     .fixedSize(horizontal: false, vertical: true)
             }
 
             shortcutSection
 
-            Section("Opstarten") {
-                Toggle("Dopamine Code starten zodra ik inlog", isOn: $launchAtLogin)
+            Section("alg.opstarten.titel") {
+                Toggle("alg.opstarten.toggle", isOn: $launchAtLogin)
                     .onChange(of: launchAtLogin) { value in
                         if syncingLaunchAtLogin { syncingLaunchAtLogin = false; return }
                         model.applyLaunchAtLogin(value)
@@ -197,15 +179,14 @@ struct SettingsView: View {
                             launchAtLogin = actual
                         }
                     }
-                Text("De app zit dan meteen klaar in de menubalk. Het wakker houden gaat niet "
-                     + "vanzelf aan — dat blijft een klik van jou.")
+                Text("alg.opstarten.uitleg")
                     .font(.caption).foregroundStyle(.secondary)
                     .fixedSize(horizontal: false, vertical: true)
                 if LaunchAtLogin.requiresApproval {
                     HStack {
-                        Text("macOS wacht nog op je goedkeuring hiervoor.")
+                        Text("alg.opstarten.wacht")
                             .font(.caption).foregroundStyle(.orange)
-                        Button("Openen") { LaunchAtLogin.openLoginItemsSettings() }
+                        Button("alg.opstarten.openen") { LaunchAtLogin.openLoginItemsSettings() }
                             .controlSize(.small)
                     }
                 }

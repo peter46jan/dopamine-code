@@ -131,3 +131,40 @@
 "slaap.uur.een" = "1 heure";
 "slaap.uur.meer" = "%d heures";
 "slaap.uurmin" = "%1$d h %2$d min";
+
+/* --- Instellingen: de tabbladen --- */
+"tab.algemeen" = "Général";
+"tab.stoppen" = "Arrêt automatique";
+"tab.diagnose" = "Diagnostic";
+"tab.aanzetten" = "Activation automatique";
+"tab.geschiedenis" = "Historique";
+
+/* --- Wanneer slot en scherm reageren --- */
+"moment.klep" = "Dès que je rabats l'écran";
+"moment.meteen" = "Immédiatement à l'activation";
+"moment.nooit" = "Jamais";
+
+/* --- Instellingen · Algemeen: slot en scherm --- */
+"alg.wakker.titel" = "Ce qui se passe pendant que le Mac reste éveillé";
+"alg.vergrendelen" = "Verrouiller le Mac";
+"alg.vergrendelen.uitleg" = "Verrouiller signifie : retour à l'écran de connexion, si bien qu'un mot de passe est nécessaire pour continuer. Normalement macOS le fait tout seul dès que le Mac se met en veille — mais tant que Dopamine Code le garde éveillé, il ne dort jamais, donc cela n'arrive jamais non plus. Par défaut, cela attend que vous rabattiez l'écran, pour que vous puissiez continuer à travailler écran ouvert.";
+"alg.schermuit" = "Éteindre l'écran";
+"alg.schermuit.uitleg" = "Si vous réglez ceci sur \"jamais\", l'écran intégré continue de briller à pleine luminosité sous l'écran rabattu. Vous n'en voyez rien, mais cela consomme.";
+
+/* --- Instellingen · Algemeen: hoe de app zich meldt --- */
+"alg.meldt.titel" = "Comment l'app se manifeste";
+"alg.melding" = "Notification si quelque chose se produit en votre absence";
+"alg.melding.uitleg" = "Une notification arrive quand le maintien en éveil s'est arrêté tout seul, quand cet arrêt a échoué, quand le Mac a trop chauffé, quand le Mac s'est endormi quand même, quand le garde-fou a dû relancer l'app, et quand quelque chose voulait s'activer tout seul sans y parvenir. La notification attend que votre écran soit déverrouillé puis reste affichée — un son à 03:12, personne ne l'entend. Aucune notification quand l'activation automatique a réussi : cela figure dans le panneau et dans le journal, et une notification quotidienne à 09:00 diluerait les six ci-dessus.";
+"alg.geluid" = "Son à l'activation et à l'arrêt";
+"alg.geluid.netwerk" = "Son quand la connexion internet tombe";
+"alg.knipper" = "Faire clignoter brièvement le rétroéclairage";
+"alg.geluid.uitleg" = "Le son est activé par défaut : un clavier qui clignote, vous ne le voyez pas écran rabattu.";
+"alg.aftellen" = "Temps restant à côté de l'icône de la barre des menus";
+"alg.aftellen.uitleg" = "Il affiche alors par exemple \"3:15\" à côté de l'icône : encore trois heures et quinze minutes. Le nombre vient de la même heure de fin que celle utilisée par la limite, il ne peut donc jamais diverger de ce qui va réellement se passer. Il n'apparaît que pendant une session — si le Mac est éveillé sans que rien ne tourne, rien ne décompte, et un nombre ferait là une promesse que personne ne tient.";
+
+/* --- Instellingen · Algemeen: opstarten --- */
+"alg.opstarten.titel" = "Démarrage";
+"alg.opstarten.toggle" = "Lancer Dopamine Code dès que je me connecte";
+"alg.opstarten.uitleg" = "L'app est alors prête dans la barre des menus. Le maintien en éveil ne s'active pas tout seul — cela reste votre clic.";
+"alg.opstarten.wacht" = "macOS attend encore votre autorisation pour cela.";
+"alg.opstarten.openen" = "Ouvrir";

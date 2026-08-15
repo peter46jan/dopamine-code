@@ -135,3 +135,40 @@
 "slaap.uur.een" = "1 uur";
 "slaap.uur.meer" = "%d uur";
 "slaap.uurmin" = "%1$d u %2$d m";
+
+/* --- Instellingen: de tabbladen --- */
+"tab.algemeen" = "Algemeen";
+"tab.stoppen" = "Vanzelf stoppen";
+"tab.diagnose" = "Diagnose";
+"tab.aanzetten" = "Zelf aanzetten";
+"tab.geschiedenis" = "Geschiedenis";
+
+/* --- Wanneer slot en scherm reageren --- */
+"moment.klep" = "Zodra ik de klep dichtdoe";
+"moment.meteen" = "Meteen bij aanzetten";
+"moment.nooit" = "Nooit";
+
+/* --- Instellingen · Algemeen: slot en scherm --- */
+"alg.wakker.titel" = "Wat er gebeurt als de Mac wakker blijft";
+"alg.vergrendelen" = "Mac vergrendelen";
+"alg.vergrendelen.uitleg" = "Vergrendelen betekent: terug naar het inlogscherm, zodat er een wachtwoord nodig is om verder te kunnen. Normaal doet macOS dat vanzelf zodra de Mac gaat slapen — maar zolang Dopamine Code hem wakker houdt slaapt hij nooit, dus gebeurt het ook nooit. Standaard wacht het tot je de klep dichtdoet, zodat je met de klep open gewoon door kunt werken.";
+"alg.schermuit" = "Scherm uitzetten";
+"alg.schermuit.uitleg" = "Zet je dit op \"nooit\", dan brandt het ingebouwde scherm onder de dichte klep op volle helderheid door. Je ziet er niets van, maar het kost stroom.";
+
+/* --- Instellingen · Algemeen: hoe de app zich meldt --- */
+"alg.meldt.titel" = "Hoe de app zich meldt";
+"alg.melding" = "Melding als er iets gebeurt terwijl je weg bent";
+"alg.melding.uitleg" = "Er komt een melding als het wakker houden vanzelf is gestopt, als dat stoppen niet lukte, als de Mac te warm werd, als de Mac tóch in slaap is gegaan, als het vangnet de app heeft moeten terughalen, en als iets vanzelf wilde aangaan maar dat niet kon. De melding wacht tot je scherm ontgrendeld is en blijft daarna staan — een geluidje om 03:12 hoort niemand. Er komt géén melding als het vanzelf aangaan wél lukte: dat staat in het paneel en in het logboek, en een dagelijkse melding om 09:00 laat de zes hierboven verwateren.";
+"alg.geluid" = "Geluidje bij aan- en uitzetten";
+"alg.geluid.netwerk" = "Geluidje als de internetverbinding wegvalt";
+"alg.knipper" = "Toetsenbordverlichting kort laten knipperen";
+"alg.geluid.uitleg" = "Geluid staat standaard aan: een knipperend toetsenbord zie je niet als de klep dicht is.";
+"alg.aftellen" = "Resterende tijd naast het icoon in de menubalk";
+"alg.aftellen.uitleg" = "Dan staat er bijvoorbeeld \"3:15\" naast het icoon: nog drie uur en vijftien minuten. Het getal komt van dezelfde eindtijd waar de tijdslimiet mee rekent, dus het loopt nooit uit de pas met wat er echt gaat gebeuren. Het verschijnt alleen als er een sessie loopt — staat de Mac wakker zonder dat er iets loopt, dan telt er niets af en zou een getal daar een belofte doen die niemand waarmaakt.";
+
+/* --- Instellingen · Algemeen: opstarten --- */
+"alg.opstarten.titel" = "Opstarten";
+"alg.opstarten.toggle" = "Dopamine Code starten zodra ik inlog";
+"alg.opstarten.uitleg" = "De app zit dan meteen klaar in de menubalk. Het wakker houden gaat niet vanzelf aan — dat blijft een klik van jou.";
+"alg.opstarten.wacht" = "macOS wacht nog op je goedkeuring hiervoor.";
+"alg.opstarten.openen" = "Openen";

@@ -131,3 +131,40 @@
 "slaap.uur.een" = "1 Stunde";
 "slaap.uur.meer" = "%d Stunden";
 "slaap.uurmin" = "%1$d Std. %2$d Min.";
+
+/* --- Instellingen: de tabbladen --- */
+"tab.algemeen" = "Allgemein";
+"tab.stoppen" = "Automatisch beenden";
+"tab.diagnose" = "Diagnose";
+"tab.aanzetten" = "Automatisch einschalten";
+"tab.geschiedenis" = "Verlauf";
+
+/* --- Wanneer slot en scherm reageren --- */
+"moment.klep" = "Sobald ich den Deckel schließe";
+"moment.meteen" = "Sofort beim Einschalten";
+"moment.nooit" = "Nie";
+
+/* --- Instellingen · Algemeen: slot en scherm --- */
+"alg.wakker.titel" = "Was passiert, während der Mac wach bleibt";
+"alg.vergrendelen" = "Mac sperren";
+"alg.vergrendelen.uitleg" = "Sperren heißt: zurück zum Anmeldebildschirm, sodass für das Weiterarbeiten ein Passwort nötig ist. Normalerweise macht macOS das von selbst, sobald der Mac einschläft — aber solange Dopamine Code ihn wach hält, schläft er nie, also passiert es auch nie. Standardmäßig wird gewartet, bis du den Deckel schließt, damit du bei offenem Deckel einfach weiterarbeiten kannst.";
+"alg.schermuit" = "Bildschirm ausschalten";
+"alg.schermuit.uitleg" = "Stellst du das auf \"nie\", brennt der eingebaute Bildschirm unter dem geschlossenen Deckel mit voller Helligkeit weiter. Du siehst nichts davon, aber es kostet Strom.";
+
+/* --- Instellingen · Algemeen: hoe de app zich meldt --- */
+"alg.meldt.titel" = "Wie sich die App meldet";
+"alg.melding" = "Mitteilung, wenn etwas passiert, während du weg bist";
+"alg.melding.uitleg" = "Eine Mitteilung kommt, wenn das Wachhalten von selbst geendet hat, wenn dieses Beenden misslang, wenn der Mac zu warm wurde, wenn der Mac trotzdem eingeschlafen ist, wenn die Sicherung die App zurückholen musste, und wenn sich etwas von selbst einschalten wollte, aber nicht konnte. Die Mitteilung wartet, bis dein Bildschirm entsperrt ist, und bleibt dann stehen — einen Ton um 03:12 hört niemand. Keine Mitteilung kommt, wenn das automatische Einschalten geklappt hat: das steht im Panel und im Protokoll, und eine tägliche Mitteilung um 09:00 würde die sechs oben verwässern.";
+"alg.geluid" = "Ton beim Ein- und Ausschalten";
+"alg.geluid.netwerk" = "Ton, wenn die Internetverbindung ausfällt";
+"alg.knipper" = "Tastaturbeleuchtung kurz blinken lassen";
+"alg.geluid.uitleg" = "Ton ist standardmäßig an: eine blinkende Tastatur siehst du bei geschlossenem Deckel nicht.";
+"alg.aftellen" = "Restzeit neben dem Symbol in der Menüleiste";
+"alg.aftellen.uitleg" = "Dann steht dort zum Beispiel \"3:15\" neben dem Symbol: noch drei Stunden und fünfzehn Minuten. Die Zahl stammt aus derselben Endzeit, mit der das Zeitlimit rechnet, kann also nie von dem abweichen, was wirklich passiert. Sie erscheint nur, während eine Sitzung läuft — ist der Mac wach, ohne dass etwas läuft, zählt nichts herunter, und eine Zahl würde dort ein Versprechen geben, das niemand einhält.";
+
+/* --- Instellingen · Algemeen: opstarten --- */
+"alg.opstarten.titel" = "Start";
+"alg.opstarten.toggle" = "Dopamine Code starten, sobald ich mich anmelde";
+"alg.opstarten.uitleg" = "Die App sitzt dann sofort bereit in der Menüleiste. Das Wachhalten schaltet sich nicht von selbst ein — das bleibt dein Klick.";
+"alg.opstarten.wacht" = "macOS wartet dafür noch auf deine Zustimmung.";
+"alg.opstarten.openen" = "Öffnen";
