@@ -189,7 +189,7 @@ enum RestartGuard {
         var target: SecStaticCode?
         let maak = SecStaticCodeCreateWithPath(url as CFURL, [], &target)
         guard maak == errSecSuccess, let target else {
-            return "de bundel op \(url.path) kon niet als ondertekende code gelezen worden (\(maak))"
+            return L10n.t("wachter.onleesbaar", url.path, Int(maak))
         }
         let flags = SecCSFlags(rawValue: kSecCSCheckAllArchitectures | kSecCSCheckNestedCode | kSecCSStrictValidate)
         let status = SecStaticCodeCheckValidity(target, flags, ownRequirement)
@@ -365,11 +365,12 @@ enum RestartGuard {
     /// Wat Diagnose en `verify.sh` laten zien: draait hij, en wanneer keek hij voor het laatst.
     static func statusSentence() -> String {
         let state = readState()
-        let staat = isLoaded() ? "geladen" : "NIET geladen"
-        guard let ronde = state.laatsteRonde else { return "\(staat), nog niet gekeken" }
+        let staat = L10n.t(isLoaded() ? "wachter.geladen" : "wachter.nietgeladen")
+        guard let ronde = state.laatsteRonde else { return L10n.t("wachter.nognietgekeken", staat) }
         let seconden = max(Int(Date().timeIntervalSince(ronde)), 0)
-        let ouderdom = seconden < 120 ? "\(seconden) s geleden" : "\(seconden / 60) min geleden"
-        return "\(staat), keek \(ouderdom)" + (state.laatsteMelding.map { " — \($0)" } ?? "")
+        let ouderdom = seconden < 120 ? L10n.t("wachter.secondengeleden", seconden)
+                                      : L10n.t("wachter.minutengeleden", seconden / 60)
+        return L10n.t("wachter.keek", staat, ouderdom) + (state.laatsteMelding.map { " — \($0)" } ?? "")
     }
 
     // MARK: - De ronde

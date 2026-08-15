@@ -54,12 +54,12 @@ enum SessionTrigger: Equatable {
     /// woord, dus staat het hier en niet op de plek die de zin bouwt.
     var metLidwoord: String {
         switch self {
-        case .schakelaar: return "de schakelaar"
-        case .cli: return "de opdrachtregel"
-        case .klepArming: return "de klep"
-        case .app(_, let naam): return "de app \(naam)"
-        case .schema: return "het schema"
-        case .sneltoets: return "de sneltoets"
+        case .schakelaar: return L10n.t("aanleiding.schakelaar")
+        case .cli: return L10n.t("aanleiding.cli")
+        case .klepArming: return L10n.t("aanleiding.klep")
+        case .app(_, let naam): return L10n.t("aanleiding.app", naam)
+        case .schema: return L10n.t("aanleiding.schema")
+        case .sneltoets: return L10n.t("aanleiding.sneltoets")
         }
     }
 

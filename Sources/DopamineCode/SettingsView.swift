@@ -23,20 +23,20 @@ struct Diagnostics {
 
     static func collect(model: AppModel) async -> Diagnostics {
         var d = Diagnostics()
-        d.clamshellCausesSleep = SleepFlag.clamshellCausesSleep().map { $0 ? "ja" : "nee" } ?? "onbekend"
-        d.backlightRoute = (await model.backlight.hasDirectControl)
-            ? "rechtstreeks (CoreBrightness)"
-            : "nagebootste toetsaanslagen (CGEvent)"
+        d.clamshellCausesSleep = SleepFlag.clamshellCausesSleep()
+            .map { L10n.t($0 ? "diag.ja" : "diag.nee") } ?? L10n.t("diag.onbekend")
+        d.backlightRoute = L10n.t((await model.backlight.hasDirectControl)
+            ? "diag.route.direct" : "diag.route.toetsen")
         d.thermal = await model.thermal.label
-        d.lockDelay = await ScreenLock.lockDelayDescription() ?? "onbekend"
-        d.cpuLimit = await ThermalWatch.cpuSpeedLimit().map { "\($0)%" } ?? "onbekend"
+        d.lockDelay = await ScreenLock.lockDelayDescription() ?? L10n.t("diag.onbekend")
+        d.cpuLimit = await ThermalWatch.cpuSpeedLimit().map { "\($0)%" } ?? L10n.t("diag.onbekend")
         // Draait `launchctl print`, dus net als de regel hieronder naast de hoofdthread.
         d.restartGuard = await Task.detached { RestartGuard.statusSentence() }.value
         d.loginMechanism = await Task.detached {
             switch LaunchAtLogin.currentMechanism() {
-            case .serviceManagement: return "macOS-inlogitem (SMAppService)"
-            case .launchAgent: return "opstartbestand (LaunchAgent)"
-            case .none: return "niet ingesteld"
+            case .serviceManagement: return L10n.t("diag.login.sm")
+            case .launchAgent: return L10n.t("diag.login.agent")
+            case .none: return L10n.t("diag.login.geen")
             }
         }.value
         return d
@@ -618,28 +618,25 @@ struct SettingsView: View {
 
     private var diagnosticsTab: some View {
         Form {
-            Section("Toestemming") {
-                LabeledContent("Wachtwoordvrijstelling", value: model.grantText)
-                Text("Met deze eenmalige regel mag Dopamine Code precies één commando uitvoeren "
-                     + "zonder je wachtwoord: de slaapblokkade aan- en uitzetten. Zonder de regel "
-                     + "vraagt macOS er elke keer om — en met de klep dicht kan niemand dat "
-                     + "invullen, dus kan de Mac daarna niet vanzelf weer gaan slapen.")
+            Section("diag.toestemming.titel") {
+                LabeledContent("diag.vrijstelling", value: model.grantText)
+                Text("diag.vrijstelling.uitleg")
                     .font(.caption).foregroundStyle(.secondary)
                     .fixedSize(horizontal: false, vertical: true)
                 if model.safetyNetsDisarmed {
-                    Label("Het vanzelf stoppen werkt nu niet: de app kan de Mac niet zelf weer laten slapen.",
+                    Label("diag.vrijstelling.kapot",
                           systemImage: "exclamationmark.triangle.fill")
                         .font(.caption).foregroundStyle(.orange)
                         .fixedSize(horizontal: false, vertical: true)
                 }
                 HStack {
-                    Button("Installeren…") { model.installGrant() }
-                    Button("Verwijderen…") { model.removeGrant() }
-                    Button("Controleren") { refresh() }
+                    Button("diag.installeren") { model.installGrant() }
+                    Button("diag.verwijderen") { model.removeGrant() }
+                    Button("diag.controleren") { refresh() }
                 }
                 .controlSize(.small)
                 .disabled(model.busy)
-                Text("Dit is de regel die geïnstalleerd wordt (in /etc/sudoers.d):")
+                Text("diag.regeltekst")
                     .font(.caption).foregroundStyle(.secondary)
                 Text(SudoersGrant.ruleText)
                     .font(.system(.caption2, design: .monospaced))
@@ -648,71 +645,58 @@ struct SettingsView: View {
                     .fixedSize(horizontal: false, vertical: true)
             }
 
-            Section("Wat het systeem nu meldt") {
+            Section("diag.systeem.titel") {
                 // Live, from the model: the guardian refreshes it and every write updates it
                 // at once. As a snapshot it sat there reading "0" while the user switched
                 // keep-awake on in the menu bar next to it.
-                LabeledContent("Slaapblokkade (SleepDisabled)",
+                LabeledContent("diag.slaapblokkade",
                                value: model.kernelFlag.map {
                                    $0 ? "1 — de Mac mag niet slapen" : "0 — de Mac mag slapen"
                                } ?? "onleesbaar")
-                LabeledContent("Klep dicht laat de Mac slapen", value: diagnostics.clamshellCausesSleep)
-                Text("Die tweede regel staat er alleen ter informatie: hij verandert niet mee met "
-                     + "de slaapblokkade, ook niet als het wakker houden aan staat.")
+                LabeledContent("diag.klepslaap", value: diagnostics.clamshellCausesSleep)
+                Text("diag.klepslaap.uitleg")
                     .font(.caption).foregroundStyle(.secondary)
                     .fixedSize(horizontal: false, vertical: true)
-                LabeledContent("Wachtwoord na vergrendelen", value: diagnostics.lockDelay)
-                LabeledContent("Toetsenbordverlichting via", value: diagnostics.backlightRoute)
-                LabeledContent("Start bij inloggen via", value: diagnostics.loginMechanism)
-                LabeledContent("Temperatuur", value: diagnostics.thermal)
-                LabeledContent("Rekensnelheid", value: diagnostics.cpuLimit)
-                Text("100% betekent dat macOS de Mac niet afremt. Lager betekent: teruggeschroefd "
-                     + "om af te koelen.")
+                LabeledContent("diag.wachtwoordna", value: diagnostics.lockDelay)
+                LabeledContent("diag.verlichtingvia", value: diagnostics.backlightRoute)
+                LabeledContent("diag.loginvia", value: diagnostics.loginMechanism)
+                LabeledContent("diag.temperatuur", value: diagnostics.thermal)
+                LabeledContent("diag.rekensnelheid", value: diagnostics.cpuLimit)
+                Text("diag.rekensnelheid.uitleg")
                     .font(.caption).foregroundStyle(.secondary)
                     .fixedSize(horizontal: false, vertical: true)
-                Button("Opnieuw uitlezen") { refresh() }
+                Button("diag.opnieuwuitlezen") { refresh() }
                     .controlSize(.small)
             }
 
-            Section("De wachter, voor als de app wegvalt") {
-                LabeledContent("Wachter", value: diagnostics.restartGuard)
-                Text("Wordt Dopamine Code hard afgeschoten — kill -9, of een crash — dan is er "
-                     + "geen enkele kans meer om de slaapblokkade terug te zetten, en blijft de "
-                     + "Mac wakker tot de accu leeg is. Daarom kijkt er elke 30 seconden een "
-                     + "kleine wachter of de blokkade aan staat zonder dat de app nog draait; "
-                     + "in dat geval start hij de app opnieuw, die het dan zelf opruimt. Hij "
-                     + "schakelt zelf nooit iets, en na een gewone Stop komt hij niet terug.")
+            Section("diag.wachter.titel") {
+                LabeledContent("diag.wachter", value: diagnostics.restartGuard)
+                Text("diag.wachter.uitleg")
                     .font(.caption).foregroundStyle(.secondary)
                     .fixedSize(horizontal: false, vertical: true)
-                Text("Dit gaat vanzelf en is niet uit te zetten — net als de temperatuurbewaking.")
+                Text("diag.wachter.vanzelf")
                     .font(.caption).foregroundStyle(.secondary)
                     .fixedSize(horizontal: false, vertical: true)
-                Button("Wachter herstellen") { model.repairRestartGuard() }
+                Button("diag.wachter.herstellen") { model.repairRestartGuard() }
                     .controlSize(.small)
             }
 
-            Section("Toetsenbordverlichting") {
-                Text("Een vaste helderheid blijft alleen staan als de automatische "
-                     + "toetsenbordverlichting uit staat. Die zet Dopamine Code daarom uit zodra "
-                     + "je de schuif gebruikt — met deze knop zet je hem weer terug zoals hij was.")
+            Section("diag.verlichting.titel") {
+                Text("diag.verlichting.uitleg")
                     .font(.caption).foregroundStyle(.secondary)
                     .fixedSize(horizontal: false, vertical: true)
-                Button("Automatische helderheid terugzetten") {
+                Button("diag.verlichting.terug") {
                     model.restoreKeyboardAutoBrightness()
                 }
                 .controlSize(.small)
                 .disabled(!Prefs.autoBrightnessWasSuppressed)
             }
 
-            Section("Bedienen vanaf de opdrachtregel") {
+            Section("diag.cli.titel") {
                 // Nooit stil: kon de socket niet aangemaakt worden, dan werkt `dopamine`
                 // gewoon niet en zou je dat nergens zien staan.
-                LabeledContent("Besturingskanaal", value: model.controlChannelText)
-                Text("Hiermee kan een script het wakker houden aan- en uitzetten, bijvoorbeeld "
-                     + "voor de duur van een build. Het schakelt niets zelf: het vraagt Dopamine "
-                     + "Code om iets te doen, met dezelfde tijdslimiet, accugrens en "
-                     + "temperatuurbewaking eromheen. Draait de app niet, dan doet het niets en "
-                     + "zegt het dat ook.")
+                LabeledContent("diag.cli.kanaal", value: model.controlChannelText)
+                Text("diag.cli.uitleg")
                     .font(.caption).foregroundStyle(.secondary)
                     .fixedSize(horizontal: false, vertical: true)
                 Text("dopamine on --until-exit $$   ·   dopamine off   ·   dopamine status --json")
@@ -720,8 +704,7 @@ struct SettingsView: View {
                     .textSelection(.enabled)
                     .foregroundStyle(.secondary)
                     .fixedSize(horizontal: false, vertical: true)
-                Text("Om 'dopamine' te kunnen typen zonder het hele pad, plak je deze regel één "
-                     + "keer in Terminal:")
+                Text("diag.cli.padregel")
                     .font(.caption).foregroundStyle(.secondary)
                     .fixedSize(horizontal: false, vertical: true)
                 Text(AppModel.cliLinkCommand)
@@ -731,12 +714,11 @@ struct SettingsView: View {
                     .fixedSize(horizontal: false, vertical: true)
             }
 
-            Section("Logboek") {
-                Text("Alles wat de app doet komt in dit bestand te staan — daarin kun je "
-                     + "achteraf teruglezen wat er 's nachts gebeurd is.")
+            Section("diag.logboek.titel") {
+                Text("diag.logboek.uitleg")
                     .font(.caption).foregroundStyle(.secondary)
                     .fixedSize(horizontal: false, vertical: true)
-                Button("Toon logbestand in Finder") { model.openLog() }
+                Button("diag.logboek.toon") { model.openLog() }
                     .controlSize(.small)
                 Text(EventLog.shared.logPath)
                     .font(.system(.caption2, design: .monospaced))
@@ -762,38 +744,35 @@ struct SettingsView: View {
     /// uitzet: dit is een verslag, geen bediening.
     private var historyTab: some View {
         Form {
-            Section("De laatste sessies") {
+            Section("gesch.laatste.titel") {
                 if let history {
                     if history.sessies.isEmpty {
-                        Text("Er staat geen enkele sessie in het logboek.")
+                        Text("gesch.geen")
                             .font(.caption).foregroundStyle(.secondary)
                     } else {
                         ForEach(history.sessies) { sessie in historyRow(sessie) }
                     }
                 } else {
-                    Text("Bezig met lezen…")
+                    Text("gesch.bezig")
                         .font(.caption).foregroundStyle(.secondary)
                 }
             }
 
-            Section("Waar dit vandaan komt") {
+            Section("gesch.herkomst.titel") {
                 if let history {
                     // Het aantal gelezen regels staat er zodat een leeg lijstje niet hetzelfde
                     // lijkt als "je hebt de app nog nooit aangezet". Nul regels betekent dat er
                     // niets te lezen viel; vierduizend regels zonder sessies betekent iets anders.
-                    LabeledContent("Gelezen regels", value: "\(history.gelezenRegels)")
+                    LabeledContent("gesch.gelezenregels", value: "\(history.gelezenRegels)")
                     if history.zonderAfsluitregel > 0 {
-                        LabeledContent("Zonder afsluitregel", value: "\(history.zonderAfsluitregel)")
-                        Text("Van die sessies staat het einde niet in het logboek. Een sessie die "
-                             + "op dit moment nog loopt telt daarin mee — daarvan is het einde er "
-                             + "nog niet.")
+                        LabeledContent("gesch.zonderafsluiting", value: "\(history.zonderAfsluitregel)")
+                        Text("gesch.zonderafsluiting.uitleg")
                             .font(.caption).foregroundStyle(.secondary)
                             .fixedSize(horizontal: false, vertical: true)
                     }
                     if history.zonderBegin > 0 {
-                        LabeledContent("Einde zonder begin", value: "\(history.zonderBegin)")
-                        Text("Van die sessies is het begin uit het logboek gerold; er staan alleen "
-                             + "nog regels over het einde.")
+                        LabeledContent("gesch.zonderbegin", value: "\(history.zonderBegin)")
+                        Text("gesch.zonderbegin.uitleg")
                             .font(.caption).foregroundStyle(.secondary)
                             .fixedSize(horizontal: false, vertical: true)
                     }
@@ -803,14 +782,10 @@ struct SettingsView: View {
                             .fixedSize(horizontal: false, vertical: true)
                     }
                 }
-                Text("Dit is het logboek, leesbaar gemaakt — er wordt niets apart bijgehouden. "
-                     + "Het logboek rolt om na een megabyte; wat ouder is dan het archief ernaast "
-                     + "staat er niet meer in. Loopt er nu een sessie, dan komt die regel niet uit "
-                     + "het logboek maar uit de app zelf: in het logboek staat pas iets over het "
-                     + "einde als het einde er is.")
+                Text("gesch.uitleg")
                     .font(.caption).foregroundStyle(.secondary)
                     .fixedSize(horizontal: false, vertical: true)
-                Button("Opnieuw lezen") { loadHistory() }
+                Button("gesch.opnieuwlezen") { loadHistory() }
                     .controlSize(.small)
             }
         }
@@ -833,9 +808,9 @@ struct SettingsView: View {
                 if let eind = sessie.eind {
                     Text(Self.tijd.string(from: eind)).font(.callout).monospacedDigit()
                 } else if loopt {
-                    Text("loopt nog").font(.callout).foregroundStyle(Color.accentColor)
+                    Text("gesch.looptnog").font(.callout).foregroundStyle(Color.accentColor)
                 } else {
-                    Text("onbekend").font(.callout).foregroundStyle(.orange)
+                    Text("gesch.onbekend").font(.callout).foregroundStyle(.orange)
                 }
                 if let gedraaid = sessie.gedraaid {
                     Text("· \(gedraaid)").font(.callout).foregroundStyle(.secondary).monospacedDigit()
@@ -848,7 +823,7 @@ struct SettingsView: View {
                     .fixedSize(horizontal: false, vertical: true)
             }
             if sessie.beloofdeNietGehaald {
-                Label("De Mac heeft tijdens deze sessie tóch geslapen.",
+                Label("gesch.tochgeslapen",
                       systemImage: "exclamationmark.octagon.fill")
                     .font(.caption).foregroundStyle(.red)
                     .fixedSize(horizontal: false, vertical: true)

@@ -243,3 +243,153 @@
 "aan.klep.uitleg" = "Cela se trouve dans le panneau de la barre des menus et pas ici, car cela vaut une seule fois : vous cliquez \"Activer dès que je rabats l'écran\", vous rabattez, et le maintien en éveil s'active. Sinon, cela expire tout seul au bout de cinq minutes et l'app le dit. Cela ne survit délibérément pas à un redémarrage : personne n'attend plus qu'une chose armée il y a des heures se déclenche.";
 "aan.omheen.titel" = "Ce qui reste en place quoi qu'il arrive";
 "aan.omheen.uitleg" = "Tout ce qui s'active tout seul ici emprunte exactement le même chemin que l'interrupteur : la même limite de temps, le même seuil de batterie et la même surveillance de température. Si l'activation n'est pas sûre à ce moment — batterie trop faible, Mac trop chaud, ou dispense de mot de passe disparue — rien ne se produit, et vous en recevez une notification. Une planification ne dure jamais plus que la limite de temps : si celle-ci est de 4 heures et la fenêtre jusqu'à 18:00, cela s'arrête à 13:00 et pas à 18:00. Et dans une même fenêtre, la planification s'active au plus une fois, même si quelque chose s'est arrêté entre-temps — sinon elle rétablirait ce qu'un garde-fou vient de relâcher.";
+
+/* --- Waarden die de diagnose samenstelt --- */
+"diag.ja" = "oui";
+"diag.nee" = "non";
+"diag.onbekend" = "inconnu";
+"diag.route.direct" = "directement (CoreBrightness)";
+"diag.route.toetsen" = "frappes de touches imitées (CGEvent)";
+"diag.login.sm" = "élément d'ouverture macOS (SMAppService)";
+"diag.login.agent" = "fichier de démarrage (LaunchAgent)";
+"diag.login.geen" = "non configuré";
+
+/* --- De wachter, zoals hij zichzelf beschrijft --- */
+"wachter.geladen" = "chargé";
+"wachter.nietgeladen" = "PAS chargé";
+"wachter.nognietgekeken" = "%@, n'a pas encore regardé";
+"wachter.keek" = "%1$@, a regardé %2$@";
+"wachter.secondengeleden" = "il y a %d s";
+"wachter.minutengeleden" = "il y a %d min";
+
+/* --- Instellingen · Diagnose: toestemming --- */
+"diag.toestemming.titel" = "Autorisation";
+"diag.vrijstelling" = "Dispense de mot de passe";
+"diag.vrijstelling.uitleg" = "Avec cette règle à installer une seule fois, Dopamine Code peut exécuter exactement une commande sans votre mot de passe : activer et désactiver le blocage de veille. Sans la règle, macOS le demande à chaque fois — et écran rabattu, personne ne peut le saisir, donc le Mac ne pourra plus se rendormir tout seul ensuite.";
+"diag.vrijstelling.kapot" = "L'arrêt automatique ne fonctionne pas : l'app ne peut pas rendormir le Mac elle-même.";
+"diag.installeren" = "Installer…";
+"diag.verwijderen" = "Supprimer…";
+"diag.controleren" = "Vérifier";
+"diag.regeltekst" = "Voici la règle qui sera installée (dans /etc/sudoers.d) :";
+
+/* --- Instellingen · Diagnose: wat het systeem meldt --- */
+"diag.systeem.titel" = "Ce que le système indique maintenant";
+"diag.slaapblokkade" = "Blocage de veille (SleepDisabled)";
+"diag.klepslaap" = "Rabattre l'écran endort le Mac";
+"diag.klepslaap.uitleg" = "Cette deuxième ligne est là à titre d'information : elle ne change pas avec le blocage de veille, même quand le maintien en éveil est actif.";
+"diag.wachtwoordna" = "Mot de passe après verrouillage";
+"diag.verlichtingvia" = "Rétroéclairage du clavier via";
+"diag.loginvia" = "Lancement à l'ouverture via";
+"diag.temperatuur" = "Température";
+"diag.rekensnelheid" = "Vitesse de calcul";
+"diag.rekensnelheid.uitleg" = "100% signifie que macOS ne bride pas le Mac. Moins veut dire : réduit pour refroidir.";
+"diag.opnieuwuitlezen" = "Relire";
+
+/* --- Instellingen · Diagnose: de wachter --- */
+"diag.wachter.titel" = "Le veilleur, au cas où l'app disparaîtrait";
+"diag.wachter" = "Veilleur";
+"diag.wachter.uitleg" = "Si Dopamine Code est tué net — kill -9, ou un plantage — il ne reste aucune chance de rétablir le blocage de veille, et le Mac reste éveillé jusqu'à ce que la batterie soit vide. C'est pourquoi toutes les 30 secondes un petit veilleur vérifie si le blocage est actif alors que l'app ne tourne plus ; dans ce cas il relance l'app, qui fait alors le ménage elle-même. Il ne bascule jamais rien lui-même, et après un Quitter normal il ne revient pas.";
+"diag.wachter.vanzelf" = "Cela se fait tout seul et ne peut pas être désactivé — tout comme la surveillance de température.";
+"diag.wachter.herstellen" = "Réparer le veilleur";
+
+/* --- Instellingen · Diagnose: verlichting, opdrachtregel, logboek --- */
+"diag.verlichting.titel" = "Rétroéclairage du clavier";
+"diag.verlichting.uitleg" = "Une luminosité fixe ne tient que si le rétroéclairage automatique est désactivé. Dopamine Code le désactive donc dès que vous utilisez le curseur — ce bouton le rétablit tel qu'il était.";
+"diag.verlichting.terug" = "Rétablir la luminosité automatique";
+"diag.cli.titel" = "Piloter depuis la ligne de commande";
+"diag.cli.kanaal" = "Canal de commande";
+"diag.cli.uitleg" = "Cela permet à un script d'activer et de désactiver le maintien en éveil, par exemple le temps d'une compilation. Il ne bascule rien lui-même : il demande à Dopamine Code de faire quelque chose, avec la même limite de temps, le même seuil de batterie et la même surveillance de température autour. Si l'app ne tourne pas, il ne fait rien et le dit.";
+"diag.cli.padregel" = "Pour taper 'dopamine' sans le chemin complet, collez cette ligne une fois dans Terminal :";
+"diag.logboek.titel" = "Journal";
+"diag.logboek.uitleg" = "Tout ce que fait l'app se retrouve dans ce fichier — vous pouvez y relire après coup ce qui s'est passé pendant la nuit.";
+"diag.logboek.toon" = "Afficher le fichier journal dans le Finder";
+
+/* --- Instellingen · Geschiedenis --- */
+"gesch.laatste.titel" = "Les dernières sessions";
+"gesch.geen" = "Il n'y a aucune session dans le journal.";
+"gesch.bezig" = "Lecture en cours…";
+"gesch.herkomst.titel" = "D'où cela vient";
+"gesch.gelezenregels" = "Lignes lues";
+"gesch.zonderafsluiting" = "Sans ligne de clôture";
+"gesch.zonderafsluiting.uitleg" = "Pour ces sessions, la fin ne figure pas dans le journal. Une session en cours en fait partie — sa fin n'existe pas encore.";
+"gesch.zonderbegin" = "Fin sans début";
+"gesch.zonderbegin.uitleg" = "Pour ces sessions, le début a disparu du journal ; il ne reste que des lignes sur la fin.";
+"gesch.uitleg" = "Ceci est le journal, rendu lisible — rien n'est conservé à part. Le journal bascule après un mégaoctet ; ce qui est plus ancien que l'archive à côté n'y figure plus. Si une session est en cours, cette ligne ne vient pas du journal mais de l'app elle-même : le journal ne dit quelque chose sur la fin que lorsque la fin existe.";
+"gesch.opnieuwlezen" = "Relire";
+"gesch.looptnog" = "toujours en cours";
+"gesch.onbekend" = "inconnu";
+"gesch.tochgeslapen" = "Le Mac a quand même dormi pendant cette session.";
+
+/* --- Meldingen die de app in beeld zet --- */
+"melding.opgeruimd" = "Le Mac était encore maintenu éveillé depuis une fois précédente ; cela a été nettoyé.";
+"melding.kanniet.slapen" = "Le Mac ne peut pas se mettre en veille. Installez la dispense de mot de passe dans Réglages → Diagnostic, et Dopamine Code nettoiera cela tout seul.";
+"melding.trigger.mislukt" = "L'activation automatique a échoué (%1$@) : %2$@";
+"melding.staat.al.aan" = "Le maintien en éveil est déjà actif ; l'armer n'a pas de sens maintenant.";
+"melding.nietmeerklaar" = "Ce n'est plus armé ; rabattre l'écran ne fait rien maintenant.";
+"melding.trigger.draaital" = "%@ est maintenant défini comme déclencheur. Il tourne déjà, donc rien ne se passe maintenant ; au prochain démarrage, le maintien en éveil s'activera.";
+"melding.trigger.ingesteld" = "%@ est maintenant défini comme déclencheur.";
+"melding.autogestopt" = "Arrêt automatique : %@. Le Mac peut à nouveau dormir.";
+"melding.stoppen.mislukt" = "L'arrêt a échoué (%@). Installez la dispense de mot de passe dans Réglages → Diagnostic, ou exécutez ceci dans Terminal : sudo pmset -a disablesleep 0";
+"melding.lader" = "Branchez le chargeur, ou abaissez le seuil de batterie dans Réglages → Arrêt automatique.";
+"melding.afkoelen" = "Attendez qu'il ait refroidi puis réessayez.";
+"melding.procesweg" = "Le processus %d ne tourne pas (plus), il n'y a donc rien à attendre.";
+"melding.grant.eerst" = "%@. Installez-la d'abord dans Réglages → Diagnostic. Sans cette règle, la limite de temps, le seuil de batterie et la surveillance de température ne pourront pas rendormir le Mac plus tard — et écran rabattu, personne ne peut saisir le mot de passe demandé.";
+"melding.grant.installeer" = "Installez la dispense de mot de passe dans Réglages → Diagnostic.";
+"melding.geannuleerd.mogelijkaan" = "Annulé, mais le Mac est peut-être quand même maintenu éveillé. Dopamine Code va rétablir cela.";
+"melding.geannuleerd" = "Annulé.";
+"melding.vlag.anders" = "La commande n'a signalé aucune erreur, mais le blocage de veille est à %@ au lieu de 1.";
+"melding.onleesbaar" = "illisible";
+"melding.letop.zondergrant" = "Attention : sans la dispense de mot de passe, la limite de temps, le seuil de batterie et la surveillance de température ne pourront pas rendormir le Mac ensuite.";
+"melding.letop.geenwachtwoord" = "Attention : ce Mac est réglé pour ne pas demander de mot de passe après verrouillage. L'écran se verrouille bien, mais n'importe qui peut le rouvrir.";
+"melding.slot.viascreensaver" = "Écran verrouillé via l'économiseur d'écran.";
+"melding.slot.mislukt" = "L'écran ne s'est PAS verrouillé — le Mac va rester ouvert sans surveillance. Le maintien en éveil continue.";
+"melding.scherm.nietuit" = "L'écran ne s'est pas éteint. Sous un écran rabattu, il continue de briller sans qu'on le voie et consomme la batterie.";
+"melding.geannuleerd.nogwakker" = "Annulé — le Mac est toujours maintenu éveillé.";
+"melding.uitzetten.mislukt" = "La désactivation a échoué. Rétablissez-le vous-même dans Terminal avec : sudo pmset -a disablesleep 0";
+"melding.warm" = "Le Mac chauffe";
+"melding.internet.titel" = "La connexion internet a été coupée";
+"melding.nietgestopt" = "Le maintien en éveil n'a pas pu être arrêté, et tant qu'il est actif le Mac ne peut pas dormir.";
+"melding.slaap.mislukt" = "La mise en veille a échoué : %@";
+"melding.grant.geinstalleerd" = "Dispense de mot de passe installée ; le Mac peut à nouveau dormir.";
+"melding.installatie.geannuleerd" = "Installation annulée.";
+"melding.installatie.mislukt" = "Échec de l'installation : %@";
+"melding.grant.nietverwijderd" = "La dispense n'a pas été supprimée : le maintien en éveil doit d'abord être désactivé, sinon plus rien ne pourra l'arrêter ensuite.";
+"melding.grant.verwijderd" = "Dispense de mot de passe supprimée.";
+"melding.verwijderen.geannuleerd" = "Suppression annulée.";
+"melding.verwijderen.mislukt" = "Échec de la suppression : %@";
+"melding.tot.app.eneind" = "Le Mac reste éveillé jusqu'à ce que %1$@ ait terminé, et en tout cas pas au-delà de %2$@.";
+"melding.sessie.ookapp" = "La session en cours s'arrêtera aussi dès que %@ aura terminé.";
+"melding.bezig" = "Occupé avec le blocage de veille ; réessayez dans un instant.";
+"melding.toegankelijkheid" = "Dopamine Code a besoin d'une autorisation dans Réglages Système → Confidentialité → Accessibilité pour imiter les touches de luminosité.";
+"melding.verlichting.mislukt" = "Le rétroéclairage du clavier n'a pas pu être basculé.";
+"melding.helderheid.terug" = "La luminosité automatique du clavier est revenue comme vous l'aviez.";
+"melding.nietsterug" = "Il n'y avait rien à rétablir.";
+"melding.terugzetten.geweigerd" = "Le système a refusé le rétablissement. Le rétroéclairage automatique du clavier est encore désactivé ; réessayez ou activez-le vous-même dans Réglages Système → Clavier.";
+"melding.login.mislukt" = "Le lancement à l'ouverture a échoué : %@";
+"melding.wachter" = "Le veilleur : %@";
+
+/* --- De Mac sliep tijdens een sessie --- */
+"slaap.context.aan" = "alors que le blocage de veille était actif";
+"slaap.context.uit" = "alors que le maintien en éveil était actif, mais pas (plus) le blocage de veille";
+"slaap.oordeel.aan" = " Le blocage n'a pas tenu ici.";
+"slaap.oordeel.uit" = " Le blocage avait été désactivé en dehors de Dopamine Code : cela ne dit donc rien sur le blocage lui-même.";
+"slaap.zin" = "%1$@, %2$@.";
+"slaap.verifytip" = " Ne vous y fiez donc pas aveuglément ; vérifiez avec ./verify.sh --after.";
+
+/* --- Waarom een sessie gestopt is --- */
+"reden.tijdom" = "le temps réglé était écoulé";
+"reden.geeneindtijd" = "aucune heure de fin n'était définie";
+"reden.accu" = "la batterie était à %1$d%%, sous votre seuil de %2$d%%";
+"reden.warm" = "le Mac a trop chauffé";
+"reden.procesklaar" = "le processus %@ a terminé";
+"reden.pidhergebruikt" = " (ce pid appartient désormais à autre chose)";
+"reden.liepot" = "la session courait jusqu'à %@";
+
+/* --- Waardoor een sessie is aangezet, als zelfstandig naamwoord --- */
+"aanleiding.schakelaar" = "l'interrupteur";
+"aanleiding.cli" = "la ligne de commande";
+"aanleiding.klep" = "l'écran";
+"aanleiding.app" = "l'app %@";
+"aanleiding.schema" = "la planification";
+"aanleiding.sneltoets" = "le raccourci";
+"wachter.onleesbaar" = "le bundle à %1$@ n'a pas pu être lu comme du code signé (%2$d)";

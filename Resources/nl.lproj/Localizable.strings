@@ -247,3 +247,153 @@
 "aan.klep.uitleg" = "Dit staat in het menubalk-paneel en niet hier, want het geldt één keer: je klikt \"Aanzetten zodra ik de klep dichtdoe\", je klapt dicht, en het wakker houden gaat aan. Doe je het niet, dan vervalt het na vijf minuten vanzelf en zegt de app dat ook. Het overleeft met opzet geen herstart: iets dat klaarstaat en pas uren later afgaat verwacht niemand nog.";
 "aan.omheen.titel" = "Wat er hoe dan ook omheen blijft zitten";
 "aan.omheen.uitleg" = "Alles wat hier vanzelf aangaat loopt langs precies dezelfde weg als de schakelaar: dezelfde tijdslimiet, dezelfde accugrens en dezelfde temperatuurbewaking. Kan er op dat moment niet veilig aangezet worden — de accu is te leeg, de Mac is te warm, of de wachtwoordvrijstelling is weg — dan gebeurt er niets, en krijg je daar een melding van. Een schema loopt nooit langer dan de tijdslimiet: staat die op 4 uur en het venster tot 18:00, dan stopt het om 13:00 en niet om 18:00. En binnen één venster gaat het schema hooguit één keer aan, ook als er iets tussendoor stopte — anders zou het schema terugzetten wat een vangnet net had laten vallen.";
+
+/* --- Waarden die de diagnose samenstelt --- */
+"diag.ja" = "ja";
+"diag.nee" = "nee";
+"diag.onbekend" = "onbekend";
+"diag.route.direct" = "rechtstreeks (CoreBrightness)";
+"diag.route.toetsen" = "nagebootste toetsaanslagen (CGEvent)";
+"diag.login.sm" = "macOS-inlogitem (SMAppService)";
+"diag.login.agent" = "opstartbestand (LaunchAgent)";
+"diag.login.geen" = "niet ingesteld";
+
+/* --- De wachter, zoals hij zichzelf beschrijft --- */
+"wachter.geladen" = "geladen";
+"wachter.nietgeladen" = "NIET geladen";
+"wachter.nognietgekeken" = "%@, nog niet gekeken";
+"wachter.keek" = "%1$@, keek %2$@";
+"wachter.secondengeleden" = "%d s geleden";
+"wachter.minutengeleden" = "%d min geleden";
+
+/* --- Instellingen · Diagnose: toestemming --- */
+"diag.toestemming.titel" = "Toestemming";
+"diag.vrijstelling" = "Wachtwoordvrijstelling";
+"diag.vrijstelling.uitleg" = "Met deze eenmalige regel mag Dopamine Code precies één commando uitvoeren zonder je wachtwoord: de slaapblokkade aan- en uitzetten. Zonder de regel vraagt macOS er elke keer om — en met de klep dicht kan niemand dat invullen, dus kan de Mac daarna niet vanzelf weer gaan slapen.";
+"diag.vrijstelling.kapot" = "Het vanzelf stoppen werkt nu niet: de app kan de Mac niet zelf weer laten slapen.";
+"diag.installeren" = "Installeren…";
+"diag.verwijderen" = "Verwijderen…";
+"diag.controleren" = "Controleren";
+"diag.regeltekst" = "Dit is de regel die geïnstalleerd wordt (in /etc/sudoers.d):";
+
+/* --- Instellingen · Diagnose: wat het systeem meldt --- */
+"diag.systeem.titel" = "Wat het systeem nu meldt";
+"diag.slaapblokkade" = "Slaapblokkade (SleepDisabled)";
+"diag.klepslaap" = "Klep dicht laat de Mac slapen";
+"diag.klepslaap.uitleg" = "Die tweede regel staat er alleen ter informatie: hij verandert niet mee met de slaapblokkade, ook niet als het wakker houden aan staat.";
+"diag.wachtwoordna" = "Wachtwoord na vergrendelen";
+"diag.verlichtingvia" = "Toetsenbordverlichting via";
+"diag.loginvia" = "Start bij inloggen via";
+"diag.temperatuur" = "Temperatuur";
+"diag.rekensnelheid" = "Rekensnelheid";
+"diag.rekensnelheid.uitleg" = "100% betekent dat macOS de Mac niet afremt. Lager betekent: teruggeschroefd om af te koelen.";
+"diag.opnieuwuitlezen" = "Opnieuw uitlezen";
+
+/* --- Instellingen · Diagnose: de wachter --- */
+"diag.wachter.titel" = "De wachter, voor als de app wegvalt";
+"diag.wachter" = "Wachter";
+"diag.wachter.uitleg" = "Wordt Dopamine Code hard afgeschoten — kill -9, of een crash — dan is er geen enkele kans meer om de slaapblokkade terug te zetten, en blijft de Mac wakker tot de accu leeg is. Daarom kijkt er elke 30 seconden een kleine wachter of de blokkade aan staat zonder dat de app nog draait; in dat geval start hij de app opnieuw, die het dan zelf opruimt. Hij schakelt zelf nooit iets, en na een gewone Stop komt hij niet terug.";
+"diag.wachter.vanzelf" = "Dit gaat vanzelf en is niet uit te zetten — net als de temperatuurbewaking.";
+"diag.wachter.herstellen" = "Wachter herstellen";
+
+/* --- Instellingen · Diagnose: verlichting, opdrachtregel, logboek --- */
+"diag.verlichting.titel" = "Toetsenbordverlichting";
+"diag.verlichting.uitleg" = "Een vaste helderheid blijft alleen staan als de automatische toetsenbordverlichting uit staat. Die zet Dopamine Code daarom uit zodra je de schuif gebruikt — met deze knop zet je hem weer terug zoals hij was.";
+"diag.verlichting.terug" = "Automatische helderheid terugzetten";
+"diag.cli.titel" = "Bedienen vanaf de opdrachtregel";
+"diag.cli.kanaal" = "Besturingskanaal";
+"diag.cli.uitleg" = "Hiermee kan een script het wakker houden aan- en uitzetten, bijvoorbeeld voor de duur van een build. Het schakelt niets zelf: het vraagt Dopamine Code om iets te doen, met dezelfde tijdslimiet, accugrens en temperatuurbewaking eromheen. Draait de app niet, dan doet het niets en zegt het dat ook.";
+"diag.cli.padregel" = "Om 'dopamine' te kunnen typen zonder het hele pad, plak je deze regel één keer in Terminal:";
+"diag.logboek.titel" = "Logboek";
+"diag.logboek.uitleg" = "Alles wat de app doet komt in dit bestand te staan — daarin kun je achteraf teruglezen wat er 's nachts gebeurd is.";
+"diag.logboek.toon" = "Toon logbestand in Finder";
+
+/* --- Instellingen · Geschiedenis --- */
+"gesch.laatste.titel" = "De laatste sessies";
+"gesch.geen" = "Er staat geen enkele sessie in het logboek.";
+"gesch.bezig" = "Bezig met lezen…";
+"gesch.herkomst.titel" = "Waar dit vandaan komt";
+"gesch.gelezenregels" = "Gelezen regels";
+"gesch.zonderafsluiting" = "Zonder afsluitregel";
+"gesch.zonderafsluiting.uitleg" = "Van die sessies staat het einde niet in het logboek. Een sessie die op dit moment nog loopt telt daarin mee — daarvan is het einde er nog niet.";
+"gesch.zonderbegin" = "Einde zonder begin";
+"gesch.zonderbegin.uitleg" = "Van die sessies is het begin uit het logboek gerold; er staan alleen nog regels over het einde.";
+"gesch.uitleg" = "Dit is het logboek, leesbaar gemaakt — er wordt niets apart bijgehouden. Het logboek rolt om na een megabyte; wat ouder is dan het archief ernaast staat er niet meer in. Loopt er nu een sessie, dan komt die regel niet uit het logboek maar uit de app zelf: in het logboek staat pas iets over het einde als het einde er is.";
+"gesch.opnieuwlezen" = "Opnieuw lezen";
+"gesch.looptnog" = "loopt nog";
+"gesch.onbekend" = "onbekend";
+"gesch.tochgeslapen" = "De Mac heeft tijdens deze sessie tóch geslapen.";
+
+/* --- Meldingen die de app in beeld zet --- */
+"melding.opgeruimd" = "De Mac stond nog van een vorige keer wakker gehouden; dat is opgeruimd.";
+"melding.kanniet.slapen" = "De Mac kan nu niet slapen. Installeer de wachtwoordvrijstelling bij Instellingen → Diagnose, dan ruimt Dopamine Code dit vanzelf op.";
+"melding.trigger.mislukt" = "Vanzelf aanzetten lukte niet (%1$@): %2$@";
+"melding.staat.al.aan" = "Het wakker houden staat al aan; klaarzetten heeft nu geen zin.";
+"melding.nietmeerklaar" = "Het staat niet meer klaar; dichtklappen doet nu niets.";
+"melding.trigger.draaital" = "%@ staat nu als trigger ingesteld. Hij draait al, dus er gebeurt nu niets; de volgende keer dat hij start gaat het wakker houden aan.";
+"melding.trigger.ingesteld" = "%@ staat nu als trigger ingesteld.";
+"melding.autogestopt" = "Automatisch gestopt: %@. De Mac mag weer slapen.";
+"melding.stoppen.mislukt" = "Het stoppen lukte niet (%@). Installeer de wachtwoordvrijstelling bij Instellingen → Diagnose, of voer dit uit in Terminal: sudo pmset -a disablesleep 0";
+"melding.lader" = "Sluit de lader aan, of verlaag de accugrens bij Instellingen → Vanzelf stoppen.";
+"melding.afkoelen" = "Wacht even tot hij is afgekoeld en probeer het dan opnieuw.";
+"melding.procesweg" = "Proces %d draait niet (meer), dus er is niets om op te wachten.";
+"melding.grant.eerst" = "%@. Installeer hem eerst bij Instellingen → Diagnose. Zonder die regel kunnen de tijdslimiet, de accugrens en de temperatuurbewaking de Mac later niet vanzelf weer laten slapen — en met de klep dicht kan niemand het gevraagde wachtwoord invullen.";
+"melding.grant.installeer" = "Installeer de wachtwoordvrijstelling bij Instellingen → Diagnose.";
+"melding.geannuleerd.mogelijkaan" = "Geannuleerd, maar de Mac wordt mogelijk toch wakker gehouden. Dopamine Code zet dat terug.";
+"melding.geannuleerd" = "Geannuleerd.";
+"melding.vlag.anders" = "Het commando gaf geen fout, maar de slaapblokkade staat op %@ in plaats van op 1.";
+"melding.onleesbaar" = "onleesbaar";
+"melding.letop.zondergrant" = "Let op: zonder de wachtwoordvrijstelling kunnen de tijdslimiet, de accugrens en de temperatuurbewaking de Mac straks niet zelf weer laten slapen.";
+"melding.letop.geenwachtwoord" = "Let op: op deze Mac staat ingesteld dat er ná vergrendelen géén wachtwoord gevraagd wordt. Het scherm gaat dus wel op slot, maar iedereen kan het weer openen.";
+"melding.slot.viascreensaver" = "Scherm op slot gezet via de schermbeveiliging.";
+"melding.slot.mislukt" = "Het scherm is NIET op slot gegaan — de Mac staat straks onbeheerd open. Wakker houden loopt gewoon door.";
+"melding.scherm.nietuit" = "Het scherm ging niet uit. Onder een dichte klep brandt het dan onzichtbaar door en kost het accu.";
+"melding.geannuleerd.nogwakker" = "Geannuleerd — de Mac wordt nog steeds wakker gehouden.";
+"melding.uitzetten.mislukt" = "Uitzetten lukte niet. Zet het zelf terug in Terminal met: sudo pmset -a disablesleep 0";
+"melding.warm" = "De Mac wordt warm";
+"melding.internet.titel" = "De internetverbinding is weg geweest";
+"melding.nietgestopt" = "Het wakker houden kon niet gestopt worden, en zolang dat aan staat kan de Mac niet gaan slapen.";
+"melding.slaap.mislukt" = "In slaap zetten mislukte: %@";
+"melding.grant.geinstalleerd" = "Wachtwoordvrijstelling geïnstalleerd; de Mac mag weer slapen.";
+"melding.installatie.geannuleerd" = "Installatie geannuleerd.";
+"melding.installatie.mislukt" = "Installatie mislukt: %@";
+"melding.grant.nietverwijderd" = "De vrijstelling is niet verwijderd: het wakker houden moet eerst uit, anders kan niets het daarna nog stoppen.";
+"melding.grant.verwijderd" = "Wachtwoordvrijstelling verwijderd.";
+"melding.verwijderen.geannuleerd" = "Verwijderen geannuleerd.";
+"melding.verwijderen.mislukt" = "Verwijderen mislukt: %@";
+"melding.tot.app.eneind" = "De Mac blijft wakker tot %1$@ klaar is, en hoe dan ook niet langer dan tot %2$@.";
+"melding.sessie.ookapp" = "De lopende sessie stopt nu ook zodra %@ klaar is.";
+"melding.bezig" = "Even bezig met de slaapblokkade; probeer het zo opnieuw.";
+"melding.toegankelijkheid" = "Dopamine Code heeft toestemming nodig bij Systeeminstellingen → Privacy → Toegankelijkheid om de helderheidstoetsen na te bootsen.";
+"melding.verlichting.mislukt" = "Toetsenbordverlichting kon niet geschakeld worden.";
+"melding.helderheid.terug" = "Automatische toetsenbordhelderheid staat weer zoals je hem had.";
+"melding.nietsterug" = "Er was niets terug te zetten.";
+"melding.terugzetten.geweigerd" = "Het systeem weigerde het terugzetten. De automatische toetsenbordverlichting staat nog uit; probeer het opnieuw of zet hem zelf aan bij Systeeminstellingen → Toetsenbord.";
+"melding.login.mislukt" = "Start bij inloggen mislukt: %@";
+"melding.wachter" = "De wachter: %@";
+
+/* --- De Mac sliep tijdens een sessie --- */
+"slaap.context.aan" = "terwijl de slaapblokkade aan stond";
+"slaap.context.uit" = "terwijl het wakker houden aan stond, maar de slaapblokkade niet (meer)";
+"slaap.oordeel.aan" = " De blokkade heeft het hier niet gehouden.";
+"slaap.oordeel.uit" = " De blokkade was buiten Dopamine Code om uitgezet, dus dit zegt niets over de blokkade zelf.";
+"slaap.zin" = "%1$@, %2$@.";
+"slaap.verifytip" = " Vertrouw er dus niet blind op; controleer het met ./verify.sh --after.";
+
+/* --- Waarom een sessie gestopt is --- */
+"reden.tijdom" = "de ingestelde tijd was om";
+"reden.geeneindtijd" = "er stond geen eindtijd ingesteld";
+"reden.accu" = "de accu stond op %1$d%%, onder je grens van %2$d%%";
+"reden.warm" = "de Mac werd te warm";
+"reden.procesklaar" = "het proces %@ is klaar";
+"reden.pidhergebruikt" = " (die pid is inmiddels van iets anders)";
+"reden.liepot" = "de sessie liep tot %@";
+
+/* --- Waardoor een sessie is aangezet, als zelfstandig naamwoord --- */
+"aanleiding.schakelaar" = "de schakelaar";
+"aanleiding.cli" = "de opdrachtregel";
+"aanleiding.klep" = "de klep";
+"aanleiding.app" = "de app %@";
+"aanleiding.schema" = "het schema";
+"aanleiding.sneltoets" = "de sneltoets";
+"wachter.onleesbaar" = "de bundel op %1$@ kon niet als ondertekende code gelezen worden (%2$d)";

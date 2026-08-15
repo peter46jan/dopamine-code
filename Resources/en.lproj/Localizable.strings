@@ -242,3 +242,153 @@
 "aan.klep.uitleg" = "This lives in the menu bar panel and not here, because it applies once: you click \"Turn on when I close the lid\", you close it, and keeping awake switches on. If you do not, it expires by itself after five minutes and the app says so. It deliberately does not survive a restart: nobody expects something armed hours ago to still go off.";
 "aan.omheen.titel" = "What stays wrapped around it regardless";
 "aan.omheen.uitleg" = "Everything that switches on by itself here takes exactly the same route as the switch: the same time limit, the same battery floor and the same temperature watch. If it cannot be switched on safely at that moment — the battery too low, the Mac too warm, or the password exemption gone — nothing happens, and you get a notification about it. A schedule never runs longer than the time limit: set that to 4 hours with the window until 18:00, and it stops at 13:00 and not at 18:00. And within one window the schedule fires at most once, even if something stopped in between — otherwise the schedule would put back what a safety net had just released.";
+
+/* --- Waarden die de diagnose samenstelt --- */
+"diag.ja" = "yes";
+"diag.nee" = "no";
+"diag.onbekend" = "unknown";
+"diag.route.direct" = "directly (CoreBrightness)";
+"diag.route.toetsen" = "imitated key presses (CGEvent)";
+"diag.login.sm" = "macOS login item (SMAppService)";
+"diag.login.agent" = "startup file (LaunchAgent)";
+"diag.login.geen" = "not set up";
+
+/* --- De wachter, zoals hij zichzelf beschrijft --- */
+"wachter.geladen" = "loaded";
+"wachter.nietgeladen" = "NOT loaded";
+"wachter.nognietgekeken" = "%@, has not looked yet";
+"wachter.keek" = "%1$@, looked %2$@";
+"wachter.secondengeleden" = "%d s ago";
+"wachter.minutengeleden" = "%d min ago";
+
+/* --- Instellingen · Diagnose: toestemming --- */
+"diag.toestemming.titel" = "Permission";
+"diag.vrijstelling" = "Password exemption";
+"diag.vrijstelling.uitleg" = "With this one-time rule Dopamine Code may run exactly one command without your password: switching the sleep block on and off. Without the rule macOS asks for it every time — and with the lid closed nobody can type it, so the Mac cannot go back to sleep by itself afterwards.";
+"diag.vrijstelling.kapot" = "Stopping by itself does not work now: the app cannot put the Mac back to sleep.";
+"diag.installeren" = "Install…";
+"diag.verwijderen" = "Remove…";
+"diag.controleren" = "Check";
+"diag.regeltekst" = "This is the rule that gets installed (in /etc/sudoers.d):";
+
+/* --- Instellingen · Diagnose: wat het systeem meldt --- */
+"diag.systeem.titel" = "What the system reports now";
+"diag.slaapblokkade" = "Sleep block (SleepDisabled)";
+"diag.klepslaap" = "Closing the lid puts the Mac to sleep";
+"diag.klepslaap.uitleg" = "That second row is there for information only: it does not change along with the sleep block, not even while keeping awake is on.";
+"diag.wachtwoordna" = "Password after locking";
+"diag.verlichtingvia" = "Keyboard backlight via";
+"diag.loginvia" = "Start at login via";
+"diag.temperatuur" = "Temperature";
+"diag.rekensnelheid" = "Processing speed";
+"diag.rekensnelheid.uitleg" = "100% means macOS is not throttling the Mac. Lower means: dialled back to cool down.";
+"diag.opnieuwuitlezen" = "Read again";
+
+/* --- Instellingen · Diagnose: de wachter --- */
+"diag.wachter.titel" = "The watchdog, for when the app disappears";
+"diag.wachter" = "Watchdog";
+"diag.wachter.uitleg" = "If Dopamine Code is killed outright — kill -9, or a crash — there is no chance left to put the sleep block back, and the Mac stays awake until the battery is empty. So every 30 seconds a small watchdog checks whether the block is on while the app is no longer running; in that case it starts the app again, which then cleans up itself. It never switches anything by itself, and after a normal Quit it does not come back.";
+"diag.wachter.vanzelf" = "This happens by itself and cannot be switched off — just like the temperature watch.";
+"diag.wachter.herstellen" = "Repair watchdog";
+
+/* --- Instellingen · Diagnose: verlichting, opdrachtregel, logboek --- */
+"diag.verlichting.titel" = "Keyboard backlight";
+"diag.verlichting.uitleg" = "A fixed brightness only stays put with automatic keyboard backlight switched off. Dopamine Code therefore switches that off as soon as you use the slider — this button puts it back the way it was.";
+"diag.verlichting.terug" = "Restore automatic brightness";
+"diag.cli.titel" = "Control from the command line";
+"diag.cli.kanaal" = "Control channel";
+"diag.cli.uitleg" = "This lets a script switch keeping awake on and off, for the duration of a build for instance. It switches nothing itself: it asks Dopamine Code to do something, with the same time limit, battery floor and temperature watch around it. If the app is not running it does nothing, and says so.";
+"diag.cli.padregel" = "To type 'dopamine' without the full path, paste this line into Terminal once:";
+"diag.logboek.titel" = "Log";
+"diag.logboek.uitleg" = "Everything the app does ends up in this file — you can read back afterwards what happened during the night.";
+"diag.logboek.toon" = "Show log file in Finder";
+
+/* --- Instellingen · Geschiedenis --- */
+"gesch.laatste.titel" = "The most recent sessions";
+"gesch.geen" = "There is not a single session in the log.";
+"gesch.bezig" = "Reading…";
+"gesch.herkomst.titel" = "Where this comes from";
+"gesch.gelezenregels" = "Lines read";
+"gesch.zonderafsluiting" = "Without a closing line";
+"gesch.zonderafsluiting.uitleg" = "For those sessions the end is not in the log. A session still running right now counts among them — its end is not there yet.";
+"gesch.zonderbegin" = "End without a beginning";
+"gesch.zonderbegin.uitleg" = "For those sessions the beginning has rolled out of the log; only lines about the end remain.";
+"gesch.uitleg" = "This is the log, made readable — nothing is kept separately. The log rolls over after a megabyte; anything older than the archive next to it is no longer in there. If a session is running now, that row does not come from the log but from the app itself: the log only says something about the end once the end exists.";
+"gesch.opnieuwlezen" = "Read again";
+"gesch.looptnog" = "still running";
+"gesch.onbekend" = "unknown";
+"gesch.tochgeslapen" = "The Mac slept during this session after all.";
+
+/* --- Meldingen die de app in beeld zet --- */
+"melding.opgeruimd" = "The Mac was still being kept awake from a previous run; that has been cleaned up.";
+"melding.kanniet.slapen" = "The Mac cannot sleep right now. Install the password exemption under Settings → Diagnostics, and Dopamine Code will clean this up by itself.";
+"melding.trigger.mislukt" = "Switching on by itself failed (%1$@): %2$@";
+"melding.staat.al.aan" = "Keeping awake is already on; arming it makes no sense right now.";
+"melding.nietmeerklaar" = "It is no longer armed; closing the lid does nothing now.";
+"melding.trigger.draaital" = "%@ is now set as a trigger. It is already running, so nothing happens now; the next time it starts, keeping awake switches on.";
+"melding.trigger.ingesteld" = "%@ is now set as a trigger.";
+"melding.autogestopt" = "Stopped automatically: %@. The Mac may sleep again.";
+"melding.stoppen.mislukt" = "Stopping failed (%@). Install the password exemption under Settings → Diagnostics, or run this in Terminal: sudo pmset -a disablesleep 0";
+"melding.lader" = "Plug in the charger, or lower the battery floor under Settings → Stopping by itself.";
+"melding.afkoelen" = "Wait until it has cooled down and then try again.";
+"melding.procesweg" = "Process %d is not running (any more), so there is nothing to wait for.";
+"melding.grant.eerst" = "%@. Install it first under Settings → Diagnostics. Without that rule the time limit, the battery floor and the temperature watch cannot let the Mac sleep again later — and with the lid closed nobody can type the password it asks for.";
+"melding.grant.installeer" = "Install the password exemption under Settings → Diagnostics.";
+"melding.geannuleerd.mogelijkaan" = "Cancelled, but the Mac may be kept awake anyway. Dopamine Code will put that back.";
+"melding.geannuleerd" = "Cancelled.";
+"melding.vlag.anders" = "The command reported no error, but the sleep block is at %@ instead of 1.";
+"melding.onleesbaar" = "unreadable";
+"melding.letop.zondergrant" = "Note: without the password exemption, the time limit, the battery floor and the temperature watch cannot let the Mac sleep again later.";
+"melding.letop.geenwachtwoord" = "Note: this Mac is set not to ask for a password after locking. The screen does lock, but anyone can open it again.";
+"melding.slot.viascreensaver" = "Screen locked via the screen saver.";
+"melding.slot.mislukt" = "The screen did NOT lock — the Mac will be sitting open unattended. Keeping awake simply carries on.";
+"melding.scherm.nietuit" = "The display did not switch off. Under a closed lid it then burns on unseen and costs battery.";
+"melding.geannuleerd.nogwakker" = "Cancelled — the Mac is still being kept awake.";
+"melding.uitzetten.mislukt" = "Switching off failed. Put it back yourself in Terminal with: sudo pmset -a disablesleep 0";
+"melding.warm" = "The Mac is getting warm";
+"melding.internet.titel" = "The internet connection has been down";
+"melding.nietgestopt" = "Keeping awake could not be stopped, and while it is on the Mac cannot go to sleep.";
+"melding.slaap.mislukt" = "Putting to sleep failed: %@";
+"melding.grant.geinstalleerd" = "Password exemption installed; the Mac may sleep again.";
+"melding.installatie.geannuleerd" = "Installation cancelled.";
+"melding.installatie.mislukt" = "Installation failed: %@";
+"melding.grant.nietverwijderd" = "The exemption was not removed: keeping awake has to go off first, otherwise nothing can stop it afterwards.";
+"melding.grant.verwijderd" = "Password exemption removed.";
+"melding.verwijderen.geannuleerd" = "Removal cancelled.";
+"melding.verwijderen.mislukt" = "Removal failed: %@";
+"melding.tot.app.eneind" = "The Mac stays awake until %1$@ has finished, and in any case no longer than until %2$@.";
+"melding.sessie.ookapp" = "The running session now also stops as soon as %@ has finished.";
+"melding.bezig" = "Busy with the sleep block; try again in a moment.";
+"melding.toegankelijkheid" = "Dopamine Code needs permission under System Settings → Privacy → Accessibility to imitate the brightness keys.";
+"melding.verlichting.mislukt" = "The keyboard backlight could not be switched.";
+"melding.helderheid.terug" = "Automatic keyboard brightness is back the way you had it.";
+"melding.nietsterug" = "There was nothing to restore.";
+"melding.terugzetten.geweigerd" = "The system refused to restore it. Automatic keyboard backlight is still off; try again or switch it on yourself under System Settings → Keyboard.";
+"melding.login.mislukt" = "Start at login failed: %@";
+"melding.wachter" = "The watchdog: %@";
+
+/* --- De Mac sliep tijdens een sessie --- */
+"slaap.context.aan" = "while the sleep block was on";
+"slaap.context.uit" = "while keeping awake was on, but the sleep block was not (any more)";
+"slaap.oordeel.aan" = " The block did not hold here.";
+"slaap.oordeel.uit" = " The block had been switched off outside Dopamine Code, so this says nothing about the block itself.";
+"slaap.zin" = "%1$@, %2$@.";
+"slaap.verifytip" = " So do not trust it blindly; check it with ./verify.sh --after.";
+
+/* --- Waarom een sessie gestopt is --- */
+"reden.tijdom" = "the set time was up";
+"reden.geeneindtijd" = "no end time was set";
+"reden.accu" = "the battery was at %1$d%%, below your floor of %2$d%%";
+"reden.warm" = "the Mac got too warm";
+"reden.procesklaar" = "the process %@ has finished";
+"reden.pidhergebruikt" = " (that pid now belongs to something else)";
+"reden.liepot" = "the session ran until %@";
+
+/* --- Waardoor een sessie is aangezet, als zelfstandig naamwoord --- */
+"aanleiding.schakelaar" = "the switch";
+"aanleiding.cli" = "the command line";
+"aanleiding.klep" = "the lid";
+"aanleiding.app" = "the app %@";
+"aanleiding.schema" = "the schedule";
+"aanleiding.sneltoets" = "the shortcut";
+"wachter.onleesbaar" = "the bundle at %1$@ could not be read as signed code (%2$d)";

@@ -9,12 +9,19 @@ extern scherm, en de toetsenbordverlichting schakelen. Gebouwd als persoonlijk g
 voor één Mac, en met die aanname geschreven — er is geen installer, geen automatische
 update, en getest is er op één machine.
 
+Beschikbaar in het **Nederlands, Engels, Duits en Frans**. De app volgt de taalvolgorde van
+macOS en valt terug op Nederlands als er geen van de vier bij zit. De vertalingen staan in
+[Resources/](Resources/), één `.lproj` per taal; `./verify.sh --talen` controleert of ze
+alle vier dezelfde sleutels en dezelfde invulwaarden hebben. Het logboek blijft Nederlands:
+dat is diagnostisch gereedschap, en `verify.sh` en de audit lezen die regels terug.
+
 ```
 ./build.sh --install     bouwen, ondertekenen, in /Applications zetten en starten
 ./verify.sh --report     status lezen, zonder wachtwoord en zonder bijwerkingen
 ./verify.sh              alle controles, inclusief de twee die je wachtwoord nodig hebben
 ./verify.sh --after      na een echte sessie: heeft de Mac tóch geslapen?
 ./release.sh 1.1.0       een versie uitbrengen (tag + concept-release op GitHub)
+./verify.sh --talen      controleer of de vier talen gelijk lopen
 ```
 
 ---
