@@ -1,7 +1,8 @@
 # Dopamine Code
 
-*Heette tot 11 augustus 2026 "Wakker". Bundle-ID, sudoers-regel, logboek en instellingen
-zijn meeverhuisd; de app migreert een oude installatie zelf bij de eerste start.*
+*Heette tot 11 augustus 2026 "Wakker". Sudoers-regel en logboek zijn meeverhuisd. Kom je van
+een oudere installatie met een ander bundle-ID, dan begint de app met lege instellingen:
+verhuizen kan met `defaults export <oud-id> - | defaults import <nieuw-id> -`.*
 
 Menubalk-app voor macOS. Twee dingen: de Mac actief houden met de klep dicht en zonder
 extern scherm, en de toetsenbordverlichting schakelen. Gebouwd als persoonlijk gereedschap

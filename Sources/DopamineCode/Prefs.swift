@@ -40,37 +40,15 @@ enum Prefs {
         static let updateNoticeShown = "updateNoticeShown"
     }
 
-    /// The app used to be called Wakker, under a different bundle identifier. UserDefaults
-    /// is keyed by that identifier, so without this every setting would silently reset to
-    /// its default on the first launch after the rename.
-    private static func migrateFromLegacyBundle() {
-        let legacyDomain = "com.peter46jan.wakker"
-        guard d.object(forKey: Key.autoOffMinutes) == nil,
-              d.object(forKey: Key.autoOffHours) == nil,
-              let legacy = d.persistentDomain(forName: legacyDomain), !legacy.isEmpty
-        else { return }
-
-        // Only our own keys. The legacy domain also holds AppKit-owned entries — window
-        // frames, panel state, NSQuitAlwaysKeepsWindows — and carrying those into a new
-        // bundle identifier imports another app's furniture along with the settings.
-        let ours: Set<String> = [
-            Key.autoOffMinutes, Key.autoOffHours, Key.batteryFloor,
-            Key.lockMoment, Key.displayOffMoment,
-            Key.displayOffOnActivate, Key.lockOnActivate,
-            Key.soundFeedback, Key.soundOnNetworkLoss, Key.launchAtLogin,
-            Key.backlightRestoreLevel, Key.warnAboutAmphetamine,
-            Key.blinkBacklightOnToggle,
-            Key.autoBrightnessWasSuppressed, Key.autoBrightnessOriginallyOn,
-        ]
-        for (key, value) in legacy where ours.contains(key) && d.object(forKey: key) == nil {
-            d.set(value, forKey: key)
-        }
-        d.removePersistentDomain(forName: legacyDomain)
-        NSLog("Instellingen overgenomen van %@ (%d sleutels).", legacyDomain, legacy.count)
-    }
+    // Hier stond een migratie die instellingen overnam van een eerder bundle-ID. Weg, en om
+    // een reden die het noteren waard is: UserDefaults is gesleuteld op het bundle-ID, dus
+    // zo'n migratie moet het óúde ID letterlijk noemen — en dat is precies het soort string
+    // dat hier niet meer hoort te staan. Een hernoeming raakt bovendien alleen wie de app al
+    // had draaien, niet wie hem vandaag voor het eerst bouwt; dat is een eenmalige handeling
+    // op één machine, geen eigenschap van de app. Hernoem je het bundle-ID opnieuw, verhuis
+    // je instellingen dan met `defaults export` en `defaults import`.
 
     static func registerDefaults() {
-        migrateFromLegacyBundle()
 
         // Before register(defaults:), deliberately. `object(forKey:)` also returns values
         // from the registration domain, so once the new key has a registered default the
