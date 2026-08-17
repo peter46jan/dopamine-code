@@ -1290,6 +1290,87 @@ SWIFT
     fi
     rm -rf "$dir3"
   fi
+
+  # --- 4. Het bijwerkcommando -----------------------------------------------------------
+  local src4="$PROJECT_DIR/Sources/DopamineCode/Installatie.swift"
+  if [ ! -f "$src4" ]; then
+    fail "Installatie.swift ontbreekt."
+  else
+    local dir4; dir4="$(mktemp -d)"
+    cat > "$dir4/main.swift" <<'SWIFT'
+import Foundation
+
+var fouten = 0
+func eis(_ voorwaarde: Bool, _ wat: String) {
+    if !voorwaarde { print("FOUT: \(wat)"); fouten += 1 }
+}
+
+// Homebrew: Cellar ergens in het opgeloste pad. Bewust buiten /opt/homebrew/ en /usr/local/
+// zodat deze proef alleen de Cellar-controle raakt en niet toevallig via de prefix-controle
+// slaagt — een aangepast Homebrew-prefix zet de Cellar ook ergens anders neer.
+let cellar = Installatie.bepaal(
+    bundelPad: "/Users/jan/homebrew/Cellar/dopamine-code/1.2.0/Dopamine Code.app",
+    gestempeldPad: nil, bestaatKloon: false)
+eis(cellar == .homebrew, "een pad met Cellar erin is .homebrew, werd \(cellar)")
+eis(cellar.bijwerkCommando == "brew upgrade dopamine-code",
+    "het homebrew-commando klopt, werd '\(cellar.bijwerkCommando)'")
+
+// Homebrew: de opt-symlink waar `brew` naar wijst, zonder dat "Cellar" er zelf in staat.
+let optSymlink = Installatie.bepaal(
+    bundelPad: "/opt/homebrew/opt/dopamine-code/Dopamine Code.app",
+    gestempeldPad: nil, bestaatKloon: false)
+eis(optSymlink == .homebrew, "/opt/homebrew/... is .homebrew, werd \(optSymlink)")
+
+// Bron: een geldig gestempeld pad, en het commando citeert het.
+let bronPad = "/Users/jan/dopamine-code"
+let bron = Installatie.bepaal(
+    bundelPad: "/Applications/Dopamine Code.app",
+    gestempeldPad: bronPad, bestaatKloon: true)
+eis(bron == .bron(pad: bronPad), "een geldig gestempeld pad is .bron, werd \(bron)")
+eis(bron.bijwerkCommando == "cd \"\(bronPad)\" && git pull && ./build.sh --install",
+    "het bron-commando klopt letterlijk, werd '\(bron.bijwerkCommando)'")
+
+// Onbekend: het gestempelde pad bestaat niet meer (verplaatst of verwijderd).
+let weg = Installatie.bepaal(
+    bundelPad: "/Applications/Dopamine Code.app",
+    gestempeldPad: "/Users/jan/verhuisd", bestaatKloon: false)
+eis(weg == .onbekend, "een verdwenen kloon valt terug op .onbekend, werd \(weg)")
+
+// Onbekend: geen stempel in Info.plist.
+let zonderStempel = Installatie.bepaal(
+    bundelPad: "/Applications/Dopamine Code.app",
+    gestempeldPad: nil, bestaatKloon: false)
+eis(zonderStempel == .onbekend, "zonder stempel is het .onbekend, werd \(zonderStempel)")
+eis(zonderStempel.bijwerkCommando == "git pull && ./build.sh --install",
+    "het onbekend-commando is precies zoals voorheen, werd '\(zonderStempel.bijwerkCommando)'")
+
+// Een pad met een spatie erin (deze kloon heet letterlijk "Sleep macos") wordt correct
+// tussen aanhalingstekens gezet in plaats van `cd` twee argumenten te geven.
+let spatiePad = "/Users/jim/Sleep macos"
+let metSpatie = Installatie.bepaal(
+    bundelPad: "/Applications/Dopamine Code.app",
+    gestempeldPad: spatiePad, bestaatKloon: true)
+eis(metSpatie.bijwerkCommando == "cd \"\(spatiePad)\" && git pull && ./build.sh --install",
+    "een pad met een spatie citeert correct, werd '\(metSpatie.bijwerkCommando)'")
+
+print(fouten == 0 ? "OK" : "FOUTEN=\(fouten)")
+exit(fouten == 0 ? 0 : 1)
+SWIFT
+    local build4
+    if ! command -v swiftc >/dev/null 2>&1; then
+      skip "swiftc niet gevonden; het bijwerkcommando is niet getest."
+    elif ! build4="$(swiftc -O -o "$dir4/probe" "$src4" "$dir4/main.swift" 2>&1)"; then
+      fail "De installatieproef compileert niet: $(printf '%s' "$build4" | grep error: | head -2 | tr '\n' ' ')"
+    else
+      local uit4
+      if uit4="$("$dir4/probe" 2>&1)"; then
+        pass "Installatie herkent Homebrew en bron, en het bijwerkcommando klopt en citeert paden met een spatie."
+      else
+        fail "Het bijwerkcommando deugt niet: $(printf '%s' "$uit4" | tr '\n' ' ')"
+      fi
+    fi
+    rm -rf "$dir4"
+  fi
 }
 
 # De formule in de Homebrew-tap wijst naar een tarball van een tag. Blijft die achter op de

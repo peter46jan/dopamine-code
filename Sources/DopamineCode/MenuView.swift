@@ -397,14 +397,6 @@ struct MenuView: View {
 
     // MARK: - Bijwerken
 
-    /// Het commando dat je zelf draait om bij te werken.
-    ///
-    /// Zonder pad ervoor, en dat is geen slordigheid. De app weet niet waar jij de bron
-    /// hebt staan — hij draait uit `/Applications` en de kloonmap kan overal zijn. Een
-    /// gegokt pad dat er net naast zit is erger dan geen pad: dan plak je een commando dat
-    /// in de verkeerde map iets anders doet.
-    private static let updateCommand = "git pull && ./build.sh --install"
-
     /// Eén keer, bij de eerste keer dat het paneel opengaat.
     ///
     /// De app doet iets met het netwerk dat de gebruiker niet gevraagd heeft, dus hoort hij
@@ -456,14 +448,14 @@ struct MenuView: View {
                     .font(.caption2)
                     .foregroundStyle(.secondary)
                     .fixedSize(horizontal: false, vertical: true)
-                Text(Self.updateCommand)
+                Text(Installatie.huidige.bijwerkCommando)
                     .font(.system(.caption2, design: .monospaced))
                     .textSelection(.enabled)
                     .foregroundStyle(.secondary)
                 HStack {
                     Button("menu.update.kopieer") {
                         NSPasteboard.general.clearContents()
-                        NSPasteboard.general.setString(Self.updateCommand, forType: .string)
+                        NSPasteboard.general.setString(Installatie.huidige.bijwerkCommando, forType: .string)
                     }
                     // Ontbreekt als de URL uit het antwoord de controle in `UpdateCheck`
                     // niet haalde. Dan blijft het versienummer staan en verdwijnt alleen

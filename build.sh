@@ -144,10 +144,11 @@ printf 'APPL????' > "$APP/Contents/PkgInfo"
 # that lives in git is a version somebody has to remember to bump, and the one thing worse
 # than no version number is a wrong one.
 #
-# Three values, because they answer different questions:
+# Four values, because they answer different questions:
 #   CFBundleShortVersionString  what you tell people you run  -> 1.2.0
 #   CFBundleVersion             something that always climbs  -> 47
 #   DCSourceVersion             exactly which source this is  -> v1.2.0-3-gabc1234-dirty
+#   DCSourcePath                where that source lives, if it still does -> /Users/jan/dopamine-code
 #
 # Built from a tarball with no git, or from a checkout with no tags, the short version
 # stays 0.0.0. That is not a placeholder anyone has to notice: UpdateCheck reads 0.0.0 as
@@ -157,9 +158,16 @@ printf 'APPL????' > "$APP/Contents/PkgInfo"
 # weten welke versie dit is — Homebrew pakt een tarball van een tag, en daar zit geen .git
 # in. Zonder deze uitweg zou zo'n build zichzelf 0.0.0 noemen en zou de updatecontrole van
 # een keurig geïnstalleerde 1.0.0 zeggen dat hij zijn eigen versie niet kent.
+#
+# DCSourcePath krijgt alleen een waarde in de git-tak hieronder, nooit bij DOPAMINE_VERSION.
+# Dat laatste is precies de Homebrew-bouw: een tarball zonder `.git`, uitgepakt in een
+# tijdelijke map die na het bouwen weer weg is. Stempel je die map toch, dan toont
+# `Installatie` straks een `cd` naar een pad dat niet meer bestaat — erger dan geen pad,
+# want `bepaal()` in `Installatie.swift` valt in dat geval terug op `.onbekend`.
 SHORT_VERSION="0.0.0"
 BUILD_NUMBER="0"
 SOURCE_VERSION="onbekend"
+SOURCE_PATH=""
 if [ -n "${DOPAMINE_VERSION:-}" ]; then
   case "${DOPAMINE_VERSION#v}" in
     *[!0-9.]*|''|*..*|.*|*.) die "DOPAMINE_VERSION='$DOPAMINE_VERSION' is geen versienummer." ;;
@@ -171,6 +179,9 @@ if [ -n "${DOPAMINE_VERSION:-}" ]; then
 elif git rev-parse --git-dir >/dev/null 2>&1; then
   SOURCE_VERSION="$(git describe --tags --always --dirty 2>/dev/null || echo onbekend)"
   BUILD_NUMBER="$(git rev-list --count HEAD 2>/dev/null || echo 0)"
+  # $PWD, niet $(pwd): de `cd "$(dirname "$0")"` bovenaan dit script heeft de shell al in de
+  # repo-root gezet, en dit is de map die straks als `cd "<pad>"` in het bijwerkcommando komt.
+  SOURCE_PATH="$PWD"
   if TAG="$(git describe --tags --abbrev=0 2>/dev/null)"; then
     # Only a bare `1.2.3` or `v1.2.3` counts. A tag like `probe-2026-08` is a real tag and
     # a useless version, and shipping it as one would have UpdateCheck comparing nonsense.
@@ -185,6 +196,9 @@ PB=/usr/libexec/PlistBuddy
 "$PB" -c "Set :CFBundleShortVersionString $SHORT_VERSION" "$APP/Contents/Info.plist"
 "$PB" -c "Set :CFBundleVersion $BUILD_NUMBER" "$APP/Contents/Info.plist"
 "$PB" -c "Add :DCSourceVersion string $SOURCE_VERSION" "$APP/Contents/Info.plist"
+if [ -n "$SOURCE_PATH" ]; then
+  "$PB" -c "Add :DCSourcePath string $SOURCE_PATH" "$APP/Contents/Info.plist"
+fi
 say "Versie: $SHORT_VERSION (build $BUILD_NUMBER, bron $SOURCE_VERSION)"
 
 # --- app icon -----------------------------------------------------------------
