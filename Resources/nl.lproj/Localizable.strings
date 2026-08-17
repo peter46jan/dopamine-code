@@ -422,3 +422,7 @@
 "alg.verlichting.titel" = "Toetsenbordverlichting";
 "alg.verlichting.sterkte" = "Sterkte";
 "alg.gedrag.titel" = "Tijdens een sessie";
+
+/* --- Compacte duur voor de segmentkiezer: 30m, 2u, 10u30 --- */
+"duur.kort.uur" = "u";
+"duur.kort.min" = "m";

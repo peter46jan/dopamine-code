@@ -418,3 +418,7 @@
 "alg.verlichting.titel" = "Rétroéclairage du clavier";
 "alg.verlichting.sterkte" = "Intensité";
 "alg.gedrag.titel" = "Pendant une session";
+
+/* --- Durée compacte pour le sélecteur segmenté : 30m, 2h, 10h30 --- */
+"duur.kort.uur" = "h";
+"duur.kort.min" = "m";

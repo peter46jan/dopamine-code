@@ -433,6 +433,36 @@ final class AppModel: ObservableObject {
         return L10n.t("duur.uurmin", h, m)
     }
 
+    /// De aftelling voor de statuskaart: alleen het getal.
+    ///
+    /// `remainingText` is een hele zin — "stopt vanzelf over 3 u 18 min" — en die past niet in
+    /// dertig punten; hij werd afgekapt tot "stopt vanze…". Die zin blijft staan voor de
+    /// plekken waar hij wél past. De kaart heeft de zin niet nodig: eronder staat al
+    /// "wakker tot 21:56".
+    ///
+    /// Naar boven afgerond, net als `menuBarCountdown`, zodat de twee niet een minuut uit
+    /// elkaar kunnen lopen terwijl ze tegelijk zichtbaar zijn.
+    var kaartAftelling: String? {
+        guard let deadline, intendedOn else { return nil }
+        let minuten = max(0, Int((deadline.timeIntervalSince(now) / 60).rounded(.up)))
+        return AppModel.durationTextKort(minuten)
+    }
+
+    /// Compacte vorm voor de segmentkiezer: `30m`, `2u`, `10u30`.
+    ///
+    /// De lange vorm past daar niet in. Met vijf vaste duren plus een eigen segment voor een
+    /// afwijkende waarde staan er zes naast elkaar, en "10 u 30 min" maakte er een die het
+    /// paneel links en rechts uitliep.
+    ///
+    /// Eigen sleutels en geen `replacingOccurrences` op de lange vorm: dat laatste werkt
+    /// alleen in het Nederlands en zou in de drie andere talen stil niets doen.
+    static func durationTextKort(_ total: Int) -> String {
+        let h = total / 60, m = total % 60
+        if h == 0 { return "\(m)" + L10n.t("duur.kort.min") }
+        if m == 0 { return "\(h)" + L10n.t("duur.kort.uur") }
+        return "\(h)" + L10n.t("duur.kort.uur") + String(format: "%02d", m)
+    }
+
     /// The wall-clock time the current session would end, for the menu.
     var deadlineText: String? {
         guard let deadline else { return nil }

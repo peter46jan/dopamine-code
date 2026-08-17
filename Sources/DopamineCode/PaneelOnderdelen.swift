@@ -117,7 +117,9 @@ struct MeterRij<Inhoud: View>: View {
             }
             .font(.system(size: 10.5))
             .monospacedDigit()
-            .frame(width: 74, alignment: .trailing)
+            // 100 en niet 74: "62% · aan de lader" werd afgekapt tot "62% · aan d…", en dat is
+            // net de helft van de mededeling die ertoe doet.
+            .frame(width: 100, alignment: .trailing)
         }
     }
 }

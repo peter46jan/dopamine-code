@@ -418,3 +418,7 @@
 "alg.verlichting.titel" = "Tastaturbeleuchtung";
 "alg.verlichting.sterkte" = "Helligkeit";
 "alg.gedrag.titel" = "Während einer Sitzung";
+
+/* --- Kompakte Dauer für die Segmentauswahl: 30m, 2h, 10h30 --- */
+"duur.kort.uur" = "h";
+"duur.kort.min" = "m";

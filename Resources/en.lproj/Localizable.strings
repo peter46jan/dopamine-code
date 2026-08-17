@@ -417,3 +417,7 @@
 "alg.verlichting.titel" = "Keyboard backlight";
 "alg.verlichting.sterkte" = "Brightness";
 "alg.gedrag.titel" = "During a session";
+
+/* --- Compact duration for the segmented picker: 30m, 2h, 10h30 --- */
+"duur.kort.uur" = "h";
+"duur.kort.min" = "m";

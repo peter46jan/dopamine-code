@@ -48,7 +48,9 @@ struct MenuView: View {
             voet
         }
         .padding(13)
-        .frame(width: 320)
+        // 360 en niet 320. Op 320 liep de segmentkiezer met vijf duren plus een afwijkende
+        // waarde het paneel uit, en werd "62% · aan de lader" afgekapt tot "62% · aan d…".
+        .frame(width: 360)
         .onAppear {
             runningApps = RunningApps.list()
             showUpdateNotice = !Prefs.updateNoticeShown
@@ -85,9 +87,11 @@ struct MenuView: View {
         case .gearmd:
             Text("kaart.gearmd").font(.headline)
         case .aan:
-            Text(model.remainingText ?? "—")
-                .font(.system(size: 30, weight: .light))
+            Text(model.kaartAftelling ?? "—")
+                .font(.system(size: 32, weight: .light))
                 .monospacedDigit()
+                .lineLimit(1)
+                .minimumScaleFactor(0.7)
         }
     }
 
@@ -123,14 +127,16 @@ struct MenuView: View {
         VStack(alignment: .leading, spacing: 8) {
             Picker("", selection: Binding(get: { model.autoOffMinutes },
                                           set: { model.setAutoOff(minutes: $0) })) {
+                // Compacte labels: zes segmenten met "30 min" en "10 u 30 min" erin liepen het
+                // paneel links en rechts uit.
                 ForEach(quickDurations, id: \.self) { totaal in
-                    Text(AppModel.durationText(totaal)).tag(totaal)
+                    Text(AppModel.durationTextKort(totaal)).tag(totaal)
                 }
                 // Een waarde die niet in de vijf zit — via de tijdkiezer of via
                 // `dopamine on --for` — krijgt een eigen segment. Zonder dit zou de kiezer
                 // leeg staan bij een duur die er wél is, en dat leest als "geen duur".
                 if !quickDurations.contains(model.autoOffMinutes) {
-                    Text(AppModel.durationText(model.autoOffMinutes)).tag(model.autoOffMinutes)
+                    Text(AppModel.durationTextKort(model.autoOffMinutes)).tag(model.autoOffMinutes)
                 }
             }
             .pickerStyle(.segmented)
@@ -147,7 +153,8 @@ struct MenuView: View {
                 // typen bent. Deze regel stond al in de oude untilRow en blijft gelden.
                 Button("menu.tot.zetten") { untilExplanation = model.setAutoOffUntil(untilTime) }
                     .buttonStyle(.link).font(.caption)
-                Spacer()
+                    .fixedSize()          // anders breekt "Zetten" over twee regels
+                Spacer(minLength: 4)
                 procesKiezer
             }
 
