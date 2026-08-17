@@ -19,10 +19,9 @@
 "menu.tot.zetten" = "Set";
 
 /* --- Menu: stop when a program finishes --- */
-"menu.stoppenals.titel" = "Stop when";
 "menu.stoppenals.geenapps" = "No apps found";
-"menu.stoppenals.klaar" = "%@ has finished";
-"menu.stoppenals.placeholder" = "an app has finished…";
+"menu.stoppenals.klaar" = "Stops when %@ has finished";
+"menu.stoppenals.placeholder" = "Stop when an app has finished…";
 
 /* --- Menu: warning that the safety nets cannot work --- */
 "menu.ontwapend.titel" = "Stopping by itself will not work";
@@ -400,3 +399,45 @@
 "taal.uitleg" = "Independent of the language of the rest of your Mac. This writes the same setting as System Settings → Language & Region → Applications, so the two cannot drift apart.";
 "taal.pasnavolgende" = "The new language appears the next time the app starts. Quit it from the menu and open it again.";
 "taal.nuactief" = "Currently active: %@";
+
+/* --- Panel: the status card and the safety nets --- */
+"kaart.uit" = "Sleeping normally";
+"kaart.gearmd" = "Waiting for the lid";
+"kaart.tot" = "awake until %@";
+"kaart.eindigt" = "Ends at";
+"vangnet.kop" = "Safety nets";
+"vangnet.legenda" = "now · stops at";
+"vangnet.accu.lader" = "on the charger";
+"vangnet.wachter.interval" = "every 30 s";
+"vangnet.wachter.nognietgekeken" = "has not looked yet";
+"vangnet.afgeknepen" = "Your Mac is running at %d%% because of the heat";
+
+/* --- Settings: what moved out of the panel --- */
+"alg.verlichting.titel" = "Keyboard backlight";
+"alg.verlichting.sterkte" = "Brightness";
+"alg.gedrag.titel" = "During a session";
+
+/* --- Compact duration for the segmented picker: 30m, 2h, 10h30 --- */
+"duur.kort.uur" = "h";
+"duur.kort.min" = "m";
+"vangnet.wachter.gelezen" = "flag read, %@";
+"aandacht.kop" = "Needs attention";
+"kaart.fout" = "Something is wrong";
+"vangnet.wachter.stil" = "The watchdog has not looked in too long";
+
+/* --- Error status: status = .error(...), shown in the status card and the attention row --- */
+"fout.vlag.onleesbaar" = "Cannot read whether the Mac is allowed to sleep";
+"fout.vorigekeer" = "The Mac is still being kept awake from a previous run";
+"fout.buitenuitgezet" = "Switched off outside Dopamine Code";
+"fout.zondersessie" = "The Mac is being kept awake with nothing running";
+"fout.vastzit" = "Stuck — the Mac cannot go to sleep";
+"fout.accu" = "Battery %1$d%% — below your floor of %2$d%%";
+"fout.temperatuur" = "The Mac is too warm";
+"fout.procesbestaatniet" = "Not started: that process does not exist";
+"fout.stopzoumislukken" = "Not started: stopping would fail later";
+"fout.geentoestemming" = "No permission to keep the Mac awake";
+"fout.onverwacht" = "The system reports something other than expected";
+"fout.nietgelukt" = "Keeping awake failed";
+"fout.vergrendelenmislukt" = "Locking failed";
+"fout.nogwakker" = "The Mac is still being kept awake";
+"fout.nietinslaap" = "Not put to sleep";

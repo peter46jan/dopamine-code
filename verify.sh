@@ -1055,6 +1055,243 @@ test_translations() {
   fi
 }
 
+test_paneel() {
+  section "14. Paneel: meters, kaarttoestand en de rangorde van waarschuwingen"
+
+  local src="$PROJECT_DIR/Sources/DopamineCode/Meter.swift"
+  if [ ! -f "$src" ]; then
+    fail "Meter.swift ontbreekt."
+  else
+    local dir; dir="$(mktemp -d)"
+    cat > "$dir/main.swift" <<'SWIFT'
+import Foundation
+
+var fouten = 0
+func eis(_ voorwaarde: Bool, _ wat: String) {
+    if !voorwaarde { print("FOUT: \(wat)"); fouten += 1 }
+}
+
+// --- de accumeter -------------------------------------------------------------
+// De vulling is de stand, de zone is de grens. Ze mogen nooit hetzelfde getal zijn.
+let vol = AccuMeter(percent: 84, grens: 15, aanDeLader: false)
+eis(vol.vulling == 0.84, "84% vult 0,84, werd \(vol.vulling)")
+eis(vol.zone == 0.15, "grens 15% geeft zone 0,15, werd \(vol.zone)")
+eis(!vol.grijptIn, "84% boven een grens van 15% grijpt niet in")
+
+// De grens is `<=`, precies zoals AppModel hem toepast. Op de grens zelf grijpt hij dus in.
+eis(AccuMeter(percent: 15, grens: 15, aanDeLader: false).grijptIn, "15 <= 15 grijpt in")
+eis(!AccuMeter(percent: 16, grens: 15, aanDeLader: false).grijptIn, "16 > 15 grijpt niet in")
+
+// Aan de lader kan dit vangnet niet afgaan — AppModel eist `!battery.onAC`. Een meter die
+// hem dan als scherp tekent, belooft iets wat niet gebeurt.
+eis(!AccuMeter(percent: 5, grens: 15, aanDeLader: true).grijptIn, "aan de lader grijpt hij niet in")
+eis(AccuMeter(percent: 5, grens: 15, aanDeLader: true).sluimert, "aan de lader sluimert het vangnet")
+eis(!AccuMeter(percent: 84, grens: 15, aanDeLader: false).sluimert, "op accu sluimert het niet")
+
+// Rommel van buiten mag niet buiten de balk tekenen.
+eis(AccuMeter(percent: 140, grens: 15, aanDeLader: false).vulling == 1.0, "boven 100 klemt op 1")
+eis(AccuMeter(percent: -8, grens: 15, aanDeLader: false).vulling == 0.0, "onder 0 klemt op 0")
+eis(AccuMeter(percent: 50, grens: 140, aanDeLader: false).zone == 1.0, "grens boven 100 klemt op 1")
+eis(AccuMeter(percent: 50, grens: -8,  aanDeLader: false).zone == 0.0, "grens onder 0 klemt op 0")
+
+// --- de warmtemeter -----------------------------------------------------------
+// Vier stappen, want macOS geeft er vier. De laatste is waar de sessie stopt.
+let koel = WarmteMeter(stap: 1)
+eis(koel.aantal == 4, "vier stappen, werd \(koel.aantal)")
+eis(koel.stopBij == 4, "stopt bij de vierde")
+eis(koel.brandt(1) && !koel.brandt(2), "bij stap 1 brandt alleen het eerste blokje")
+eis(!koel.grijptIn, "stap 1 grijpt niet in")
+
+let heet = WarmteMeter(stap: 4)
+eis(heet.grijptIn, "stap 4 grijpt in")
+eis(heet.brandt(1) && heet.brandt(4), "bij stap 4 branden ze allemaal")
+eis(!WarmteMeter(stap: 2).brandt(0), "index 0 brandt nooit")
+eis(!WarmteMeter(stap: 2).brandt(-3), "een negatieve index brandt nooit")
+
+// Een stap buiten 1…4 mag niet stil doorglippen naar "alles in orde".
+eis(WarmteMeter(stap: 9).stap == 4, "boven het aantal klemt op het aantal")
+eis(WarmteMeter(stap: 0).stap == 1, "onder 1 klemt op 1")
+
+print(fouten == 0 ? "OK" : "FOUTEN=\(fouten)")
+exit(fouten == 0 ? 0 : 1)
+SWIFT
+    local build
+    if ! command -v swiftc >/dev/null 2>&1; then
+      skip "swiftc niet gevonden; de meters zijn niet getest."
+    elif ! build="$(swiftc -O -o "$dir/probe" "$src" "$dir/main.swift" 2>&1)"; then
+      fail "De meterproef compileert niet: $(printf '%s' "$build" | grep error: | head -2 | tr '\n' ' ')"
+    else
+      local uit
+      if uit="$("$dir/probe" 2>&1)"; then
+        pass "Accumeter en warmtemeter rekenen goed, inclusief de lader-uitzondering."
+      else
+        fail "Meters deugen niet: $(printf '%s' "$uit" | tr '\n' ' ')"
+      fi
+    fi
+    rm -rf "$dir"
+  fi
+
+  # --- 2. De kaarttoestand ------------------------------------------------------------
+  local src2="$PROJECT_DIR/Sources/DopamineCode/KaartToestand.swift"
+  if [ ! -f "$src2" ]; then
+    fail "KaartToestand.swift ontbreekt."
+  else
+    local dir2; dir2="$(mktemp -d)"
+    cat > "$dir2/main.swift" <<'SWIFT'
+import Foundation
+
+var fouten = 0
+func eis(_ voorwaarde: Bool, _ wat: String) {
+    if !voorwaarde { print("FOUT: \(wat)"); fouten += 1 }
+}
+
+let nu = Date(timeIntervalSince1970: 1_000_000)
+
+// Niets aan: de kaart biedt het armen aan, want dat is het enige zinnige aanbod.
+let uit = KaartToestand(intendedOn: false, armTot: nil, sessieStart: nil, deadline: nil, nu: nu)
+eis(uit.isUit, "niets aan is .uit")
+eis(uit.voortgang == 0, "uit heeft geen voortgang")
+
+// Gearmd wint van uit, ook al is intendedOn nog vals: er staat iets te gebeuren.
+let arm = KaartToestand(intendedOn: false, armTot: nu.addingTimeInterval(270),
+                        sessieStart: nil, deadline: nil, nu: nu)
+eis(arm.isGearmd, "armTot in de toekomst is .gearmd")
+
+// Een arming die verlopen is telt niet meer mee.
+let armVoorbij = KaartToestand(intendedOn: false, armTot: nu.addingTimeInterval(-1),
+                               sessieStart: nil, deadline: nil, nu: nu)
+eis(armVoorbij.isUit, "een verlopen arming valt terug naar .uit")
+
+// Aan: de boog toont het verstreken deel.
+let aan = KaartToestand(intendedOn: true,
+                        armTot: nil,
+                        sessieStart: nu.addingTimeInterval(-3600),
+                        deadline: nu.addingTimeInterval(3600),
+                        nu: nu)
+eis(aan.isAan, "intendedOn met deadline is .aan")
+eis(abs(aan.voortgang - 0.5) < 0.001, "halverwege is 0,5, werd \(aan.voortgang)")
+
+// Aan zonder deadline mag niet als 100% vol tekenen — dat zou "bijna klaar" zeggen.
+let aanZonder = KaartToestand(intendedOn: true, armTot: nil, sessieStart: nu,
+                              deadline: nil, nu: nu)
+eis(aanZonder.isAan, "intendedOn zonder deadline is nog steeds .aan")
+eis(aanZonder.voortgang == 0, "zonder deadline is de boog leeg, werd \(aanZonder.voortgang)")
+
+// Een deadline die voorbij is: nul, niet negatief, en de boog blijft binnen de rand.
+let over = KaartToestand(intendedOn: true, armTot: nil,
+                         sessieStart: nu.addingTimeInterval(-7200),
+                         deadline: nu.addingTimeInterval(-60), nu: nu)
+eis(over.voortgang == 1.0, "voortgang klemt op 1")
+
+eis(KaartToestand(intendedOn: true, armTot: nil, sessieStart: nu, deadline: nu, nu: nu).voortgang == 0,
+    "deadline gelijk aan de start geeft geen NaN")
+
+// Aan wint van gearmd: staat de sessie al te lopen, dan is de arming niet meer het nieuws.
+let allebei = KaartToestand(intendedOn: true, armTot: nu.addingTimeInterval(270),
+                            sessieStart: nu, deadline: nu.addingTimeInterval(60), nu: nu)
+eis(allebei.isAan, "een lopende sessie wint van een arming")
+
+print(fouten == 0 ? "OK" : "FOUTEN=\(fouten)")
+exit(fouten == 0 ? 0 : 1)
+SWIFT
+    local build2
+    if ! command -v swiftc >/dev/null 2>&1; then
+      skip "swiftc niet gevonden; de kaarttoestand is niet getest."
+    elif ! build2="$(swiftc -O -o "$dir2/probe" "$src2" "$dir2/main.swift" 2>&1)"; then
+      fail "De kaartproef compileert niet: $(printf '%s' "$build2" | grep error: | head -2 | tr '\n' ' ')"
+    else
+      local uit2
+      if uit2="$("$dir2/probe" 2>&1)"; then
+        pass "Kaarttoestand klopt in alle drie de toestanden en op de randen."
+      else
+        fail "Kaarttoestand deugt niet: $(printf '%s' "$uit2" | tr '\n' ' ')"
+      fi
+    fi
+    rm -rf "$dir2"
+  fi
+
+  # --- 3. De rangorde van waarschuwingen ----------------------------------------------
+  local src3="$PROJECT_DIR/Sources/DopamineCode/Aandacht.swift"
+  if [ ! -f "$src3" ]; then
+    fail "Aandacht.swift ontbreekt."
+  else
+    local dir3; dir3="$(mktemp -d)"
+    cat > "$dir3/main.swift" <<'SWIFT'
+import Foundation
+
+var fouten = 0
+func eis(_ voorwaarde: Bool, _ wat: String) {
+    if !voorwaarde { print("FOUT: \(wat)"); fouten += 1 }
+}
+
+func m(_ s: Aandacht.Soort) -> Aandacht.Melding { Aandacht.Melding(soort: s, tekst: "\(s)") }
+
+// Door elkaar erin, op ernst eruit — ongeacht de volgorde waarin het paneel ze aanbiedt.
+let door = Aandacht(meldingen: [m(.updateBeschikbaar), m(.geenToestemming), m(.vangnettenUit)])
+eis(door.lijst.first?.soort == .vangnettenUit, "vangnettenUit staat vooraan")
+eis(door.lijst.last?.soort == .updateBeschikbaar, "updateBeschikbaar staat achteraan")
+eis(door.lijst.count == 3, "er raakt niets kwijt")
+
+// De kop toont de ernstigste, de telling de rest.
+eis(door.kop?.soort == .vangnettenUit, "de kop is de ernstigste melding")
+eis(door.telling == 3, "de telling is het totaal, werd \(door.telling)")
+
+// Rood klapt altijd uit. Dat is het hele punt: rood is waar iemand iets moet doen, en dat
+// achter een driehoekje verstoppen is precies de fout die dit ontwerp oploste.
+eis(door.moetOpen, "een rode melding dwingt open")
+eis(Aandacht(meldingen: [m(.vangnettenUit)]).moetOpen, "vangnettenUit is rood")
+eis(Aandacht(meldingen: [m(.belofteGebroken)]).moetOpen, "belofteGebroken is rood")
+eis(Aandacht(meldingen: [m(.conflictDeeltVlag)]).moetOpen, "conflictDeeltVlag is rood")
+
+// Oranje en grijs niet — daar mag de rij ingeklapt blijven.
+eis(!Aandacht(meldingen: [m(.geenToestemming)]).moetOpen, "geenToestemming is oranje, niet rood")
+eis(!Aandacht(meldingen: [m(.conflict)]).moetOpen, "een conflict zonder gedeelde vlag is oranje")
+eis(!Aandacht(meldingen: [m(.storingen)]).moetOpen, "storingen zijn grijs")
+eis(!Aandacht(meldingen: [m(.updateBeschikbaar)]).moetOpen, "een update is grijs")
+
+// Leeg is leeg: geen rij, geen telling, geen lege balk in het paneel.
+let niets = Aandacht(meldingen: [])
+eis(niets.lijst.isEmpty && niets.kop == nil && !niets.moetOpen, "leeg levert geen rij op")
+eis(niets.telling == 0, "leeg telt nul")
+
+// Rood vóór oranje, oranje vóór grijs. Dat is niet automatisch: `rangorde` en `ernst` zijn
+// twee losse tabellen. Krijgt een grijze soort ooit rangorde 1, dan is `kop` een grijze
+// melding en verstopt de ingeklapte rij een rode eronder.
+func gewicht(_ e: Aandacht.Ernst) -> Int {
+    switch e {
+    case .rood: return 0
+    case .oranje: return 1
+    case .grijs: return 2
+    }
+}
+let gewichten = Aandacht.Soort.allCases
+    .sorted { $0.rangorde < $1.rangorde }
+    .map { gewicht($0.ernst) }
+eis(gewichten == gewichten.sorted(), "rood staat vóór oranje, oranje vóór grijs")
+// En de rangorde is een echte ordening: geen twee soorten op dezelfde plek.
+let volgordes = Aandacht.Soort.allCases.map(\.rangorde)
+eis(Set(volgordes).count == volgordes.count, "twee soorten delen een rangorde")
+
+print(fouten == 0 ? "OK" : "FOUTEN=\(fouten)")
+exit(fouten == 0 ? 0 : 1)
+SWIFT
+    local build3
+    if ! command -v swiftc >/dev/null 2>&1; then
+      skip "swiftc niet gevonden; de rangorde is niet getest."
+    elif ! build3="$(swiftc -O -o "$dir3/probe" "$src3" "$dir3/main.swift" 2>&1)"; then
+      fail "De rangordeproef compileert niet: $(printf '%s' "$build3" | grep error: | head -2 | tr '\n' ' ')"
+    else
+      local uit3
+      if uit3="$("$dir3/probe" 2>&1)"; then
+        pass "Waarschuwingen sorteren op ernst; rood dwingt de rij open."
+      else
+        fail "De rangorde deugt niet: $(printf '%s' "$uit3" | tr '\n' ' ')"
+      fi
+    fi
+    rm -rf "$dir3"
+  fi
+}
+
 # De formule in de Homebrew-tap wijst naar een tarball van een tag. Blijft die achter op de
 # nieuwste release, dan installeert `brew install` stilletjes een oude versie — geen fout,
 # geen melding, en de beheerder merkt het niet omdat zijn eigen app gewoon werkt. release.sh
@@ -1105,6 +1342,7 @@ case "${1:-}" in
   --login)   test_login_item ;;
   --talen)   test_translations ;;
   --tap)     test_tap ;;
+  --paneel)  test_paneel ;;
   *)
     report
     test_includedir
@@ -1119,6 +1357,7 @@ case "${1:-}" in
     test_login_item
     test_translations
     test_tap
+    test_paneel
     ;;
 esac
 

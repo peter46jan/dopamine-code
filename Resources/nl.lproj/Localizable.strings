@@ -24,10 +24,9 @@
 "menu.tot.zetten" = "Zetten";
 
 /* --- Menu: stoppen zodra een programma klaar is --- */
-"menu.stoppenals.titel" = "Stoppen als";
 "menu.stoppenals.geenapps" = "Geen apps gevonden";
-"menu.stoppenals.klaar" = "%@ klaar is";
-"menu.stoppenals.placeholder" = "een app klaar is…";
+"menu.stoppenals.klaar" = "Stopt als %@ klaar is";
+"menu.stoppenals.placeholder" = "Stoppen als een app klaar is…";
 
 /* --- Menu: waarschuwing dat de vangnetten niet kunnen werken --- */
 "menu.ontwapend.titel" = "Vanzelf stoppen werkt nu niet";
@@ -405,3 +404,45 @@
 "taal.uitleg" = "Los van de taal van de rest van je Mac. Dit schrijft dezelfde instelling als Systeeminstellingen → Taal en regio → Apps, dus de twee kunnen niet uit de pas lopen.";
 "taal.pasnavolgende" = "De nieuwe taal verschijnt bij de volgende start van de app. Stop hem via het menu en open hem opnieuw.";
 "taal.nuactief" = "Nu actief: %@";
+
+/* --- Paneel: de statuskaart en de vangnetten --- */
+"kaart.uit" = "Slaapt normaal";
+"kaart.gearmd" = "Wacht op de klep";
+"kaart.tot" = "wakker tot %@";
+"kaart.eindigt" = "Eindigt om";
+"vangnet.kop" = "Vangnetten";
+"vangnet.legenda" = "nu · stopt bij";
+"vangnet.accu.lader" = "aan de lader";
+"vangnet.wachter.interval" = "elke 30 s";
+"vangnet.wachter.nognietgekeken" = "nog niet gekeken";
+"vangnet.afgeknepen" = "Je Mac draait op %d%% door de warmte";
+
+/* --- Instellingen: wat uit het paneel verhuisd is --- */
+"alg.verlichting.titel" = "Toetsenbordverlichting";
+"alg.verlichting.sterkte" = "Sterkte";
+"alg.gedrag.titel" = "Tijdens een sessie";
+
+/* --- Compacte duur voor de segmentkiezer: 30m, 2u, 10u30 --- */
+"duur.kort.uur" = "u";
+"duur.kort.min" = "m";
+"vangnet.wachter.gelezen" = "vlag gelezen, %@";
+"aandacht.kop" = "Vraagt aandacht";
+"kaart.fout" = "Er klopt iets niet";
+"vangnet.wachter.stil" = "De wachter heeft te lang niet gekeken";
+
+/* --- Foutstatus: status = .error(...), zichtbaar in de statuskaart en de aandachtsrij --- */
+"fout.vlag.onleesbaar" = "Kan niet uitlezen of de Mac mag slapen";
+"fout.vorigekeer" = "De Mac wordt nog wakker gehouden van een vorige keer";
+"fout.buitenuitgezet" = "Buiten Dopamine Code om uitgezet";
+"fout.zondersessie" = "Mac wordt wakker gehouden zonder dat er iets loopt";
+"fout.vastzit" = "Zit vast — de Mac kan niet gaan slapen";
+"fout.accu" = "Accu %1$d%% — onder je grens van %2$d%%";
+"fout.temperatuur" = "De Mac is te warm";
+"fout.procesbestaatniet" = "Niet gestart: dat proces bestaat niet";
+"fout.stopzoumislukken" = "Niet gestart: het stoppen zou later mislukken";
+"fout.geentoestemming" = "Geen toestemming om de Mac wakker te houden";
+"fout.onverwacht" = "Het systeem meldt iets anders dan verwacht";
+"fout.nietgelukt" = "Wakker houden is niet gelukt";
+"fout.vergrendelenmislukt" = "Vergrendelen lukte niet";
+"fout.nogwakker" = "De Mac wordt nog steeds wakker gehouden";
+"fout.nietinslaap" = "Niet in slaap gezet";

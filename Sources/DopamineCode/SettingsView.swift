@@ -198,6 +198,30 @@ struct SettingsView: View {
                 }
             }
 
+            Section("alg.verlichting.titel") {
+                if model.backlight.hasDirectControl {
+                    if let niveau = model.backlightLevel {
+                        Slider(value: Binding(get: { Double(niveau) },
+                                              set: { model.setBacklightLevel(Float($0)) }),
+                               in: 0...1) {
+                            Text("alg.verlichting.sterkte")
+                        }
+                    }
+                    if model.backlightSuppressed {
+                        Text("menu.verlichting.schermuit").font(.caption).foregroundStyle(.orange)
+                    }
+                } else if !KeyboardBacklight.canPostEvents {
+                    Text("menu.verlichting.geendirect").font(.caption).foregroundStyle(.secondary)
+                    Button("menu.verlichting.instellingen") {
+                        KeyboardBacklight.openAccessibilitySettings()
+                    }
+                }
+            }
+
+            Section("alg.gedrag.titel") {
+                Text(model.behaviourSummary).font(.caption).foregroundStyle(.secondary)
+            }
+
             taalSection
 
             updateSection

@@ -31,283 +31,176 @@ struct MenuView: View {
     /// UserDefaults-uitlezing zijn voor een vraag die per paneelopening één keer telt.
     @State private var showUpdateNotice = false
 
+    /// Of de gebruiker de aandachtsrij zelf heeft opengeklapt. Alleen zíjn keuze staat hier;
+    /// of rood hem dwingt open te staan komt uit `Aandacht.moetOpen`, want dat is een feit
+    /// over de toestand en geen voorkeur.
+    @State private var aandachtOpen = false
+
+    /// `KeyboardBacklight.canPostEvents` is `CGPreflightPostEventAccess()` en kost gemeten
+    /// mediaan 9,3 ms. De body draait elke seconde — en blijft dat doen nadat het paneel
+    /// dicht is — dus in de body stond hier negen milliseconde blokkerende IPC per seconde
+    /// op de hoofddraad, en dat is de draad die de guardian aandrijft. Eén keer per opening.
+    @State private var kanToetsenbord = false
+
     var body: some View {
-        VStack(alignment: .leading, spacing: 0) {
-            header
-            Divider().padding(.vertical, 8)
-            keepAwakeSection
-            Divider().padding(.vertical, 8)
-            backlightSection
-            Divider().padding(.vertical, 8)
-            footer
+        VStack(alignment: .leading, spacing: 13) {
+            statuskaart
+            triggerregel
+            duurkiezer
+            vangnetten
+            aandachtsrij
+            updateNotice
+            updateRow
+            Divider()
+            voet
         }
-        .padding(14)
-        .frame(width: 320)
+        .padding(13)
+        // 360 en niet 320. Op 320 liep de segmentkiezer met vijf duren plus een afwijkende
+        // waarde het paneel uit, en werd "62% · aan de lader" afgekapt tot "62% · aan d…".
+        .frame(width: 360)
         .onAppear {
             runningApps = RunningApps.list()
             showUpdateNotice = !Prefs.updateNoticeShown
-        }
-    }
-
-    // MARK: - Header
-
-    private var header: some View {
-        HStack(alignment: .top, spacing: 10) {
-            Image(nsImage: model.menuBarIcon(pointSize: 26))
-                .foregroundStyle(model.status.isError ? Color.orange : (model.status.isOn ? Color.accentColor : Color.secondary))
-            VStack(alignment: .leading, spacing: 2) {
-                Text(model.statusText)
-                    .font(.headline)
-                if let line = model.safetyNetLine {
-                    Text(line)
-                        .font(.subheadline)
-                        .foregroundStyle(model.safetyNetsDisarmed ? Color.orange : Color.secondary)
-                }
-                // Waar de sessie aan hangt, naast hoe lang hij nog loopt. Bewust een aparte
-                // regel: `safetyNetLine` gaat over wat de Mac straks weer laat slapen, en
-                // zijn derde tak (vlag aan zonder sessie) mag daar niet in verwateren.
-                if let line = model.bindingLine {
-                    Text(line)
-                        .font(.subheadline)
-                        .foregroundStyle(.secondary)
-                }
-                Text(subtitle).font(.caption).foregroundStyle(.secondary)
-            }
-            Spacer()
-        }
-    }
-
-    private var subtitle: String {
-        var parts: [String] = []
-        if let battery = model.battery {
-            parts.append("\(battery.percent)%" + (battery.onAC ? " · " + L10n.t("sub.lader") : ""))
-        }
-        parts.append(L10n.t(model.lidClosed ? "sub.klepdicht" : "sub.klepopen"))
-        // Only while a session is running. Outside one nothing observes the network at all,
-        // and `online` simply holds its last value — so this line cheerfully reported
-        // "verbonden" with the wifi switched off, which is worse than saying nothing.
-        if model.networkWatched {
-            parts.append(L10n.t(model.online ? "sub.verbonden" : "sub.geenverbinding"))
-        }
-        if model.thermal != .nominal { parts.append(L10n.t("sub.temperatuur", model.thermal.label)) }
-        return parts.joined(separator: " · ")
-    }
-
-    // MARK: - Keep awake
-
-    private var keepAwakeSection: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            // Bound to what the user asked for, not to `status`. An error during a live
-            // session — an unreadable IOKit read, a lock that did not take — rendered the
-            // switch as OFF while the session was running, and the guardian only repaired
-            // it on the next twenty-second tick. Clicking it inside that window silently
-            // started a second session and pushed the deadline out by the full duration.
-            Toggle(isOn: Binding(
-                get: { model.intendedOn },
-                set: { model.setKeepAwake($0) }
-            )) {
-                Text("menu.kop.titel").fontWeight(.medium)
-            }
-            .toggleStyle(.switch)
-            .disabled(model.busy)
-
-            // Hoe deze sessie begonnen is. Altijd zichtbaar zolang er iets loopt, ook bij de
-            // schakelaar: een regel die er soms wel en soms niet staat maakt zijn afwezigheid
-            // dubbelzinnig, en dan is "welke trigger heeft dit gestart?" niet te beantwoorden.
-            // Bewust hier en niet in `safetyNetLine`: die zin is rond drie gevallen opgebouwd
-            // en zijn derde tak — vlag aan zonder sessie — mag niet verwateren.
-            if let line = model.triggerLine {
-                Text(line)
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-                    .fixedSize(horizontal: false, vertical: true)
-            }
-
-            armingRow
-
-            durationRow
-
-            processRow
-
-            Text(model.behaviourSummary)
-                .font(.caption)
-                .foregroundStyle(.secondary)
-                .fixedSize(horizontal: false, vertical: true)
-
-            if let message = model.lastMessage {
-                Text(message)
-                    .font(.caption)
-                    .foregroundStyle(model.status.isError ? Color.orange : Color.secondary)
-                    .fixedSize(horizontal: false, vertical: true)
-            }
-
-            if let slept = model.sleepDuringSession {
-                brokenPromiseWarning(slept)
-            }
-
-            if model.safetyNetsDisarmed {
-                disarmedWarning
-            }
-
-            if model.grantStatus != .granted {
-                grantWarning
-            }
-
-            if let conflict = model.conflict {
-                conflictWarning(conflict)
-            }
-
-            if !model.outages.isEmpty {
-                outageList
-            }
-
-            Button {
-                model.sleepNow()
-            } label: {
-                Label("menu.nuslapen", systemImage: "powersleep")
-            }
-            .buttonStyle(.link)
-            .disabled(model.busy)
-        }
-    }
-
-    /// "Ga aan zodra ik de klep dichtdoe" — fase 3.1.
-    ///
-    /// Vooraf zeggen wat je wilt, in plaats van een gebaar meten op het moment dat de klep
-    /// dichtgaat. Dat gebaar zou Toegankelijkheid vragen (staat op deze Mac uit) en het zou
-    /// afhangen van een klepmelding die tot tien seconden te laat kan komen — dan is de
-    /// toetsstand niets meer waard. Zo kan het nooit per ongeluk afgaan.
-    ///
-    /// De aftelling rekent met `model.now`, de kloktik die het hele paneel al gebruikt. Geen
-    /// eigen timer: dat zou een tweede klok naast de guardian zijn.
-    @ViewBuilder private var armingRow: some View {
-        if let arm = model.lidArm {
-            HStack(spacing: 6) {
-                Label("menu.arm.actief", systemImage: "laptopcomputer.and.arrow.down")
-                    .font(.caption)
-                    .foregroundStyle(Color.accentColor)
-                    .fixedSize(horizontal: false, vertical: true)
-                Text("· \(arm.resterendeTekst(op: model.now))")
-                    .font(.caption)
-                    .monospacedDigit()
-                    .foregroundStyle(.secondary)
-                Spacer()
-                Button("menu.arm.intrekken") { model.cancelArming() }
-                    .buttonStyle(.link)
-                    .font(.caption)
-            }
-        } else if !model.intendedOn {
-            Button {
-                model.armForLidClose()
-            } label: {
-                Label("menu.arm.aanzetten", systemImage: "laptopcomputer.and.arrow.down")
-                    .font(.caption)
-            }
-            .buttonStyle(.link)
-            .disabled(model.busy)
-        }
-    }
-
-    /// Duration control, right here rather than only in Settings.
-    ///
-    /// This is the number you most often want to change at the moment you flip the switch,
-    /// so making it a trip to a separate window would be the wrong place for it. Adjusting
-    /// it during a running session moves the deadline immediately — anchored to when the
-    /// session started, so shortening it brings the end forward instead of pushing it back.
-    private var durationRow: some View {
-        VStack(alignment: .leading, spacing: 6) {
-            HStack(spacing: 8) {
-                Text("menu.duur.titel")
-                    .font(.callout)
-                    .foregroundStyle(.secondary)
-
-                Spacer()
-
-                Button {
-                    model.adjustAutoOff(byMinutes: -15)
-                } label: {
-                    Image(systemName: "minus")
-                }
-                .buttonStyle(.borderless)
-                .disabled(model.autoOffMinutes <= 5)
-
-                Text(model.configuredDurationText)
-                    .font(.callout.weight(.medium))
-                    .monospacedDigit()
-                    .frame(width: 82)
-                    .multilineTextAlignment(.center)
-
-                Button {
-                    model.adjustAutoOff(byMinutes: 15)
-                } label: {
-                    Image(systemName: "plus")
-                }
-                .buttonStyle(.borderless)
-                .disabled(model.autoOffMinutes >= 24 * 60)
-            }
-
-            HStack(spacing: 4) {
-                ForEach(quickDurations, id: \.self) { total in
-                    Button(AppModel.durationText(total).replacingOccurrences(of: " uur", with: " u")) {
-                        model.setAutoOff(minutes: total)
-                    }
-                    .buttonStyle(.borderless)
-                    .font(.caption)
-                    .foregroundStyle(model.autoOffMinutes == total ? Color.accentColor : Color.secondary)
-                }
-                Spacer()
-                if let ends = model.deadlineText {
-                    Text(L10n.t("menu.duur.tot", ends))
-                        .font(.caption)
-                        .monospacedDigit()
-                        .foregroundStyle(.secondary)
-                }
-            }
-
-            untilRow
-        }
-    }
-
-    /// "Tot 18:00" naast "voor 4,5 uur".
-    ///
-    /// Je denkt vaker in een eindtijd dan in een duur, maar het blijft dezelfde ene instelling:
-    /// de kloktijd wordt door `setAutoOffUntil` omgerekend naar minuten en gaat door dezelfde
-    /// `setAutoOff` heen als de knoppen hierboven. Er wordt dus nergens een tweede eindtijd
-    /// bewaard, en de tijdslimiet blijft precies één planner houden.
-    ///
-    /// Met een knop en niet bij elke wijziging van de kiezer: elke keer zetten schrijft ook de
-    /// standaardduur voor de vólgende sessie, en dat hoort te gebeuren op het moment dat je het
-    /// vraagt — niet terwijl je nog aan het typen bent.
-    private var untilRow: some View {
-        VStack(alignment: .leading, spacing: 4) {
-            HStack(spacing: 8) {
-                Text("menu.tot.titel")
-                    .font(.callout)
-                    .foregroundStyle(.secondary)
-                DatePicker("", selection: $untilTime, displayedComponents: .hourAndMinute)
-                    .labelsHidden()
-                    .datePickerStyle(.field)
-                    .controlSize(.small)
-                Button("menu.tot.zetten") { untilExplanation = model.setAutoOffUntil(untilTime) }
-                    .buttonStyle(.link)
-                    .font(.caption)
-                Spacer()
-            }
-            if let untilExplanation {
-                Text(untilExplanation)
-                    .font(.caption2)
-                    .foregroundStyle(.secondary)
-                    .fixedSize(horizontal: false, vertical: true)
-            }
-        }
-        .onAppear {
-            // Begin bij de eindtijd die er nu staat, zodat de kiezer nooit op een willekeurig
-            // moment in het verleden opent.
             untilTime = model.deadline
                 ?? Date().addingTimeInterval(Double(model.autoOffMinutes) * 60)
-            // En begin zonder de uitleg van de vorige keer: die ging over een sessie en een
-            // tijdstip die er nu misschien niet meer zijn.
             untilExplanation = nil
+            kanToetsenbord = KeyboardBacklight.canPostEvents
+        }
+    }
+
+    // MARK: - De statuskaart
+
+    private var statuskaart: some View {
+        HStack(spacing: 13) {
+            BoogIcoon(toestand: model.kaart, fout: model.status.isError)
+            VStack(alignment: .leading, spacing: 2) {
+                grote
+                onderregel
+            }
+            Spacer(minLength: 0)
+            Toggle("", isOn: Binding(get: { model.intendedOn },
+                                     set: { model.setKeepAwake($0) }))
+                .toggleStyle(.switch)
+                .labelsHidden()
+                .disabled(model.busy)
+        }
+        .padding(11)
+        .glas(oplichtend: model.kaart.isAan)
+    }
+
+    @ViewBuilder private var grote: some View {
+        switch model.kaart.fase {
+        case .uit:
+            // "Slaapt normaal" is een bewering over het systeem, en die mogen we niet doen
+            // terwijl de app weet dat er iets mis is — bij een onleesbare kernelvlag weet de
+            // guardian juist níet of de Mac mag slapen. Dan staat de fout er zelf.
+            if model.status.isError {
+                // Kort en zonder de zin zelf: die staat rood in de aandachtsrij, die bij een
+                // fout altijd openklapt. Hem hier hérhalen zette hem drie keer op één paneel.
+                Text("kaart.fout").font(.headline).foregroundStyle(.orange)
+            } else {
+                Text("kaart.uit").font(.headline)
+            }
+        case .gearmd:
+            Text("kaart.gearmd").font(.headline)
+        case .aan:
+            Text(model.kaartAftelling ?? "—")
+                .font(.system(size: 32, weight: .light))
+                .monospacedDigit()
+                .lineLimit(1)
+                .minimumScaleFactor(0.7)
+        }
+    }
+
+    @ViewBuilder private var onderregel: some View {
+        switch model.kaart.fase {
+        case .uit:
+            Button("menu.arm.aanzetten") { model.armForLidClose() }
+                .buttonStyle(.link).font(.caption).disabled(model.busy)
+        case .gearmd:
+            HStack(spacing: 6) {
+                if let arm = model.lidArm {
+                    Text(arm.resterendeTekst(op: model.now))
+                        .font(.caption).monospacedDigit().foregroundStyle(.secondary)
+                }
+                Button("menu.arm.intrekken") { model.cancelArming() }
+                    .buttonStyle(.link).font(.caption)
+            }
+        case .aan:
+            Text(onderregelAan).font(.caption).foregroundStyle(.secondary)
+        }
+    }
+
+    private var onderregelAan: String {
+        var delen: [String] = []
+        if let tot = model.deadlineText { delen.append(L10n.t("kaart.tot", tot)) }
+        delen.append(L10n.t(model.lidClosed ? "sub.klepdicht" : "sub.klepopen"))
+        return delen.joined(separator: " · ")
+    }
+
+    /// Hoe deze sessie begonnen is.
+    ///
+    /// Altijd zichtbaar zolang er iets loopt — dat stond zo in het oude paneel, met de reden
+    /// erbij: "een regel die er soms wel en soms niet staat maakt zijn afwezigheid
+    /// dubbelzinnig, en dan is 'welke trigger heeft dit gestart?' niet te beantwoorden."
+    /// Bij de herindeling viel hij weg; dit zet hem terug.
+    @ViewBuilder private var triggerregel: some View {
+        if let regel = model.triggerLine {
+            Text(regel)
+                .font(.caption2)
+                .foregroundStyle(.secondary)
+                .fixedSize(horizontal: false, vertical: true)
+        }
+    }
+
+    // MARK: - De duur
+
+    private var duurkiezer: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Picker("", selection: Binding(get: { model.autoOffMinutes },
+                                          set: { model.setAutoOff(minutes: $0) })) {
+                // Compacte labels: zes segmenten met "30 min" en "10 u 30 min" erin liepen het
+                // paneel links en rechts uit.
+                ForEach(quickDurations, id: \.self) { totaal in
+                    Text(AppModel.durationTextKort(totaal)).tag(totaal)
+                }
+                // Een waarde die niet in de vijf zit — via de tijdkiezer of via
+                // `dopamine on --for` — krijgt een eigen segment. Zonder dit zou de kiezer
+                // leeg staan bij een duur die er wél is, en dat leest als "geen duur".
+                if !quickDurations.contains(model.autoOffMinutes) {
+                    Text(AppModel.durationTextKort(model.autoOffMinutes)).tag(model.autoOffMinutes)
+                }
+            }
+            .pickerStyle(.segmented)
+            .labelsHidden()
+            .disabled(model.busy)
+
+            HStack(spacing: 6) {
+                Text("kaart.eindigt").font(.caption).foregroundStyle(.secondary)
+                DatePicker("", selection: $untilTime, displayedComponents: .hourAndMinute)
+                    .labelsHidden().datePickerStyle(.field).controlSize(.small)
+                // Met een knop en niet bij elke wijziging van de kiezer: elke keer zetten
+                // schrijft ook de standaardduur voor de vólgende sessie, en dat hoort te
+                // gebeuren op het moment dat je het vraagt — niet terwijl je nog aan het
+                // typen bent. Deze regel stond al in de oude untilRow en blijft gelden.
+                Button("menu.tot.zetten") { untilExplanation = model.setAutoOffUntil(untilTime) }
+                    .buttonStyle(.link).font(.caption)
+                    .fixedSize()          // anders breekt "Zetten" over twee regels
+                Spacer(minLength: 4)
+            }
+
+            // Eigen regel. Naast de tijdkiezer erbij liep de rij in het Frans met een
+            // gekoppelde app 19 punten buiten het paneel, en "Se termine à" werd dan tot
+            // drie regels platgedrukt omdat het als enige mocht krimpen.
+            HStack(spacing: 6) {
+                procesKiezer
+                Spacer(minLength: 0)
+            }
+
+            if let untilExplanation {
+                Text(untilExplanation).font(.caption2).foregroundStyle(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
         }
     }
 
@@ -319,196 +212,185 @@ struct MenuView: View {
     /// plafond overheen gaan, precies zoals bij `dopamine on --until-exit`. Willekeurige
     /// procesnummers blijven werk voor de opdrachtregel; een lijst van álle processen is
     /// honderden regels systeemwerk waar niemand iets aan heeft.
-    private var processRow: some View {
-        HStack(spacing: 8) {
-            Text("menu.stoppenals.titel")
-                .font(.callout)
-                .foregroundStyle(.secondary)
-            Menu {
-                if runningApps.isEmpty {
-                    Text("menu.stoppenals.geenapps")
-                } else {
-                    ForEach(runningApps) { item in
-                        Button("\(item.naam) (\(item.pid))") { model.keepAwakeUntilQuit(of: item) }
-                    }
+    private var procesKiezer: some View {
+        Menu {
+            if runningApps.isEmpty {
+                Text("menu.stoppenals.geenapps")
+            } else {
+                ForEach(runningApps) { item in
+                    Button("\(item.naam) (\(item.pid))") { model.keepAwakeUntilQuit(of: item) }
                 }
-            } label: {
-                Text(model.binding.map { L10n.t("menu.stoppenals.klaar", $0.identity.naam) }
-                     ?? L10n.t("menu.stoppenals.placeholder"))
-                    .font(.callout)
             }
-            .menuStyle(.borderlessButton)
-            .disabled(model.busy)
-            Spacer()
-        }
-    }
-
-    /// The single most important thing this app can tell you: the Mac will not sleep, and
-    /// nothing running unattended is able to change that.
-    private var disarmedWarning: some View {
-        VStack(alignment: .leading, spacing: 6) {
-            Label("menu.ontwapend.titel", systemImage: "shield.slash.fill")
-                .font(.caption.weight(.semibold))
-                .foregroundStyle(.red)
-            Text("menu.ontwapend.uitleg")
-                .font(.caption2)
-                .foregroundStyle(.secondary)
-                .fixedSize(horizontal: false, vertical: true)
-            Text("sudo pmset -a disablesleep 0")
-                .font(.system(.caption2, design: .monospaced))
-                .textSelection(.enabled)
-        }
-        .padding(8)
-        .background(Color.red.opacity(0.12), in: RoundedRectangle(cornerRadius: 6))
-    }
-
-    /// The one finding that outranks everything else in this panel: the Mac slept while we
-    /// were holding it awake, so the app's single promise does not hold on this machine.
-    /// Deliberately stays visible after the session ends — it is not news that expires.
-    private func brokenPromiseWarning(_ episode: SleepWatch.Episode) -> some View {
-        // Only the flag-was-up case is an accusation against the kernel. The other case —
-        // the flag was cleared from outside while a session was still running — is the Mac
-        // behaving correctly, and saying "dat hoort niet te kunnen" about it would be a
-        // false alarm dressed in red.
-        let broke = model.sleepBrokeThePromise
-        return VStack(alignment: .leading, spacing: 6) {
-            Label(broke ? "menu.gebroken.wel" : "menu.gebroken.niet",
-                  systemImage: broke ? "exclamationmark.octagon.fill" : "exclamationmark.triangle.fill")
-                .font(.caption.weight(.semibold))
-                .foregroundStyle(broke ? .red : .orange)
-            // `episode.describe()` levert nog Nederlands; die zin wordt in SleepWatch
-            // samengesteld en verhuist mee zodra dat bestand aan de beurt is.
-            Text(episode.describe().prefix(1).uppercased() + episode.describe().dropFirst() + ". "
-                 + L10n.t(broke ? "menu.gebroken.uitleg.wel" : "menu.gebroken.uitleg.niet"))
-                .font(.caption2)
-                .foregroundStyle(.secondary)
-                .fixedSize(horizontal: false, vertical: true)
-            if broke {
-                Text("./verify.sh --after")
-                    .font(.system(.caption2, design: .monospaced))
-                    .textSelection(.enabled)
-            }
-        }
-        .padding(8)
-        .background((broke ? Color.red : Color.orange).opacity(0.15), in: RoundedRectangle(cornerRadius: 6))
-    }
-
-    private var grantWarning: some View {
-        VStack(alignment: .leading, spacing: 6) {
-            Label(model.grantText, systemImage: "lock.trianglebadge.exclamationmark")
+        } label: {
+            Text(model.binding.map { L10n.t("menu.stoppenals.klaar", $0.identity.naam) }
+                 ?? L10n.t("menu.stoppenals.placeholder"))
                 .font(.caption)
-                .foregroundStyle(.orange)
-            Text("menu.grant.uitleg")
-                .font(.caption2)
-                .foregroundStyle(.secondary)
-                .fixedSize(horizontal: false, vertical: true)
-            HStack {
-                Button("menu.grant.installeren") { model.installGrant() }
-                    .disabled(model.busy)
-                Button("menu.grant.opnieuw") { model.refreshGrant() }
-            }
-            .controlSize(.small)
-
-            // The Terminal route, for when the authorisation sheet misbehaves. It is also
-            // the honest one: you get to read the script before running it as root.
-            if !SudoersGrant.manualCommand.isEmpty {
-                Text("menu.grant.terminal")
-                    .font(.caption2).foregroundStyle(.secondary)
-                Text(SudoersGrant.manualCommand)
-                    .font(.system(.caption2, design: .monospaced))
-                    .textSelection(.enabled)
-                    .foregroundStyle(.secondary)
-                    .fixedSize(horizontal: false, vertical: true)
-            }
         }
-        .padding(8)
-        .background(Color.orange.opacity(0.10), in: RoundedRectangle(cornerRadius: 6))
+        .menuStyle(.borderlessButton)
+        .fixedSize()
+        .disabled(model.busy)
     }
 
-    /// Two different problems, deliberately drawn differently. Two tools each holding the
-    /// Mac up their own way only makes a test meaningless; two tools writing the same
-    /// global flag means either can undo the other mid-session. Painting both the same
-    /// calm orange said the second was as harmless as the first.
-    private func conflictWarning(_ conflict: ConflictWatch.Conflict) -> some View {
-        let tint: Color = conflict.sharesTheFlag ? .red : .orange
-        return VStack(alignment: .leading, spacing: 6) {
-            Label(L10n.t(conflict.sharesTheFlag ? "menu.conflict.deelt" : "menu.conflict.draait",
-                         conflict.name),
-                  systemImage: conflict.sharesTheFlag ? "exclamationmark.octagon.fill" : "exclamationmark.2")
-                .font(.caption.weight(conflict.sharesTheFlag ? .semibold : .regular))
-                .foregroundStyle(tint)
-                .fixedSize(horizontal: false, vertical: true)
-            Text(conflict.detail)
-                .font(.caption2)
-                .foregroundStyle(.secondary)
-                .fixedSize(horizontal: false, vertical: true)
-            HStack {
-                Button(L10n.t("menu.conflict.afsluiten", conflict.name)) { model.quitAmphetamine() }
-                Button("menu.conflict.nietmelden") { model.dismissConflictWarning() }
-            }
-            .controlSize(.small)
-        }
-        .padding(8)
-        .background(tint.opacity(conflict.sharesTheFlag ? 0.15 : 0.10), in: RoundedRectangle(cornerRadius: 6))
-    }
+    // MARK: - De vangnetten
 
-    private var outageList: some View {
-        VStack(alignment: .leading, spacing: 3) {
-            // The list outlives its session on purpose — it is the after-the-fact report —
-            // but the heading has to say which session it belongs to. "Netwerk deze sessie"
-            // above last night's outages, at two in the afternoon with keep-awake off, is
-            // simply a false statement.
-            Text(model.outagesFromFinishedSession ? "menu.storing.vorige" : "menu.storing.nu")
-                .font(.caption).foregroundStyle(.secondary)
-            ForEach(model.outages.suffix(3)) { outage in
-                Text("• " + outage.describe())
-                    .font(.caption2)
-                    .foregroundStyle(outage.isOngoing ? Color.orange : Color.secondary)
-                    .fixedSize(horizontal: false, vertical: true)
-            }
-        }
-    }
-
-    // MARK: - Backlight
-
-    private var backlightSection: some View {
+    /// De drie vangnetten, als meters naast elkaar in plaats van als zinnen door het paneel
+    /// heen. Elk is een paar: waar je nu bent, en waar het ingrijpt. Dat tweede getal is de
+    /// hele reden dat dit blok bestaat — een percentage zonder grens zegt niets over wat er
+    /// straks gaat gebeuren.
+    private var vangnetten: some View {
         VStack(alignment: .leading, spacing: 8) {
-            Toggle(isOn: Binding(
-                get: { model.backlightOn ?? false },
-                set: { _ in model.toggleBacklight() }
-            )) {
-                Text("menu.verlichting.titel").fontWeight(.medium)
+            HStack {
+                Text("vangnet.kop").font(.system(size: 10)).textCase(.uppercase)
+                    .foregroundStyle(.tertiary)
+                Spacer()
+                Text("vangnet.legenda").font(.system(size: 10)).foregroundStyle(.tertiary)
             }
-            .toggleStyle(.switch)
 
-            if model.backlight.hasDirectControl {
-                if let level = model.backlightLevel {
-                    Slider(
-                        value: Binding(
-                            get: { Double(level) },
-                            set: { model.setBacklightLevel(Float($0)) }
-                        ),
-                        in: 0...1
-                    )
-                    .controlSize(.small)
+            // Alleen als er werkelijk een accumeting is. Nul tonen op een Mac zonder accu is
+            // een lege balk voor iets wat nooit gemeten is.
+            if let accu = model.accuMeter, let battery = model.battery {
+                MeterRij(symbool: "battery.50",
+                         inhoud: AccuMeterView(meter: accu),
+                         waarde: "\(battery.percent)%",
+                         grens: accu.sluimert ? L10n.t("vangnet.accu.lader")
+                                              : "\(Prefs.batteryFloor)%",
+                         gedempt: accu.sluimert)
+            }
+
+            MeterRij(symbool: "thermometer.medium",
+                     inhoud: WarmteMeterView(meter: model.warmteMeter),
+                     waarde: model.warmteLabel,
+                     grens: "4/4")
+
+            MeterRij(symbool: "shield",
+                     inhoud: HStack(spacing: 6) {
+                         WachterStip(leeft: model.wachterLeeft)
+                         Text(model.wachterZin).font(.system(size: 10))
+                             .foregroundStyle(model.wachterLeeft ? Color.secondary : Color.red)
+                             .lineLimit(1)
+                         Spacer(minLength: 0)
+                     },
+                     waarde: "",
+                     grens: L10n.t("vangnet.wachter.interval"))
+
+            if let limiet = model.cpuSpeedLimit, limiet < 100 {
+                Text(L10n.t("vangnet.afgeknepen", limiet))
+                    .font(.caption2).foregroundStyle(.orange)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+        }
+    }
+
+    // MARK: - De aandachtsrij
+
+    /// Alle waarschuwingen in één rij, op ernst geordend door `AppModel.aandacht`. Ingeklapt
+    /// staat de ernstigste er met een telling naast; rood klapt altijd zelf open, want rood
+    /// is de toestand waarin iemand iets moet doen.
+    @ViewBuilder private var aandachtsrij: some View {
+        let aandacht = model.aandacht
+        if let kop = aandacht.kop {
+            DisclosureGroup(isExpanded: Binding(
+                get: { aandacht.moetOpen || aandachtOpen },
+                set: { aandachtOpen = $0 }
+            )) {
+                VStack(alignment: .leading, spacing: 10) {
+                    ForEach(aandacht.lijst, id: \.soort) { melding in
+                        meldingVak(melding)
+                    }
                 }
-                if model.backlightSuppressed {
-                    Text("menu.verlichting.schermuit")
-                        .font(.caption2)
-                        .foregroundStyle(.orange)
+                .padding(.top, 6)
+            } label: {
+                HStack(spacing: 7) {
+                    if aandacht.telling > 1 {
+                        Text("\(aandacht.telling)")
+                            .font(.system(size: 10, weight: .bold))
+                            .padding(.horizontal, 5).padding(.vertical, 1)
+                            .background(kleur(kop.soort.ernst), in: Capsule())
+                            .foregroundStyle(.white)
+                    }
+                    // Ingeklapt staat de zin hier; uitgeklapt staat hij eronder in het vak.
+                    // Allebei tegelijk zette dezelfde regel twee keer pal onder elkaar, en
+                    // omdat rood altijd uitklapt was dat bij elke rode toestand gegarandeerd.
+                    Text(aandacht.moetOpen || aandachtOpen ? L10n.t("aandacht.kop") : kop.tekst)
+                        .font(.caption)
+                        .foregroundStyle(kleur(kop.soort.ernst))
+                        .lineLimit(2)
+                }
+            }
+            .padding(9)
+            .glas(straal: 10)
+        }
+    }
+
+    private func kleur(_ ernst: Aandacht.Ernst) -> Color {
+        switch ernst {
+        case .rood:   return .red
+        case .oranje: return .orange
+        case .grijs:  return .secondary
+        }
+    }
+
+    /// De uitleg en de knoppen die bij één melding horen. De zin zelf staat al in de melding —
+    /// die is in `AppModel` samengesteld — dus hier staat alleen wat je ermee kunt doen.
+    @ViewBuilder private func meldingVak(_ melding: Aandacht.Melding) -> some View {
+        VStack(alignment: .leading, spacing: 6) {
+            Text(melding.tekst).font(.caption).foregroundStyle(kleur(melding.soort.ernst))
+                .fixedSize(horizontal: false, vertical: true)
+            switch melding.soort {
+            case .vangnettenUit:
+                Text("menu.ontwapend.uitleg").font(.caption2).foregroundStyle(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
+                Text("sudo pmset -a disablesleep 0")
+                    .font(.system(.caption2, design: .monospaced)).textSelection(.enabled)
+            case .geenToestemming:
+                Text("menu.grant.uitleg").font(.caption2).foregroundStyle(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
+                HStack {
+                    Button("menu.grant.installeren") { model.installGrant() }.disabled(model.busy)
+                    Button("menu.grant.opnieuw") { model.refreshGrant() }
+                }
+                .controlSize(.small)
+                // De Terminal-route, voor als het autorisatievenster zich misdraagt. Het is
+                // ook de eerlijke route: je leest het script voordat je het als root draait.
+                if !SudoersGrant.manualCommand.isEmpty {
+                    Text("menu.grant.terminal").font(.caption2).foregroundStyle(.secondary)
+                    Text(SudoersGrant.manualCommand)
+                        .font(.system(.caption2, design: .monospaced))
+                        .textSelection(.enabled).foregroundStyle(.secondary)
                         .fixedSize(horizontal: false, vertical: true)
                 }
-            } else if !KeyboardBacklight.canPostEvents {
-                VStack(alignment: .leading, spacing: 4) {
-                    Text("menu.verlichting.geendirect")
-                        .font(.caption2)
-                        .foregroundStyle(.secondary)
+            case .conflict, .conflictDeeltVlag:
+                if let conflict = model.conflict {
+                    Text(conflict.detail).font(.caption2).foregroundStyle(.secondary)
                         .fixedSize(horizontal: false, vertical: true)
-                    Button("menu.verlichting.instellingen") {
-                        KeyboardBacklight.openAccessibilitySettings()
+                    HStack {
+                        Button(L10n.t("menu.conflict.afsluiten", conflict.name)) {
+                            model.quitAmphetamine()
+                        }
+                        Button("menu.conflict.nietmelden") { model.dismissConflictWarning() }
                     }
                     .controlSize(.small)
                 }
+            case .storingen:
+                ForEach(model.outages.suffix(3)) { storing in
+                    Text("• " + storing.describe()).font(.caption2)
+                        .foregroundStyle(storing.isOngoing ? Color.orange : Color.secondary)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+            case .belofteGebroken:
+                Text("menu.gebroken.uitleg.wel").font(.caption2).foregroundStyle(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
+                Text("./verify.sh --after")
+                    .font(.system(.caption2, design: .monospaced)).textSelection(.enabled)
+            case .wasGeslapen:
+                Text("menu.gebroken.uitleg.niet").font(.caption2).foregroundStyle(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
+            // `.foutstatus` draagt zijn eigen zin uit `AppModel.status` en heeft geen knop:
+            // de twintig plekken die hem zetten hebben elk hun eigen herstelpad, en één
+            // algemene actie zou bij de meeste het verkeerde doen.
+            case .foutstatus, .wachterStil, .laatsteMelding, .laatsteMededeling,
+                 .updateBeschikbaar, .updateMededeling:
+                EmptyView()
             }
         }
     }
@@ -545,8 +427,8 @@ struct MenuView: View {
                 }
                 .controlSize(.small)
             }
-            .padding(8)
-            .background(Color.secondary.opacity(0.10), in: RoundedRectangle(cornerRadius: 6))
+            .padding(9)
+            .glas(straal: 10)
         }
     }
 
@@ -592,35 +474,41 @@ struct MenuView: View {
                 }
                 .controlSize(.small)
             }
-            .padding(8)
-            .background(Color.accentColor.opacity(0.10), in: RoundedRectangle(cornerRadius: 6))
+            .padding(9)
+            .glas(straal: 10)
         }
     }
 
-    // MARK: - Footer
+    // MARK: - De voet
 
-    private var footer: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            updateNotice
-            updateRow
-            footerButtons
-        }
-    }
+    private var voet: some View {
+        HStack(spacing: 6) {
+            Button { model.sleepNow() } label: {
+                Label("menu.nuslapen", systemImage: "powersleep")
+            }
+            .disabled(model.busy)
 
-    private var footerButtons: some View {
-        HStack {
-            Button("menu.voet.instellingen") {
+            if model.backlight.hasDirectControl || kanToetsenbord {
+                Button { model.toggleBacklight() } label: {
+                    Image(systemName: "keyboard")
+                }
+                .foregroundStyle(model.backlightOn == true ? Color.accentColor : Color.secondary)
+                .help(Text("menu.verlichting.titel"))
+            }
+
+            Spacer()
+
+            Button {
                 // Een accessory-app kan geen venster naar voren halen; even naar `.regular`,
                 // en `SettingsView.onDisappear` zet hem weer terug op `.accessory` zodat er
                 // geen Dock-icoon blijft hangen. Daarna de scene openen via de nette API.
                 NSApp.setActivationPolicy(.regular)
                 NSApp.activate(ignoringOtherApps: true)
                 openSettings()
+            } label: {
+                Image(systemName: "gearshape")
             }
-            Spacer()
-            Button("menu.voet.stop") {
-                NSApp.terminate(nil)
-            }
+            Button("menu.voet.stop") { NSApp.terminate(nil) }
         }
         .controlSize(.small)
     }

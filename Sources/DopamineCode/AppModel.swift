@@ -99,6 +99,14 @@ final class AppModel: ObservableObject {
     @Published private(set) var conflict: ConflictWatch.Conflict?
     @Published private(set) var lastMessage: String?
     @Published private(set) var thermal: ThermalWatch.Pressure = .nominal
+    /// Onder 100 wordt de Mac door de warmte afgeknepen. Bijgewerkt door de guardian-tik en
+    /// niet in de body uitgelezen: `pmset -g therm` kost tot acht seconden, en de body draait
+    /// elke seconde door de kloktik.
+    @Published private(set) var cpuSpeedLimit: Int?
+    /// Hoe lang geleden de wachter voor het laatst keek. Bijgewerkt door de guardian-tik en
+    /// niet in de body uitgelezen: `RestartGuard.timeSinceLastRound()` leest en decodeert een
+    /// bestand, en de body draait elke seconde door de kloktik.
+    @Published private(set) var wachterSinds: TimeInterval?
     @Published private(set) var busy = false
 
     /// True when the flag is set but the app has no passwordless way to clear it. In that
@@ -334,6 +342,142 @@ final class AppModel: ObservableObject {
         return nil
     }
 
+    // MARK: - Wat het paneel nodig heeft
+
+    /// De toestand van de statuskaart. Eén vraag, één antwoord — zie `KaartToestand`.
+    var kaart: KaartToestand {
+        KaartToestand(intendedOn: intendedOn,
+                      armTot: lidArm?.verlooptOp,
+                      sessieStart: sessionStart,
+                      deadline: deadline,
+                      nu: now)
+    }
+
+    /// `nil` als er geen accumeting is — een Mac zonder accu, of vóór de eerste snapshot.
+    /// Nul tonen zou een lege balk zijn voor iets wat nooit gemeten is.
+    var accuMeter: AccuMeter? {
+        guard let battery else { return nil }
+        return AccuMeter(percent: battery.percent,
+                         grens: Prefs.batteryFloor,
+                         aanDeLader: battery.onAC)
+    }
+
+    /// De warmtestand, en buiten een sessie rechtstreeks gemeten.
+    ///
+    /// `ThermalWatch` draait alléén tijdens een sessie: `startSession` doet `start()`,
+    /// `endSession` doet `stop()` en zet `thermal = .nominal`. Buiten een sessie is `thermal`
+    /// dus altijd `.nominal`, ongeacht wat de Mac werkelijk doet — en het paneel tekende dan
+    /// "Normaal · 4/4" op een machine die op dat moment ernstig onder druk kon staan.
+    ///
+    /// `activate()` kende dit probleem al en leest daar met zoveel woorden de líve waarde:
+    /// "the cached value is ALWAYS .nominal here". Dezelfde reden geldt hier. De lezing is
+    /// een goedkope synchrone property, geen systeemaanroep.
+    ///
+    /// Dit is dezelfde regel die `accuMeter` al volgt: liever niets tonen of echt meten dan
+    /// een waarde tekenen die nooit gemeten is.
+    var warmteStand: ThermalWatch.Pressure {
+        intendedOn ? thermal : ThermalWatch.Pressure(ProcessInfo.processInfo.thermalState)
+    }
+
+    /// Het woord naast de warmtemeter. Uit dezelfde bron als de meter zelf, want anders kan er
+    /// "normaal" staan naast drie van de vier blokjes aan.
+    var warmteLabel: String { warmteStand.label }
+
+    var warmteMeter: WarmteMeter {
+        switch warmteStand {
+        case .nominal:  return WarmteMeter(stap: 1)
+        case .fair:     return WarmteMeter(stap: 2)
+        case .serious:  return WarmteMeter(stap: 3)
+        case .critical: return WarmteMeter(stap: 4)
+        }
+    }
+
+    /// Alle waarschuwingen in één gesorteerde lijst.
+    ///
+    /// Bewust hier en niet in de view: de rangorde is een beslissing over wat er bovenaan
+    /// komt te staan, en die hoort niet in de opmaak te zitten.
+    var aandacht: Aandacht {
+        var meldingen: [Aandacht.Melding] = []
+        if safetyNetsDisarmed {
+            meldingen.append(.init(soort: .vangnettenUit, tekst: L10n.t("menu.ontwapend.titel")))
+        }
+        // De foutstatus zelf. Twintig plekken zetten `status = .error(...)` en het paneel las
+        // dat nergens meer: bij een onleesbare kernelvlag stond er "Slaapt normaal" met een
+        // groen kloppende wachterstip eronder, terwijl de guardian juist niet wist óf de Mac
+        // mocht slapen. Rood, dus de rij klapt altijd open — een fout kan niet meer achter een
+        // driehoekje verdwijnen.
+        if case .error(let melding) = status {
+            meldingen.append(.init(soort: .foutstatus, tekst: melding))
+        }
+        // Een stille wachter is rood, en rood klapt de rij open. De stip werd hier al rood
+        // van, maar zonder melding bleef de rij dicht en telde hij niet mee.
+        if !wachterLeeft {
+            meldingen.append(.init(soort: .wachterStil, tekst: L10n.t("vangnet.wachter.stil")))
+        }
+        if let slept = sleepDuringSession {
+            meldingen.append(.init(soort: sleepBrokeThePromise ? .belofteGebroken : .wasGeslapen,
+                                   tekst: slept.describe()))
+        }
+        if let conflict {
+            meldingen.append(.init(soort: conflict.sharesTheFlag ? .conflictDeeltVlag : .conflict,
+                                   tekst: L10n.t(conflict.sharesTheFlag ? "menu.conflict.deelt"
+                                                                        : "menu.conflict.draait",
+                                                 conflict.name)))
+        }
+        // Alleen oranje als er werkelijk iets mislukte. `lastMessage` draagt ook
+        // geruststellingen — "opgeruimd", "staat al aan" — en die als waarschuwing bovenaan
+        // zetten is precies het te-luid-zijn dat deze herindeling moest wegnemen. De oude
+        // code maakte dat onderscheid met `status.isError`; hier gebeurt dat weer.
+        // Niet twee keer dezelfde zin: verschillende paden zetten `status` en `lastMessage` op
+        // dezelfde tekst, en die dan als rood én als oranje tonen maakt één probleem twee.
+        if let lastMessage, !meldingen.contains(where: { $0.tekst == lastMessage }) {
+            meldingen.append(.init(soort: status.isError ? .laatsteMelding : .laatsteMededeling,
+                                   tekst: lastMessage))
+        }
+        if grantStatus != .granted {
+            meldingen.append(.init(soort: .geenToestemming, tekst: grantText))
+        }
+        if !outages.isEmpty {
+            meldingen.append(.init(soort: .storingen,
+                                   tekst: L10n.t(outagesFromFinishedSession ? "menu.storing.vorige"
+                                                                            : "menu.storing.nu")))
+        }
+        return Aandacht(meldingen: meldingen)
+    }
+
+    /// Wanneer de wachter voor het laatst keek. Dat is het bewijs dat hij leeft, en het is
+    /// het enige vangnet dat een `SIGKILL` van de app overleeft — het stond tot nu toe
+    /// nergens in de interface. `nil` als hij nog nooit gedraaid heeft.
+    ///
+    /// Leest via `RestartGuard.timeSinceLastRound()`, dat er al was voor de guardian en
+    /// uitsluitend het statusbestand inleest. Geen tweede ingang naar diezelfde toestand:
+    /// de wachter mag niets uitvoeren en niets schrijven, en één leesweg is één ding om
+    /// zuiver te houden.
+    var wachterZin: String {
+        guard let sinds = wachterSinds else {
+            return L10n.t("vangnet.wachter.nognietgekeken")
+        }
+        // Boven de twee minuten in minuten, net als `RestartGuard.statusSentence()`. Rauwe
+        // seconden gaven "vlag gelezen, 4211 s geleden" — een getal dat je moet omrekenen om
+        // te merken dat er ruim een uur niemand gekeken heeft.
+        let seconden = max(0, Int(sinds))
+        let ouderdom = seconden < 120 ? L10n.t("wachter.secondengeleden", seconden)
+                                      : L10n.t("wachter.minutengeleden", seconden / 60)
+        return L10n.t("vangnet.wachter.gelezen", ouderdom)
+    }
+
+    /// Kijkt de wachter nog? Dezelfde grens van 300 seconden die `checkRestartGuardIsAwake()`
+    /// hanteert, en net als daar telt "nog nooit gekeken" als niet levend.
+    ///
+    /// Het paneel had dit niet: `WachterStip` was hard groen en klopte altijd door, ook als de
+    /// LaunchAgent uitgezet was bij Systeeminstellingen → Inloggen en extensies. Een indicator
+    /// die per constructie geen storing kan melden, is erger dan geen indicator — zeker voor
+    /// het enige vangnet dat een `SIGKILL` van de app overleeft.
+    var wachterLeeft: Bool {
+        guard let sinds = wachterSinds else { return false }
+        return sinds <= 300
+    }
+
     static func durationText(_ total: Int) -> String {
         let h = total / 60, m = total % 60
         if h == 0 { return L10n.t("duur.minuten", m) }
@@ -341,6 +485,36 @@ final class AppModel: ObservableObject {
         // het Engels, Duits en Frans niet. Eén sleutel met %d zou daar "1 hours" opleveren.
         if m == 0 { return h == 1 ? L10n.t("duur.uur.een") : L10n.t("duur.uur.meer", h) }
         return L10n.t("duur.uurmin", h, m)
+    }
+
+    /// De aftelling voor de statuskaart: alleen het getal.
+    ///
+    /// `remainingText` is een hele zin — "stopt vanzelf over 3 u 18 min" — en die past niet in
+    /// dertig punten; hij werd afgekapt tot "stopt vanze…". Die zin blijft staan voor de
+    /// plekken waar hij wél past. De kaart heeft de zin niet nodig: eronder staat al
+    /// "wakker tot 21:56".
+    ///
+    /// Naar boven afgerond, net als `menuBarCountdown`, zodat de twee niet een minuut uit
+    /// elkaar kunnen lopen terwijl ze tegelijk zichtbaar zijn.
+    var kaartAftelling: String? {
+        guard let deadline, intendedOn else { return nil }
+        let minuten = max(0, Int((deadline.timeIntervalSince(now) / 60).rounded(.up)))
+        return AppModel.durationTextKort(minuten)
+    }
+
+    /// Compacte vorm voor de segmentkiezer: `30m`, `2u`, `10u30`.
+    ///
+    /// De lange vorm past daar niet in. Met vijf vaste duren plus een eigen segment voor een
+    /// afwijkende waarde staan er zes naast elkaar, en "10 u 30 min" maakte er een die het
+    /// paneel links en rechts uitliep.
+    ///
+    /// Eigen sleutels en geen `replacingOccurrences` op de lange vorm: dat laatste werkt
+    /// alleen in het Nederlands en zou in de drie andere talen stil niets doen.
+    static func durationTextKort(_ total: Int) -> String {
+        let h = total / 60, m = total % 60
+        if h == 0 { return "\(m)" + L10n.t("duur.kort.min") }
+        if m == 0 { return "\(h)" + L10n.t("duur.kort.uur") }
+        return "\(h)" + L10n.t("duur.kort.uur") + String(format: "%02d", m)
     }
 
     /// The wall-clock time the current session would end, for the menu.
@@ -675,7 +849,7 @@ final class AppModel: ObservableObject {
     private func clearStaleFlagAtStartup() async {
         kernelFlag = SleepFlag.read()
         guard let flag = kernelFlag else {
-            status = .error("Kan niet uitlezen of de Mac mag slapen")
+            status = .error(L10n.t("fout.vlag.onleesbaar"))
             EventLog.shared.error("SleepDisabled kon bij het starten niet gelezen worden.")
             return
         }
@@ -696,7 +870,7 @@ final class AppModel: ObservableObject {
             status = .off
             lastMessage = L10n.t("melding.opgeruimd")
         default:
-            status = .error("De Mac wordt nog wakker gehouden van een vorige keer")
+            status = .error(L10n.t("fout.vorigekeer"))
             safetyNetsDisarmed = true
             lastMessage = L10n.t("melding.kanniet.slapen")
         }
@@ -873,6 +1047,9 @@ final class AppModel: ObservableObject {
         // runs for weeks never rotated until the one time it did.
         if tickCount % 180 == 0 { EventLog.shared.rotateIfNeeded() }
 
+
+        wachterSinds = RestartGuard.timeSinceLastRound()
+
         // Kijken hoort bij élke tik, ook met een lopende sessie. Handelen niet — dat gebeurt
         // verderop, alleen in de tak waar de vlag aantoonbaar op 0 staat.
         //
@@ -886,7 +1063,7 @@ final class AppModel: ObservableObject {
             // Unreadable is not "all clear". If a session is running, the deadline, the
             // battery floor and the thermal cut-out must still be able to fire — failing
             // open here would silently disable all three for as long as the read fails.
-            status = .error("Kan niet uitlezen of de Mac mag slapen")
+            status = .error(L10n.t("fout.vlag.onleesbaar"))
             if intendedOn, let reason = releaseReason() {
                 await forceRelease(reason: reason + " (vlag onleesbaar)")
             }
@@ -903,7 +1080,7 @@ final class AppModel: ObservableObject {
             if intendedOn {
                 intendedOn = false
                 endSession()
-                status = .error("Buiten Dopamine Code om uitgezet")
+                status = .error(L10n.t("fout.buitenuitgezet"))
                 EventLog.shared.warn("SleepDisabled werd van buitenaf op 0 gezet; sessie beëindigd.")
                 // Uitdrukkelijk géén trigger-evaluatie in deze tik. De vlag viel zojuist van
                 // buitenaf weg, en een schema dat daar meteen overheen gaat maakt precies
@@ -937,7 +1114,7 @@ final class AppModel: ObservableObject {
             // a backoff window — and leaving `status` on a calm `.off` while the kernel
             // flag is 1 is exactly the lie this app exists to prevent.
             if !status.isError {
-                status = .error("Mac wordt wakker gehouden zonder dat er iets loopt")
+                status = .error(L10n.t("fout.zondersessie"))
             }
             await attemptRelease(reason: "vlag stond aan zonder actieve sessie")
             return
@@ -1507,7 +1684,7 @@ final class AppModel: ObservableObject {
         default:
             releaseAttempts += 1
             safetyNetsDisarmed = true
-            status = .error("Zit vast — de Mac kan niet gaan slapen")
+            status = .error(L10n.t("fout.vastzit"))
             lastMessage = L10n.t("melding.stoppen.mislukt", reason)
 
             // 20s, 40s, 80s … capped at 10 minutes. Still persistent enough to recover the
@@ -1582,6 +1759,7 @@ final class AppModel: ObservableObject {
         displayReassertTimer?.invalidate()
         displayReassertTimer = nil
         thermalWatch?.stop()
+        cpuSpeedLimit = nil
         thermal = .nominal
         if let network {
             network.stop()
@@ -1824,7 +2002,7 @@ final class AppModel: ObservableObject {
 
         // Refuse to start a session that the battery rule would immediately end.
         if let battery, !battery.onAC, battery.percent <= Prefs.batteryFloor {
-            status = .error("Accu \(battery.percent)% — onder je grens van \(Prefs.batteryFloor)%")
+            status = .error(L10n.t("fout.accu", battery.percent, Prefs.batteryFloor))
             lastMessage = L10n.t("melding.lader")
             Feedback.failed()
             EventLog.shared.warn("Activeren geweigerd: batterij \(battery.percent)%.")
@@ -1836,7 +2014,7 @@ final class AppModel: ObservableObject {
         // cached value is ALWAYS .nominal here and this guard could never fire.
         thermal = ThermalWatch.Pressure(ProcessInfo.processInfo.thermalState)
         if thermal == .critical {
-            status = .error("De Mac is te warm")
+            status = .error(L10n.t("fout.temperatuur"))
             lastMessage = L10n.t("melding.afkoelen")
             Feedback.failed()
             EventLog.shared.warn("Activeren geweigerd: temperatuur kritiek.")
@@ -1850,7 +2028,7 @@ final class AppModel: ObservableObject {
         var koppeling: ProcessWatch.Identity?
         if let pid = request.bindToPID {
             guard let identity = ProcessWatch.identify(pid) else {
-                status = .error("Niet gestart: dat proces bestaat niet")
+                status = .error(L10n.t("fout.procesbestaatniet"))
                 lastMessage = L10n.t("melding.procesweg", pid)
                 Feedback.failed()
                 EventLog.shared.warn("Activeren geweigerd: pid \(pid) bestaat niet (meer).")
@@ -1873,7 +2051,7 @@ final class AppModel: ObservableObject {
         // takes the warning with it.
         await refreshGrantAsync()
         guard grantStatus == .granted else {
-            status = .error("Niet gestart: het stoppen zou later mislukken")
+            status = .error(L10n.t("fout.stopzoumislukken"))
             lastMessage = L10n.t("melding.grant.eerst", grantText)
             Feedback.failed()
             EventLog.shared.warn("Activeren geweigerd: \(grantText).")
@@ -1889,7 +2067,7 @@ final class AppModel: ObservableObject {
         case .verified:
             break
         case .needsAuthorisation:
-            status = .error("Geen toestemming om de Mac wakker te houden")
+            status = .error(L10n.t("fout.geentoestemming"))
             lastMessage = L10n.t("melding.grant.installeer")
             await refreshGrantAsync()
             Feedback.failed()
@@ -1904,7 +2082,7 @@ final class AppModel: ObservableObject {
             // branch — the exact collapse the comment above forbids. An unreadable flag
             // after a cancelled prompt is the case where it matters most.
             if SleepFlag.read() != false {
-                status = .error("Mac wordt wakker gehouden zonder dat er iets loopt")
+                status = .error(L10n.t("fout.zondersessie"))
                 lastMessage = L10n.t("melding.geannuleerd.mogelijkaan")
                 await attemptRelease(reason: "geannuleerd tijdens aanzetten")
             } else {
@@ -1913,14 +2091,14 @@ final class AppModel: ObservableObject {
             }
             return .geweigerd(reden: "Geannuleerd bij het vragen om toestemming.")
         case .commandSucceededButFlagWrong(let actual):
-            status = .error("Het systeem meldt iets anders dan verwacht")
+            status = .error(L10n.t("fout.onverwacht"))
             lastMessage = L10n.t("melding.vlag.anders",
                                  actual.map { $0 ? "1" : "0" } ?? L10n.t("melding.onleesbaar"))
             Feedback.failed()
             return .geweigerd(reden: "Het commando gaf geen fout, maar de slaapblokkade staat op "
                               + "\(actual.map { $0 ? "1" : "0" } ?? "onleesbaar") in plaats van op 1.")
         case .failed(let message):
-            status = .error("Wakker houden is niet gelukt")
+            status = .error(L10n.t("fout.nietgelukt"))
             lastMessage = message
             Feedback.failed()
             return .geweigerd(reden: "Wakker houden is niet gelukt: \(message)")
@@ -2125,7 +2303,7 @@ final class AppModel: ObservableObject {
         case .fellBackToScreenSaver:
             lastMessage = L10n.t("melding.slot.viascreensaver")
         case .unavailable:
-            status = .error("Vergrendelen lukte niet")
+            status = .error(L10n.t("fout.vergrendelenmislukt"))
             lastMessage = L10n.t("melding.slot.mislukt")
             Feedback.failed()
         }
@@ -2173,7 +2351,7 @@ final class AppModel: ObservableObject {
             return false
         default:
             safetyNetsDisarmed = true
-            status = .error("De Mac wordt nog steeds wakker gehouden")
+            status = .error(L10n.t("fout.nogwakker"))
             lastMessage = L10n.t("melding.uitzetten.mislukt")
             Feedback.failed()
             EventLog.shared.error("Stoppen (\(reason)) mislukte; de vlag staat nog aan.")
@@ -2235,6 +2413,9 @@ final class AppModel: ObservableObject {
     /// its place. Serious pressure is a warning; critical releases the flag outright.
     private func handleThermal(_ pressure: ThermalWatch.Pressure) {
         thermal = pressure
+        // Zakt de druk, dan is de meting van daarnet niet meer waar. Zonder dit bleef
+        // "je Mac draait op 62%" staan nadat de Mac allang was afgekoeld.
+        if pressure == .nominal || pressure == .fair { cpuSpeedLimit = nil }
         guard intendedOn else { return }
 
         switch pressure {
@@ -2249,6 +2430,13 @@ final class AppModel: ObservableObject {
             Task { [weak self] in
                 let limit = await ThermalWatch.cpuSpeedLimit()
                 guard let self, self.thermal == .serious else { return }
+                // Ook het paneel voeden. Dit is de énige plek die `pmset -g therm` draait:
+                // één keer per overgang naar `.serious`, want `ThermalWatch.sample()` roept
+                // `onChange` alleen aan als de stand werkelijk verandert. Het stond even in
+                // de guardian-tik, en dat was een terugval op een fix uit BACKLOG.md §1 —
+                // de tik is gebeurtenisgedreven, dus elke app die start of stopt gaf er een
+                // extra subproces bij, urenlang, met de klep dicht.
+                self.cpuSpeedLimit = limit
                 self.lastMessage = L10n.t("melding.warm")
                     + (limit.map { $0 < 100 ? " en draait nu op \($0)% snelheid." : "." } ?? ".")
                     + " Wordt het kritiek, dan stopt Dopamine Code vanzelf."
@@ -2332,7 +2520,7 @@ final class AppModel: ObservableObject {
                 intendedOn = false
                 let outcome = await write(false, allowPrompt: true)
                 guard case .verified = outcome else {
-                    status = .error("Niet in slaap gezet")
+                    status = .error(L10n.t("fout.nietinslaap"))
                     lastMessage = L10n.t("melding.nietgestopt")
                     EventLog.shared.error("Nu slapen geweigerd: SleepDisabled kon niet op 0 gezet worden.")
                     Feedback.failed()
@@ -2346,7 +2534,7 @@ final class AppModel: ObservableObject {
 
             // Re-read immediately before the call rather than trusting the write outcome.
             guard SleepFlag.read() == false else {
-                status = .error("Niet in slaap gezet")
+                status = .error(L10n.t("fout.nietinslaap"))
                 EventLog.shared.error("Nu slapen afgebroken: vlag staat nog op 1 vlak voor de aanroep.")
                 return
             }
@@ -2401,7 +2589,7 @@ final class AppModel: ObservableObject {
                 intendedOn = false
                 let outcome = await write(false, allowPrompt: true)
                 guard case .verified = outcome else {
-                    status = .error("De Mac wordt nog steeds wakker gehouden")
+                    status = .error(L10n.t("fout.nogwakker"))
                     lastMessage = L10n.t("melding.grant.nietverwijderd")
                     Feedback.failed()
                     return

@@ -240,12 +240,97 @@ Co-Authored-By: Claude Opus 5 <noreply@anthropic.com>"
 
 **Bestanden:**
 - Aanmaken: `Sources/DopamineCode/KaartToestand.swift`
+- Wijzigen: `Sources/DopamineCode/Meter.swift` (bevindingen uit de review van taak 1)
 - Wijzigen: `verify.sh` (uitbreiding van `test_paneel_meters` → hernoemen naar `test_paneel`)
+
+- [ ] **Stap 0: verwerk de bevindingen uit de review van taak 1**
+
+Vijf kleine wijzigingen in `Meter.swift` en de proef. Doe ze eerst, in één commit, vóór je aan
+`KaartToestand` begint — dan blijft de geschiedenis leesbaar.
+
+**a. De vier stond er twee keer, en de tweede kant op faalde stil.** `WarmteMeter` had
+`let aantal = 4` naast een `init` die op de letterlijke `4` klemde. Wordt `aantal` ooit 5 —
+`ThermalWatch.Pressure` heeft een `@unknown default` juist omdat Apple er een stap bij kan
+zetten — dan klemt de init nog op 4, wordt `stopBij` 5, en is `grijptIn` (`4 >= 5`) permanent
+onwaar. Het warmtevangnet zou dan nooit meer laten zien dat het ingrijpt.
+
+```swift
+        self.stap = min(max(stap, 1), aantal)
+```
+
+**b. `stap` zei nergens wat 1 tot 4 betekenen.** De omzetting komt pas in taak 6 en zit in
+`AppModel`, buiten de eenheid die te testen is — een off-by-one daar ziet de proef per
+definitie niet. Zet boven `let stap: Int`:
+
+```swift
+    /// 1 = `nominal`, 2 = `fair`, 3 = `serious`, 4 = `critical` — de volgorde van
+    /// `ProcessInfo.ThermalState`. De omzetting staat in `AppModel.warmteMeter`; deze eenheid
+    /// kent dat enum met opzet niet, want dan sleept ze `L10n`, `EventLog` en `Shell` haar
+    /// eigen proef in.
+```
+
+**c. `slaapt` botste met het kernbegrip van de app.** Overal in deze codebase betekent "slaap"
+dat de Mác gaat slapen — `SleepFlag`, `SleepWatch`, `SleepDisabled`, noodslaap. Hier betekende
+het dat een vángnet stilligt. Hernoem `slaapt` naar `sluimert`, ook in de proef.
+
+**d. `brandt(_:)` had geen ondergrens.** `brandt(0)` en `brandt(-3)` gaven `true`. Het is een
+1-gebaseerd contract in een taal waar `ForEach(0..<n)` het gangbare idioom is, en nul-gebaseerd
+tellen zou bij stap 1 twee blokjes laten branden.
+
+```swift
+    func brandt(_ index: Int) -> Bool { index >= 1 && index <= stap }
+```
+
+**e. De klem op `zone` werd niet getest.** Die op `vulling` twee keer, die op `grens` geen
+enkele keer — dezelfde regel, één keer wel bewaakt en één keer niet. Voeg naast de bestaande
+klem-beweringen toe:
+
+```swift
+eis(AccuMeter(percent: 50, grens: 140, aanDeLader: false).zone == 1.0, "grens boven 100 klemt op 1")
+eis(AccuMeter(percent: 50, grens: -8,  aanDeLader: false).zone == 0.0, "grens onder 0 klemt op 0")
+```
+
+Voeg ook één zin toe aan het commentaar boven `grijptIn`, zodat een latere opruimer hem niet
+"consistent maakt":
+
+```swift
+    /// Let op: dit rekent met de rauwe waarden en niet met `vulling`/`zone`. Dat is bewust —
+    /// `AppModel` vergelijkt ook rauw, en meeklemmen zou de meter stil van de app laten
+    /// afwijken.
+```
+
+Draai daarna de proef en commit:
+
+```bash
+git add Sources/DopamineCode/Meter.swift verify.sh
+git commit -m "Koppel de warmtegrens aan het aantal stappen
+
+De vier stond twee keer in WarmteMeter: als \`aantal\` en als literal in de
+klem van de init. Wordt \`aantal\` ooit vijf — ThermalWatch.Pressure heeft een
+@unknown default juist omdat Apple er een stap bij kan zetten — dan klemt de
+init nog op vier, wordt stopBij vijf, en is grijptIn (4 >= 5) permanent
+onwaar. Het warmtevangnet zou dan nooit meer laten zien dat het ingrijpt, en
+dat is de verkeerde kant om op te falen voor een bestand dat bestaat om te
+voorkomen dat de tekening iets anders belooft dan er gebeurt.
+
+Verder: stap documenteert nu welke stand 1 tot 4 zijn, want de omzetting komt
+pas in AppModel en een off-by-one daar ziet de proef niet. \`slaapt\` heet
+\`sluimert\`, omdat slaap in deze codebase overal betekent dat de Mac gaat
+slapen en niet dat een vangnet stilligt. brandt() klemt ook aan de onderkant.
+En de klem op \`zone\` wordt nu getest, net als die op \`vulling\` al werd.
+
+Co-Authored-By: Claude Opus 5 <noreply@anthropic.com>"
+```
 
 - [ ] **Stap 1: hernoem de proeffunctie en voeg de falende gevallen toe**
 
 Hernoem in `verify.sh` `test_paneel_meters()` naar `test_paneel()` en verander de sectiekop
-naar `"13. Paneel: meters, kaarttoestand en de rangorde van waarschuwingen"`.
+naar `"14. Paneel: meters, kaarttoestand en de rangorde van waarschuwingen"`.
+
+> **Veertien en niet dertien.** Taak 1 schreef `"13. Paneel: ..."`, maar `test_tap()` heeft
+> die al: `"13. Homebrew-tap: wijst de formule naar de nieuwste release?"`. Een fout in dit
+> plan, hier rechtgezet. De nummering kent al een gat (er is geen 9) — dat is onhandig maar
+> onschadelijk, terwijl twee secties met hetzelfde nummer de uitvoer onleesbaar maakt.
 
 Voeg ná het meterblok een tweede blok toe:
 
@@ -445,7 +530,97 @@ Co-Authored-By: Claude Opus 5 <noreply@anthropic.com>"
 
 **Bestanden:**
 - Aanmaken: `Sources/DopamineCode/Aandacht.swift`
-- Wijzigen: `verify.sh` (derde blok in `test_paneel`)
+- Wijzigen: `verify.sh` (derde blok in `test_paneel`, plus één ontbrekende bewering)
+
+- [ ] **Stap 0: zeven bevindingen uit de reviews van taak 2**
+
+Doe deze eerst, in één eigen commit, vóór je aan `Aandacht` begint.
+
+**a. Twee dragende bewakingen zijn ongedekt.** Allebei bewezen door ze weg te halen: de proef
+bleef groen.
+
+De ondergrens van `WarmteMeter.brandt(_:)` wordt alleen met index 1, 2 en 4 aangeroepen. En —
+ernstiger — de bewaking `deadline > sessieStart` in `KaartToestand`. Zonder die regel geeft
+`deadline == sessieStart` een deling door nul:
+
+```
+zonder de guard, deadline == sessieStart -> voortgang = nan, isNaN = true
+```
+
+`BoogIcoon` doet straks `.trim(from: 0, to: toestand.voortgang)`, en NaN is daar een ongeldige
+numerieke waarde in Core Animation. Er staat dus een regel die een crash tegenhoudt, met niets
+dat merkt of hij er nog staat. Voeg toe:
+
+```swift
+eis(!WarmteMeter(stap: 2).brandt(0), "index 0 brandt nooit")
+eis(!WarmteMeter(stap: 2).brandt(-3), "een negatieve index brandt nooit")
+```
+
+```swift
+eis(KaartToestand(intendedOn: true, armTot: nil, sessieStart: nu, deadline: nu, nu: nu).voortgang == 0,
+    "deadline gelijk aan de start geeft geen NaN")
+```
+
+Verifieer allebei omgekeerd: zet `brandt` terug op `index <= stap` en verwijder de
+`deadline > sessieStart`-bewaking, en eis dat je respectievelijk
+`FOUT: index 0 brandt nooit` en `FOUT: deadline gelijk aan de start geeft geen NaN` ziet.
+
+**b. `resterend` gaat eruit.** Niets leest hem: het grote getal bij `.aan` komt uit
+`model.remainingText`, de regel bij `.gearmd` uit `arm.resterendeTekst(op:)`, en `BoogIcoon`
+krijgt alleen `voortgang`. Het was daarmee een dérde berekening van "hoe lang nog" naast twee
+bestaande die verschillend afronden — `remainingText` kapt af, `resterendeTekst` rondt naar
+boven — in het bestand dat er juist staat om één vraag één antwoord te geven.
+
+Verwijder het veld, zijn documentatiecommentaar, en de vijf beweringen die eraan hangen.
+Vervang die door beweringen op `wat` en `voortgang` waar de bewering anders wegvalt.
+
+> **Niet oplossen in deze taak:** `remainingText` kapt af terwijl `menuBarCountdown` naar boven
+> rondt, dus de menubalk kan `3:13` tonen boven een paneel dat `3 u 12` zegt. Dat is bestaand
+> gedrag, staat los van dit herontwerp, en hoort in een eigen wijziging met een eigen
+> afweging. Noteer het in `BACKLOG.md` en laat het verder met rust.
+
+**c. De `return` in het eerste blok breekt nu het tweede af.** In `test_paneel` staat:
+
+```bash
+  if [ ! -f "$src" ]; then
+    fail "Meter.swift ontbreekt."
+    return
+  fi
+```
+
+Toen dit `test_paneel_meters` heette was dat onschadelijk. Nu onderdrukt een ontbrekende
+`Meter.swift` stilzwijgend álle volgende blokken. Maak er een `if/else` van, zoals het tweede
+blok al doet.
+
+**d. De sectietitel belooft iets dat er nog niet is.** Hij zegt "meters, kaarttoestand **en de
+rangorde van waarschuwingen**", maar dat derde blok bouw jij in deze taak. Dat komt vanzelf
+goed zodra je klaar bent — controleer alleen dat hij klopt als je commit.
+
+**e. Het commentaar boven `stap` noemt het verkeerde enum.** Er staat dat "dat enum" `L10n`,
+`EventLog` en `Shell` meesleept, maar de zin ervóór noemt `ProcessInfo.ThermalState`, en die
+zit in Foundation en sleept niets mee. De afhankelijkheid die bedoeld wordt is
+`ThermalWatch.Pressure`, waarvan `.label` `L10n.t` aanroept. Herschrijf naar:
+
+```swift
+    /// 1 = `nominal`, 2 = `fair`, 3 = `serious`, 4 = `critical` — de volgorde van
+    /// `ProcessInfo.ThermalState`. De omzetting komt in `AppModel`; deze eenheid neemt een
+    /// `Int` en geen `ThermalWatch.Pressure`, want dat enum sleept via zijn `.label` de hele
+    /// `L10n`-keten haar eigen proef in.
+```
+
+**f. `Wat` heet voortaan `Fase`.** Op de aanroepplek wordt het straks `model.kaart.wat`, en
+"kaart.wat" leest als een vraag. De struct heet al `KaartToestand`; het enum ís de toestand.
+Hernoem het type en alle gebruik ervan, ook in de proef.
+
+**g. Nog niet doen: de steiger in `verify.sh` samenvoegen.** De heredoc-compileer-draai-vorm
+wordt met jouw derde blok voor de derde keer woordelijk herhaald, en een hulpfunctie
+(`swift_proef <naam> <bron>` met de heredoc op stdin) zou er per blok een regel of vijftien
+uithalen. Dat is waar, maar het verandert de vorm van alle drie de blokken tegelijk terwijl er
+twee net doorgelicht zijn. Zet het in `BACKLOG.md` en doe het als los werk.
+
+Commit met een bericht dat uitlegt dat twee bewakingen crashes tegenhielden zonder dat iets
+merkte of ze er nog stonden, en dat `resterend` eruit gaat omdat een derde ongelezen waarheid
+precies is wat dit bestand moest voorkomen.
 
 - [ ] **Stap 1: voeg het derde blok aan de proef toe**
 
@@ -653,10 +828,59 @@ Co-Authored-By: Claude Opus 5 <noreply@anthropic.com>"
 
 **Bestanden:**
 - Aanmaken: `Sources/DopamineCode/Glas.swift`
+- Wijzigen: `verify.sh` (één bewering vervangen — zie stap 0)
 
-Hier is geen proef voor: dit is puur weergave en `#available` is niet uit te lokken in een
-programma dat op één macOS-versie draait. De controle is dat het op beide doelversies
+Voor `Glas` zelf is geen proef: dit is puur weergave en `#available` is niet uit te lokken in
+een programma dat op één macOS-versie draait. De controle is dat het op beide doelversies
 compileert, en dat staat in stap 3.
+
+- [ ] **Stap 0: vervang een tautologie door de invariant die er wél toe doet**
+
+De spec-review van taak 3 stelde vast dat deze bewering in het rangordeblok bij geen enkele
+wijziging kan falen:
+
+```swift
+for soort in Aandacht.Soort.allCases {
+    eis([.rood, .oranje, .grijs].contains(soort.ernst), "\(soort) heeft geen ernst")
+}
+```
+
+`Ernst` heeft precies die drie cases en `ernst` geeft een niet-optionele `Ernst`, dus `contains`
+is altijd waar. Het commentaar erboven belooft dat dit een nieuwe `Soort` zonder rangorde
+tegenhoudt; dat doet de uitputtende `switch` in `rangorde` en `ernst`, dus de compiler.
+
+Er is wél een echte invariant, en het paneel hangt eraan: **rood moet vóór oranje staan en
+oranje vóór grijs.** `rangorde` en `ernst` zijn twee losse tabellen. Krijgt een grijze soort
+ooit rangorde 1, dan is `kop` — `lijst.first` — een grijze melding, en dan staat er een grijze
+regel bovenaan de ingeklapte rij terwijl er een rode onder verstopt zit. Dat is exact de fout
+die dit ontwerp moest oplossen.
+
+Vervang het blok door:
+
+```swift
+// Rood vóór oranje, oranje vóór grijs. Dat is niet automatisch: `rangorde` en `ernst` zijn
+// twee losse tabellen. Krijgt een grijze soort ooit rangorde 1, dan is `kop` een grijze
+// melding en verstopt de ingeklapte rij een rode eronder.
+func gewicht(_ e: Aandacht.Ernst) -> Int {
+    switch e {
+    case .rood: return 0
+    case .oranje: return 1
+    case .grijs: return 2
+    }
+}
+let gewichten = Aandacht.Soort.allCases
+    .sorted { $0.rangorde < $1.rangorde }
+    .map { gewicht($0.ernst) }
+eis(gewichten == gewichten.sorted(), "rood staat vóór oranje, oranje vóór grijs")
+```
+
+Laat de bewering eronder staan — `Set(volgordes).count == volgordes.count` is wél
+falsifieerbaar.
+
+Verifieer omgekeerd: geef `.geenToestemming` (rangorde 4) tijdelijk `return .grijs`, draai
+`./verify.sh --paneel`, en eis `FOUT: rood staat vóór oranje, oranje vóór grijs`. Zet terug.
+
+Commit dit apart, vóór `Glas`.
 
 - [ ] **Stap 1: schrijf de modifier**
 
@@ -764,10 +988,10 @@ struct AccuMeterView: View {
             ZStack(alignment: .leading) {
                 Capsule().fill(Color.primary.opacity(0.12))
                 Capsule()
-                    .fill(meter.slaapt ? Color.secondary : Color.accentColor)
+                    .fill(meter.sluimert ? Color.secondary : Color.accentColor)
                     .frame(width: geo.size.width * meter.vulling)
                 Capsule()
-                    .fill(Color.red.opacity(meter.slaapt ? 0.18 : 0.40))
+                    .fill(Color.red.opacity(meter.sluimert ? 0.18 : 0.40))
                     .frame(width: geo.size.width * meter.zone)
                 Rectangle()
                     .fill(Color.primary)
@@ -1001,7 +1225,7 @@ Vervang in `MenuView.swift` alles van `var body: some View {` tot en met de slui
     }
 
     @ViewBuilder private var grote: some View {
-        switch model.kaart.wat {
+        switch model.kaart.fase {
         case .uit:
             Text("kaart.uit").font(.headline)
         case .gearmd:
@@ -1014,7 +1238,7 @@ Vervang in `MenuView.swift` alles van `var body: some View {` tot en met de slui
     }
 
     @ViewBuilder private var onderregel: some View {
-        switch model.kaart.wat {
+        switch model.kaart.fase {
         case .uit:
             Button("menu.arm.aanzetten") { model.armForLidClose() }
                 .buttonStyle(.link).font(.caption).disabled(model.busy)
@@ -1111,7 +1335,7 @@ Vervang in `MenuView.swift` alles van `var body: some View {` tot en met de slui
                      meter: AccuMeterView(meter: model.accuMeter),
                      waarde: "\(model.battery?.percent ?? 0)%",
                      grens: "\(Prefs.batteryFloor)%",
-                     gedempt: model.accuMeter.slaapt)
+                     gedempt: model.accuMeter.sluimert)
 
             MeterRij(symbool: "thermometer.medium",
                      meter: WarmteMeterView(meter: model.warmteMeter),
@@ -1293,7 +1517,7 @@ struct BoogIcoon: View {
     }
 
     private var symbool: String {
-        switch toestand.wat {
+        switch toestand.fase {
         case .uit:    return "moon.fill"
         case .gearmd: return "laptopcomputer.and.arrow.down"
         case .aan:    return "sun.max.fill"
@@ -1587,12 +1811,19 @@ Zoek het `case`-blok dat `--talen` en `--tap` afhandelt en voeg toe:
 - [ ] **Stap 3: draai de hele ronde**
 
 Draai: `./verify.sh --report`
-Verwacht: sectie 13 verschijnt met drie groene regels, en de eindregel meldt geen fouten.
+Verwacht: sectie 14 verschijnt met drie groene regels, en de eindregel meldt geen fouten.
+Controleer meteen dat er nu geen twee secties meer hetzelfde nummer hebben:
+
+```bash
+grep -oE 'section "[0-9]+' verify.sh | sort | uniq -d
+```
+
+Verwacht: geen uitvoer.
 
 - [ ] **Stap 4: draai de losse vlag**
 
 Draai: `./verify.sh --paneel`
-Verwacht: alleen sectie 13, drie groene regels, exitcode 0.
+Verwacht: alleen sectie 14, drie groene regels, exitcode 0.
 
 - [ ] **Stap 5: commit**
 

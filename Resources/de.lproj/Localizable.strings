@@ -11,7 +11,7 @@
 /* --- Menü: beim Zuklappen einschalten --- */
 "menu.arm.actief" = "Schaltet sich ein, sobald du den Deckel schließt";
 "menu.arm.intrekken" = "Abbrechen";
-"menu.arm.aanzetten" = "Einschalten, sobald ich den Deckel schließe";
+"menu.arm.aanzetten" = "Bei Deckelschluss starten";
 
 /* --- Menü: wie lange --- */
 "menu.duur.titel" = "Dauer";
@@ -20,10 +20,9 @@
 "menu.tot.zetten" = "Setzen";
 
 /* --- Menü: aufhören, sobald ein Programm fertig ist --- */
-"menu.stoppenals.titel" = "Aufhören, wenn";
 "menu.stoppenals.geenapps" = "Keine Apps gefunden";
-"menu.stoppenals.klaar" = "%@ fertig ist";
-"menu.stoppenals.placeholder" = "eine App fertig ist…";
+"menu.stoppenals.klaar" = "Stoppt, wenn %@ fertig ist";
+"menu.stoppenals.placeholder" = "Aufhören, wenn eine App fertig ist…";
 
 /* --- Menü: Warnung, dass die Sicherungen nicht greifen können --- */
 "menu.ontwapend.titel" = "Automatisches Beenden geht gerade nicht";
@@ -401,3 +400,45 @@
 "taal.uitleg" = "Unabhängig von der Sprache des restlichen Macs. Das schreibt dieselbe Einstellung wie Systemeinstellungen → Sprache & Region → Apps, die beiden können also nicht auseinanderlaufen.";
 "taal.pasnavolgende" = "Die neue Sprache erscheint beim nächsten Start der App. Beende sie über das Menü und öffne sie erneut.";
 "taal.nuactief" = "Jetzt aktiv: %@";
+
+/* --- Panel: die Statuskarte und die Sicherungen --- */
+"kaart.uit" = "Schläft normal";
+"kaart.gearmd" = "Wartet auf den Deckel";
+"kaart.tot" = "wach bis %@";
+"kaart.eindigt" = "Endet um";
+"vangnet.kop" = "Sicherungen";
+"vangnet.legenda" = "jetzt · stoppt bei";
+"vangnet.accu.lader" = "am Netzteil";
+"vangnet.wachter.interval" = "alle 30 s";
+"vangnet.wachter.nognietgekeken" = "hat noch nicht nachgesehen";
+"vangnet.afgeknepen" = "Dein Mac läuft wegen der Wärme mit %d%%";
+
+/* --- Einstellungen: was aus dem Panel gezogen ist --- */
+"alg.verlichting.titel" = "Tastaturbeleuchtung";
+"alg.verlichting.sterkte" = "Helligkeit";
+"alg.gedrag.titel" = "Während einer Sitzung";
+
+/* --- Kompakte Dauer für die Segmentauswahl: 30m, 2h, 10h30 --- */
+"duur.kort.uur" = "h";
+"duur.kort.min" = "m";
+"vangnet.wachter.gelezen" = "Flag gelesen, %@";
+"aandacht.kop" = "Braucht Aufmerksamkeit";
+"kaart.fout" = "Etwas stimmt nicht";
+"vangnet.wachter.stil" = "Die Sicherung hat zu lange nicht nachgesehen";
+
+/* --- Fehlerstatus: status = .error(...), sichtbar in der Statuskarte und der Aufmerksamkeitszeile --- */
+"fout.vlag.onleesbaar" = "Kann nicht auslesen, ob der Mac schlafen darf";
+"fout.vorigekeer" = "Der Mac wird noch von einem früheren Mal wach gehalten";
+"fout.buitenuitgezet" = "Außerhalb von Dopamine Code abgeschaltet";
+"fout.zondersessie" = "Der Mac wird wach gehalten, ohne dass etwas läuft";
+"fout.vastzit" = "Hängt fest — der Mac kann nicht schlafen";
+"fout.accu" = "Akku %1$d%% — unter deiner Grenze von %2$d%%";
+"fout.temperatuur" = "Der Mac ist zu warm";
+"fout.procesbestaatniet" = "Nicht gestartet: der Prozess existiert nicht";
+"fout.stopzoumislukken" = "Nicht gestartet: das Beenden würde später fehlschlagen";
+"fout.geentoestemming" = "Keine Berechtigung, den Mac wach zu halten";
+"fout.onverwacht" = "Das System meldet etwas anderes als erwartet";
+"fout.nietgelukt" = "Wachhalten ist fehlgeschlagen";
+"fout.vergrendelenmislukt" = "Sperren ist fehlgeschlagen";
+"fout.nogwakker" = "Der Mac wird weiterhin wach gehalten";
+"fout.nietinslaap" = "Nicht in den Schlaf versetzt";
