@@ -103,6 +103,10 @@ final class AppModel: ObservableObject {
     /// niet in de body uitgelezen: `pmset -g therm` kost tot acht seconden, en de body draait
     /// elke seconde door de kloktik.
     @Published private(set) var cpuSpeedLimit: Int?
+    /// Hoe lang geleden de wachter voor het laatst keek. Bijgewerkt door de guardian-tik en
+    /// niet in de body uitgelezen: `RestartGuard.timeSinceLastRound()` leest en decodeert een
+    /// bestand, en de body draait elke seconde door de kloktik.
+    @Published private(set) var wachterSinds: TimeInterval?
     @Published private(set) var busy = false
 
     /// True when the flag is set but the app has no passwordless way to clear it. In that
@@ -349,10 +353,13 @@ final class AppModel: ObservableObject {
                       nu: now)
     }
 
-    var accuMeter: AccuMeter {
-        AccuMeter(percent: battery?.percent ?? 0,
-                  grens: Prefs.batteryFloor,
-                  aanDeLader: battery?.onAC ?? false)
+    /// `nil` als er geen accumeting is — een Mac zonder accu, of vóór de eerste snapshot.
+    /// Nul tonen zou een lege balk zijn voor iets wat nooit gemeten is.
+    var accuMeter: AccuMeter? {
+        guard let battery else { return nil }
+        return AccuMeter(percent: battery.percent,
+                         grens: Prefs.batteryFloor,
+                         aanDeLader: battery.onAC)
     }
 
     var warmteMeter: WarmteMeter {
@@ -403,7 +410,7 @@ final class AppModel: ObservableObject {
     /// de wachter mag niets uitvoeren en niets schrijven, en één leesweg is één ding om
     /// zuiver te houden.
     var wachterZin: String {
-        guard let sinds = RestartGuard.timeSinceLastRound() else {
+        guard let sinds = wachterSinds else {
             return L10n.t("vangnet.wachter.nognietgekeken")
         }
         return L10n.t("vangnet.wachter.gekeken", max(0, Int(sinds)))
@@ -957,6 +964,8 @@ final class AppModel: ObservableObject {
         } else {
             cpuSpeedLimit = nil
         }
+
+        wachterSinds = RestartGuard.timeSinceLastRound()
 
         // Kijken hoort bij élke tik, ook met een lopende sessie. Handelen niet — dat gebeurt
         // verderop, alleen in de tak waar de vlag aantoonbaar op 0 staat.
