@@ -23,26 +23,31 @@ struct Aandacht {
         case vangnettenUit        // de vlag staat aan en er is niets meer dat hem terugzet
         case belofteGebroken      // de Mac heeft geslapen terwijl wij hem vasthielden
         case conflictDeeltVlag    // een andere app schrijft dezelfde vlag
-        case laatsteMelding       // een handeling die mislukte of iets meldde
+        case laatsteMelding       // een handeling die mislukte — `status.isError`
         case geenToestemming      // zonder de sudoers-regel werkt er niets
         case conflict             // een andere app houdt de Mac op zijn eigen manier wakker
         case wasGeslapen          // geslapen, maar de vlag stond niet aan: dat hoort te kunnen
         case storingen            // netwerkonderbrekingen, verslag achteraf
+        // Dezelfde `lastMessage`, maar zonder foutstatus: "opgeruimd", "staat al aan". Een
+        // aparte soort en niet dezelfde in een andere kleur, omdat `ernst` per soort vastligt
+        // — en dat is met opzet: wat er bovenaan komt te staan mag niet per geval verschillen.
+        case laatsteMededeling
         case updateBeschikbaar
         case updateMededeling
 
         var rangorde: Int {
             switch self {
-            case .vangnettenUit:     return 1
-            case .belofteGebroken:   return 2
-            case .conflictDeeltVlag: return 3
-            case .laatsteMelding:    return 4
-            case .geenToestemming:   return 5
-            case .conflict:          return 6
-            case .wasGeslapen:       return 7
-            case .storingen:         return 8
-            case .updateBeschikbaar: return 9
-            case .updateMededeling:  return 10
+            case .vangnettenUit:      return 1
+            case .belofteGebroken:    return 2
+            case .conflictDeeltVlag:  return 3
+            case .laatsteMelding:     return 4
+            case .geenToestemming:    return 5
+            case .conflict:           return 6
+            case .wasGeslapen:        return 7
+            case .storingen:          return 8
+            case .laatsteMededeling:  return 9
+            case .updateBeschikbaar:  return 10
+            case .updateMededeling:   return 11
             }
         }
 
@@ -52,7 +57,7 @@ struct Aandacht {
                 return .rood
             case .laatsteMelding, .geenToestemming, .conflict, .wasGeslapen:
                 return .oranje
-            case .storingen, .updateBeschikbaar, .updateMededeling:
+            case .storingen, .laatsteMededeling, .updateBeschikbaar, .updateMededeling:
                 return .grijs
             }
         }

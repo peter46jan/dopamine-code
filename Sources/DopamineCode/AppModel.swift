@@ -390,8 +390,13 @@ final class AppModel: ObservableObject {
                                                                         : "menu.conflict.draait",
                                                  conflict.name)))
         }
+        // Alleen oranje als er werkelijk iets mislukte. `lastMessage` draagt ook
+        // geruststellingen — "opgeruimd", "staat al aan" — en die als waarschuwing bovenaan
+        // zetten is precies het te-luid-zijn dat deze herindeling moest wegnemen. De oude
+        // code maakte dat onderscheid met `status.isError`; hier gebeurt dat weer.
         if let lastMessage {
-            meldingen.append(.init(soort: .laatsteMelding, tekst: lastMessage))
+            meldingen.append(.init(soort: status.isError ? .laatsteMelding : .laatsteMededeling,
+                                   tekst: lastMessage))
         }
         if grantStatus != .granted {
             meldingen.append(.init(soort: .geenToestemming, tekst: grantText))

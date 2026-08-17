@@ -334,7 +334,7 @@ struct MenuView: View {
             case .wasGeslapen:
                 Text("menu.gebroken.uitleg.niet").font(.caption2).foregroundStyle(.secondary)
                     .fixedSize(horizontal: false, vertical: true)
-            case .laatsteMelding, .updateBeschikbaar, .updateMededeling:
+            case .laatsteMelding, .laatsteMededeling, .updateBeschikbaar, .updateMededeling:
                 EmptyView()
             }
         }
