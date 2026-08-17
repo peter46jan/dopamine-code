@@ -1254,11 +1254,20 @@ let niets = Aandacht(meldingen: [])
 eis(niets.lijst.isEmpty && niets.kop == nil && !niets.moetOpen, "leeg levert geen rij op")
 eis(niets.telling == 0, "leeg telt nul")
 
-// Elke soort heeft precies één ernst, en elke ernst is toegekend. Zonder deze controle kan
-// een nieuwe soort er stil bij komen zonder rangorde en dan valt hij overal buiten.
-for soort in Aandacht.Soort.allCases {
-    eis([.rood, .oranje, .grijs].contains(soort.ernst), "\(soort) heeft geen ernst")
+// Rood vóór oranje, oranje vóór grijs. Dat is niet automatisch: `rangorde` en `ernst` zijn
+// twee losse tabellen. Krijgt een grijze soort ooit rangorde 1, dan is `kop` een grijze
+// melding en verstopt de ingeklapte rij een rode eronder.
+func gewicht(_ e: Aandacht.Ernst) -> Int {
+    switch e {
+    case .rood: return 0
+    case .oranje: return 1
+    case .grijs: return 2
+    }
 }
+let gewichten = Aandacht.Soort.allCases
+    .sorted { $0.rangorde < $1.rangorde }
+    .map { gewicht($0.ernst) }
+eis(gewichten == gewichten.sorted(), "rood staat vóór oranje, oranje vóór grijs")
 // En de rangorde is een echte ordening: geen twee soorten op dezelfde plek.
 let volgordes = Aandacht.Soort.allCases.map(\.rangorde)
 eis(Set(volgordes).count == volgordes.count, "twee soorten delen een rangorde")
