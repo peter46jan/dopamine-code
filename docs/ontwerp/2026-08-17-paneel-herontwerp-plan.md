@@ -245,7 +245,12 @@ Co-Authored-By: Claude Opus 5 <noreply@anthropic.com>"
 - [ ] **Stap 1: hernoem de proeffunctie en voeg de falende gevallen toe**
 
 Hernoem in `verify.sh` `test_paneel_meters()` naar `test_paneel()` en verander de sectiekop
-naar `"13. Paneel: meters, kaarttoestand en de rangorde van waarschuwingen"`.
+naar `"14. Paneel: meters, kaarttoestand en de rangorde van waarschuwingen"`.
+
+> **Veertien en niet dertien.** Taak 1 schreef `"13. Paneel: ..."`, maar `test_tap()` heeft
+> die al: `"13. Homebrew-tap: wijst de formule naar de nieuwste release?"`. Een fout in dit
+> plan, hier rechtgezet. De nummering kent al een gat (er is geen 9) — dat is onhandig maar
+> onschadelijk, terwijl twee secties met hetzelfde nummer de uitvoer onleesbaar maakt.
 
 Voeg ná het meterblok een tweede blok toe:
 
@@ -1587,12 +1592,19 @@ Zoek het `case`-blok dat `--talen` en `--tap` afhandelt en voeg toe:
 - [ ] **Stap 3: draai de hele ronde**
 
 Draai: `./verify.sh --report`
-Verwacht: sectie 13 verschijnt met drie groene regels, en de eindregel meldt geen fouten.
+Verwacht: sectie 14 verschijnt met drie groene regels, en de eindregel meldt geen fouten.
+Controleer meteen dat er nu geen twee secties meer hetzelfde nummer hebben:
+
+```bash
+grep -oE 'section "[0-9]+' verify.sh | sort | uniq -d
+```
+
+Verwacht: geen uitvoer.
 
 - [ ] **Stap 4: draai de losse vlag**
 
 Draai: `./verify.sh --paneel`
-Verwacht: alleen sectie 13, drie groene regels, exitcode 0.
+Verwacht: alleen sectie 14, drie groene regels, exitcode 0.
 
 - [ ] **Stap 5: commit**
 
