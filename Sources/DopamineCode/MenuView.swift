@@ -64,7 +64,7 @@ struct MenuView: View {
 
     private var statuskaart: some View {
         HStack(spacing: 13) {
-            BoogIcoon(toestand: model.kaart)
+            BoogIcoon(toestand: model.kaart, fout: model.status.isError)
             VStack(alignment: .leading, spacing: 2) {
                 grote
                 onderregel
@@ -83,7 +83,18 @@ struct MenuView: View {
     @ViewBuilder private var grote: some View {
         switch model.kaart.fase {
         case .uit:
-            Text("kaart.uit").font(.headline)
+            // "Slaapt normaal" is een bewering over het systeem, en die mogen we niet doen
+            // terwijl de app weet dat er iets mis is — bij een onleesbare kernelvlag weet de
+            // guardian juist níet of de Mac mag slapen. Dan staat de fout er zelf.
+            if case .error(let melding) = model.status {
+                Text(melding)
+                    .font(.headline)
+                    .foregroundStyle(.orange)
+                    .lineLimit(3)
+                    .fixedSize(horizontal: false, vertical: true)
+            } else {
+                Text("kaart.uit").font(.headline)
+            }
         case .gearmd:
             Text("kaart.gearmd").font(.headline)
         case .aan:
@@ -341,7 +352,11 @@ struct MenuView: View {
             case .wasGeslapen:
                 Text("menu.gebroken.uitleg.niet").font(.caption2).foregroundStyle(.secondary)
                     .fixedSize(horizontal: false, vertical: true)
-            case .laatsteMelding, .laatsteMededeling, .updateBeschikbaar, .updateMededeling:
+            // `.foutstatus` draagt zijn eigen zin uit `AppModel.status` en heeft geen knop:
+            // de twintig plekken die hem zetten hebben elk hun eigen herstelpad, en één
+            // algemene actie zou bij de meeste het verkeerde doen.
+            case .foutstatus, .laatsteMelding, .laatsteMededeling,
+                 .updateBeschikbaar, .updateMededeling:
                 EmptyView()
             }
         }

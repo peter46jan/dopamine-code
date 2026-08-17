@@ -380,6 +380,14 @@ final class AppModel: ObservableObject {
         if safetyNetsDisarmed {
             meldingen.append(.init(soort: .vangnettenUit, tekst: L10n.t("menu.ontwapend.titel")))
         }
+        // De foutstatus zelf. Twintig plekken zetten `status = .error(...)` en het paneel las
+        // dat nergens meer: bij een onleesbare kernelvlag stond er "Slaapt normaal" met een
+        // groen kloppende wachterstip eronder, terwijl de guardian juist niet wist óf de Mac
+        // mocht slapen. Rood, dus de rij klapt altijd open — een fout kan niet meer achter een
+        // driehoekje verdwijnen.
+        if case .error(let melding) = status {
+            meldingen.append(.init(soort: .foutstatus, tekst: melding))
+        }
         if let slept = sleepDuringSession {
             meldingen.append(.init(soort: sleepBrokeThePromise ? .belofteGebroken : .wasGeslapen,
                                    tekst: slept.describe()))
@@ -394,7 +402,9 @@ final class AppModel: ObservableObject {
         // geruststellingen — "opgeruimd", "staat al aan" — en die als waarschuwing bovenaan
         // zetten is precies het te-luid-zijn dat deze herindeling moest wegnemen. De oude
         // code maakte dat onderscheid met `status.isError`; hier gebeurt dat weer.
-        if let lastMessage {
+        // Niet twee keer dezelfde zin: verschillende paden zetten `status` en `lastMessage` op
+        // dezelfde tekst, en die dan als rood én als oranje tonen maakt één probleem twee.
+        if let lastMessage, !meldingen.contains(where: { $0.tekst == lastMessage }) {
             meldingen.append(.init(soort: status.isError ? .laatsteMelding : .laatsteMededeling,
                                    tekst: lastMessage))
         }

@@ -133,22 +133,35 @@ struct MeterRij<Inhoud: View>: View {
 struct BoogIcoon: View {
     let toestand: KaartToestand
 
+    /// Staat de app in een foutstatus? Het oude paneel kleurde het icoon dan oranje; dat is
+    /// bij de herindeling weggevallen, terwijl er twintig plekken zijn die `status = .error`
+    /// zetten. Een maan bij een onleesbare kernelvlag stelt gerust over iets wat we juist
+    /// niet weten.
+    var fout = false
+
     var body: some View {
         ZStack {
             Circle().stroke(Color.primary.opacity(0.14), lineWidth: 4)
             Circle()
                 .trim(from: 0, to: toestand.voortgang)
-                .stroke(Color.accentColor, style: StrokeStyle(lineWidth: 4, lineCap: .round))
+                .stroke(fout ? Color.orange : Color.accentColor,
+                        style: StrokeStyle(lineWidth: 4, lineCap: .round))
                 .rotationEffect(.degrees(-90))
             Image(systemName: symbool)
                 .font(.system(size: 17))
-                .foregroundStyle(toestand.isAan ? Color.accentColor : Color.secondary)
+                .foregroundStyle(kleur)
         }
         .frame(width: 52, height: 52)
         .accessibilityHidden(true)
     }
 
+    private var kleur: Color {
+        if fout { return .orange }
+        return toestand.isAan ? .accentColor : .secondary
+    }
+
     private var symbool: String {
+        if fout { return "exclamationmark.triangle.fill" }
         switch toestand.fase {
         case .uit:    return "moon.fill"
         case .gearmd: return "laptopcomputer.and.arrow.down"
