@@ -28,6 +28,28 @@ diagnostic tooling, and `verify.sh` and the audit read those lines back.
 
 ---
 
+## Why this needs root, and what it does not get
+
+Keeping a Mac awake with the lid closed comes down to one kernel flag, `SleepDisabled`, and
+`pmset` is the only thing that can write it — as root. So the app installs one sudoers rule
+that makes exactly two commands passwordless, **arguments included**:
+
+```
+<your-username> ALL=(root) NOPASSWD: /usr/bin/pmset -a disablesleep 1, /usr/bin/pmset -a disablesleep 0
+```
+
+Those arguments are the whole point: `man sudoers` grants *any* arguments when you leave them
+out, so the same rule without them would hand over all of power management as root —
+`pmset restoredefaults`, `pmset schedule wake`, the lot. Nothing else runs as root: the
+watchdog is a LaunchAgent in your own user session that may only read, the command line links
+no IOKit and knows no `pmset`, and the update check never downloads or executes anything.
+
+`verify.sh` tries four other `pmset` commands and fails if even one gets through. The full
+reasoning, including two findings a security audit turned up and how they were fixed, is in
+[The sudoers rule](#the-sudoers-rule) and [SECURITY-AUDIT.md](SECURITY-AUDIT.md) (Dutch).
+
+---
+
 ## Building it yourself
 
 ```bash
@@ -850,6 +872,30 @@ dat is diagnostisch gereedschap, en `verify.sh` en de audit lezen die regels ter
 ./release.sh 1.1.0       een versie uitbrengen (tag + concept-release op GitHub)
 ./verify.sh --talen      controleer of de vier talen gelijk lopen
 ```
+
+---
+
+## Waarom hier root voor nodig is, en wat het níet krijgt
+
+De Mac wakker houden met de klep dicht komt neer op één kernelvlag, `SleepDisabled`, en
+`pmset` is het enige dat die kan schrijven — als root. Daarom installeert de app één
+sudoers-regel die precies twee commando's wachtwoordloos maakt, **inclusief de argumenten**:
+
+```
+<jouw-gebruikersnaam> ALL=(root) NOPASSWD: /usr/bin/pmset -a disablesleep 1, /usr/bin/pmset -a disablesleep 0
+```
+
+Die argumenten zijn het hele punt: `man sudoers` staat *elk* argument toe als je ze weglaat,
+dus dezelfde regel zonder die argumenten zou het complete energiebeheer als root weggeven —
+`pmset restoredefaults`, `pmset schedule wake`, alles. Verder draait er niets als root: de
+wachter is een LaunchAgent in je eigen gebruikerssessie die uitsluitend mag lezen, de
+opdrachtregel linkt geen IOKit en kent `pmset` niet, en de updatecontrole downloadt of voert
+nooit iets uit.
+
+`verify.sh` probeert vier andere `pmset`-commando's en faalt als er ook maar één doorheen
+komt. De volledige redenering, inclusief twee bevindingen die een security-audit opleverde en
+hoe die gedicht zijn, staat in [De sudoers-regel](#de-sudoers-regel) en
+[SECURITY-AUDIT.md](SECURITY-AUDIT.md).
 
 ---
 
