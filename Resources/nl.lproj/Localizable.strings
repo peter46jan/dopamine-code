@@ -429,3 +429,20 @@
 "aandacht.kop" = "Vraagt aandacht";
 "kaart.fout" = "Er klopt iets niet";
 "vangnet.wachter.stil" = "De wachter heeft te lang niet gekeken";
+
+/* --- Foutstatus: status = .error(...), zichtbaar in de statuskaart en de aandachtsrij --- */
+"fout.vlag.onleesbaar" = "Kan niet uitlezen of de Mac mag slapen";
+"fout.vorigekeer" = "De Mac wordt nog wakker gehouden van een vorige keer";
+"fout.buitenuitgezet" = "Buiten Dopamine Code om uitgezet";
+"fout.zondersessie" = "Mac wordt wakker gehouden zonder dat er iets loopt";
+"fout.vastzit" = "Zit vast — de Mac kan niet gaan slapen";
+"fout.accu" = "Accu %1$d%% — onder je grens van %2$d%%";
+"fout.temperatuur" = "De Mac is te warm";
+"fout.procesbestaatniet" = "Niet gestart: dat proces bestaat niet";
+"fout.stopzoumislukken" = "Niet gestart: het stoppen zou later mislukken";
+"fout.geentoestemming" = "Geen toestemming om de Mac wakker te houden";
+"fout.onverwacht" = "Het systeem meldt iets anders dan verwacht";
+"fout.nietgelukt" = "Wakker houden is niet gelukt";
+"fout.vergrendelenmislukt" = "Vergrendelen lukte niet";
+"fout.nogwakker" = "De Mac wordt nog steeds wakker gehouden";
+"fout.nietinslaap" = "Niet in slaap gezet";

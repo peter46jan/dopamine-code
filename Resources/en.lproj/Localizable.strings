@@ -424,3 +424,20 @@
 "aandacht.kop" = "Needs attention";
 "kaart.fout" = "Something is wrong";
 "vangnet.wachter.stil" = "The watchdog has not looked in too long";
+
+/* --- Error status: status = .error(...), shown in the status card and the attention row --- */
+"fout.vlag.onleesbaar" = "Cannot read whether the Mac is allowed to sleep";
+"fout.vorigekeer" = "The Mac is still being kept awake from a previous run";
+"fout.buitenuitgezet" = "Switched off outside Dopamine Code";
+"fout.zondersessie" = "The Mac is being kept awake with nothing running";
+"fout.vastzit" = "Stuck — the Mac cannot go to sleep";
+"fout.accu" = "Battery %1$d%% — below your floor of %2$d%%";
+"fout.temperatuur" = "The Mac is too warm";
+"fout.procesbestaatniet" = "Not started: that process does not exist";
+"fout.stopzoumislukken" = "Not started: stopping would fail later";
+"fout.geentoestemming" = "No permission to keep the Mac awake";
+"fout.onverwacht" = "The system reports something other than expected";
+"fout.nietgelukt" = "Keeping awake failed";
+"fout.vergrendelenmislukt" = "Locking failed";
+"fout.nogwakker" = "The Mac is still being kept awake";
+"fout.nietinslaap" = "Not put to sleep";

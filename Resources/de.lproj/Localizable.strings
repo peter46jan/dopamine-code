@@ -425,3 +425,20 @@
 "aandacht.kop" = "Braucht Aufmerksamkeit";
 "kaart.fout" = "Etwas stimmt nicht";
 "vangnet.wachter.stil" = "Die Sicherung hat zu lange nicht nachgesehen";
+
+/* --- Fehlerstatus: status = .error(...), sichtbar in der Statuskarte und der Aufmerksamkeitszeile --- */
+"fout.vlag.onleesbaar" = "Kann nicht auslesen, ob der Mac schlafen darf";
+"fout.vorigekeer" = "Der Mac wird noch von einem früheren Mal wach gehalten";
+"fout.buitenuitgezet" = "Außerhalb von Dopamine Code abgeschaltet";
+"fout.zondersessie" = "Der Mac wird wach gehalten, ohne dass etwas läuft";
+"fout.vastzit" = "Hängt fest — der Mac kann nicht schlafen";
+"fout.accu" = "Akku %1$d%% — unter deiner Grenze von %2$d%%";
+"fout.temperatuur" = "Der Mac ist zu warm";
+"fout.procesbestaatniet" = "Nicht gestartet: der Prozess existiert nicht";
+"fout.stopzoumislukken" = "Nicht gestartet: das Beenden würde später fehlschlagen";
+"fout.geentoestemming" = "Keine Berechtigung, den Mac wach zu halten";
+"fout.onverwacht" = "Das System meldet etwas anderes als erwartet";
+"fout.nietgelukt" = "Wachhalten ist fehlgeschlagen";
+"fout.vergrendelenmislukt" = "Sperren ist fehlgeschlagen";
+"fout.nogwakker" = "Der Mac wird weiterhin wach gehalten";
+"fout.nietinslaap" = "Nicht in den Schlaf versetzt";

@@ -425,3 +425,20 @@
 "aandacht.kop" = "Nécessite votre attention";
 "kaart.fout" = "Quelque chose ne va pas";
 "vangnet.wachter.stil" = "Le gardien n'a pas regardé depuis trop longtemps";
+
+/* --- État d'erreur : status = .error(...), visible dans la carte d'état et la ligne d'attention --- */
+"fout.vlag.onleesbaar" = "Impossible de lire si le Mac est autorisé à dormir";
+"fout.vorigekeer" = "Le Mac est encore maintenu éveillé depuis une fois précédente";
+"fout.buitenuitgezet" = "Désactivé en dehors de Dopamine Code";
+"fout.zondersessie" = "Le Mac est maintenu éveillé sans que rien ne tourne";
+"fout.vastzit" = "Coincé — le Mac ne peut pas dormir";
+"fout.accu" = "Batterie %1$d%% — sous votre seuil de %2$d%%";
+"fout.temperatuur" = "Le Mac est trop chaud";
+"fout.procesbestaatniet" = "Non démarré : ce processus n'existe pas";
+"fout.stopzoumislukken" = "Non démarré : l'arrêt échouerait plus tard";
+"fout.geentoestemming" = "Aucune autorisation pour garder le Mac éveillé";
+"fout.onverwacht" = "Le système indique autre chose que prévu";
+"fout.nietgelukt" = "Le maintien en éveil a échoué";
+"fout.vergrendelenmislukt" = "Le verrouillage a échoué";
+"fout.nogwakker" = "Le Mac est toujours maintenu éveillé";
+"fout.nietinslaap" = "Non mis en veille";
