@@ -52,6 +52,35 @@ reasoning, including two findings a security audit turned up and how they were f
 
 ---
 
+## What it switches off, and what takes over
+
+The flag does more than stop clamshell sleep. `SleepDisabled` becomes `userDisabledAllSleep`
+in `IOPMrootDomain`, which `checkSystemSleepAllowed()` rejects — and that is the same gate the
+kernel's **low-battery** and **overheating** emergency sleeps pass through. Anything that sets
+this flag switches off both of them.
+
+So the app does not leave that gap open. It replaces them, and these three cannot be switched
+off:
+
+| Replaces | What the app does | Default |
+|---|---|---|
+| forgetting about it | releases the flag after a set time | 7 hours |
+| low-battery emergency sleep | releases the flag below a battery percentage, on battery power | 15% |
+| overheat emergency sleep | releases the flag immediately at `thermalState == .critical` | always on |
+
+Plus a watchdog: `SIGKILL` cannot be caught, so a LaunchAgent in your own user session checks
+every 30 seconds whether the flag is set with no app running, and relaunches the app to clean
+up. Without that, a crash would leave a Mac that never sleeps again until someone runs
+`sudo pmset -a disablesleep 0` by hand.
+
+**Where this is genuinely weaker than the kernel:** the kernel's brakes work whether or not a
+process is alive; these need the app running. The watchdog narrows that to about 30 seconds,
+but it is a gap and not an equivalent. And whether `thermalState == .critical` fires at the
+same point the kernel's emergency sleep would have is an assumption, not a measurement. Both
+are in [What has not been proven yet](#what-has-not-been-proven-yet).
+
+---
+
 ## Building it yourself
 
 With Homebrew:
@@ -919,6 +948,35 @@ nooit iets uit.
 komt. De volledige redenering, inclusief twee bevindingen die een security-audit opleverde en
 hoe die gedicht zijn, staat in [De sudoers-regel](#de-sudoers-regel) en
 [SECURITY-AUDIT.md](SECURITY-AUDIT.md).
+
+---
+
+## Wat het uitschakelt, en wat het daarvoor terugzet
+
+De vlag doet meer dan het slapen bij een dichte klep stoppen. `SleepDisabled` wordt
+`userDisabledAllSleep` in `IOPMrootDomain`, wat `checkSystemSleepAllowed()` afkeurt — en dat is
+dezelfde poort waar de **lege-accu-** en **oververhittingsnoodslaap** van de kernel doorheen
+gaan. Alles wat deze vlag zet, schakelt die twee dus ook uit.
+
+Daarom laat de app dat gat niet open. Hij vervangt ze, en deze drie zijn **niet uit te zetten**:
+
+| Vervangt | Wat de app doet | Standaard |
+|---|---|---|
+| dat je het vergeet | laat de vlag na een ingestelde tijd los | 7 uur |
+| noodslaap bij lege accu | laat de vlag los onder een accupercentage, op accustroom | 15% |
+| noodslaap bij oververhitting | laat de vlag onmiddellijk los bij `thermalState == .critical` | altijd aan |
+
+Daarbovenop een wachter: `SIGKILL` is niet af te vangen, dus een LaunchAgent in je eigen
+gebruikerssessie kijkt elke 30 seconden of de vlag aan staat zonder dat er een app draait, en
+start de app opnieuw om op te ruimen. Zonder dat zou een crash een Mac achterlaten die nooit
+meer slaapt, tot iemand met de hand `sudo pmset -a disablesleep 0` draait.
+
+**Waar dit werkelijk zwakker is dan de kernel:** de noodgrepen van de kernel werken of er nu
+een proces draait of niet; deze hebben de app nodig. De wachter knijpt dat terug tot ongeveer
+30 seconden, maar het is een gat en geen gelijkwaardige vervanging. En of
+`thermalState == .critical` afgaat op hetzelfde punt waar de noodslaap van de kernel dat deed,
+is een aanname en geen meting. Beide staan in
+[Wat nog niet bewezen is](#wat-nog-niet-bewezen-is).
 
 ---
 
