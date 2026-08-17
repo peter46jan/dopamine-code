@@ -1061,11 +1061,9 @@ test_paneel() {
   local src="$PROJECT_DIR/Sources/DopamineCode/Meter.swift"
   if [ ! -f "$src" ]; then
     fail "Meter.swift ontbreekt."
-    return
-  fi
-
-  local dir; dir="$(mktemp -d)"
-  cat > "$dir/main.swift" <<'SWIFT'
+  else
+    local dir; dir="$(mktemp -d)"
+    cat > "$dir/main.swift" <<'SWIFT'
 import Foundation
 
 var fouten = 0
@@ -1107,6 +1105,8 @@ eis(!koel.grijptIn, "stap 1 grijpt niet in")
 let heet = WarmteMeter(stap: 4)
 eis(heet.grijptIn, "stap 4 grijpt in")
 eis(heet.brandt(1) && heet.brandt(4), "bij stap 4 branden ze allemaal")
+eis(!WarmteMeter(stap: 2).brandt(0), "index 0 brandt nooit")
+eis(!WarmteMeter(stap: 2).brandt(-3), "een negatieve index brandt nooit")
 
 // Een stap buiten 1…4 mag niet stil doorglippen naar "alles in orde".
 eis(WarmteMeter(stap: 9).stap == 4, "boven het aantal klemt op het aantal")
@@ -1115,21 +1115,21 @@ eis(WarmteMeter(stap: 0).stap == 1, "onder 1 klemt op 1")
 print(fouten == 0 ? "OK" : "FOUTEN=\(fouten)")
 exit(fouten == 0 ? 0 : 1)
 SWIFT
-
-  local build
-  if ! command -v swiftc >/dev/null 2>&1; then
-    skip "swiftc niet gevonden; de meters zijn niet getest."
-  elif ! build="$(swiftc -O -o "$dir/probe" "$src" "$dir/main.swift" 2>&1)"; then
-    fail "De meterproef compileert niet: $(printf '%s' "$build" | grep error: | head -2 | tr '\n' ' ')"
-  else
-    local uit
-    if uit="$("$dir/probe" 2>&1)"; then
-      pass "Accumeter en warmtemeter rekenen goed, inclusief de lader-uitzondering."
+    local build
+    if ! command -v swiftc >/dev/null 2>&1; then
+      skip "swiftc niet gevonden; de meters zijn niet getest."
+    elif ! build="$(swiftc -O -o "$dir/probe" "$src" "$dir/main.swift" 2>&1)"; then
+      fail "De meterproef compileert niet: $(printf '%s' "$build" | grep error: | head -2 | tr '\n' ' ')"
     else
-      fail "Meters deugen niet: $(printf '%s' "$uit" | tr '\n' ' ')"
+      local uit
+      if uit="$("$dir/probe" 2>&1)"; then
+        pass "Accumeter en warmtemeter rekenen goed, inclusief de lader-uitzondering."
+      else
+        fail "Meters deugen niet: $(printf '%s' "$uit" | tr '\n' ' ')"
+      fi
     fi
+    rm -rf "$dir"
   fi
-  rm -rf "$dir"
 
   # --- 2. De kaarttoestand ------------------------------------------------------------
   local src2="$PROJECT_DIR/Sources/DopamineCode/KaartToestand.swift"
@@ -1151,13 +1151,11 @@ let nu = Date(timeIntervalSince1970: 1_000_000)
 let uit = KaartToestand(intendedOn: false, armTot: nil, sessieStart: nil, deadline: nil, nu: nu)
 eis(uit.isUit, "niets aan is .uit")
 eis(uit.voortgang == 0, "uit heeft geen voortgang")
-eis(uit.resterend == nil, "uit telt niets af")
 
 // Gearmd wint van uit, ook al is intendedOn nog vals: er staat iets te gebeuren.
 let arm = KaartToestand(intendedOn: false, armTot: nu.addingTimeInterval(270),
                         sessieStart: nil, deadline: nil, nu: nu)
 eis(arm.isGearmd, "armTot in de toekomst is .gearmd")
-eis(arm.resterend == 270, "gearmd telt af naar armTot, werd \(String(describing: arm.resterend))")
 
 // Een arming die verlopen is telt niet meer mee.
 let armVoorbij = KaartToestand(intendedOn: false, armTot: nu.addingTimeInterval(-1),
@@ -1171,7 +1169,6 @@ let aan = KaartToestand(intendedOn: true,
                         deadline: nu.addingTimeInterval(3600),
                         nu: nu)
 eis(aan.isAan, "intendedOn met deadline is .aan")
-eis(aan.resterend == 3600, "resterend is deadline - nu")
 eis(abs(aan.voortgang - 0.5) < 0.001, "halverwege is 0,5, werd \(aan.voortgang)")
 
 // Aan zonder deadline mag niet als 100% vol tekenen — dat zou "bijna klaar" zeggen.
@@ -1179,14 +1176,15 @@ let aanZonder = KaartToestand(intendedOn: true, armTot: nil, sessieStart: nu,
                               deadline: nil, nu: nu)
 eis(aanZonder.isAan, "intendedOn zonder deadline is nog steeds .aan")
 eis(aanZonder.voortgang == 0, "zonder deadline is de boog leeg, werd \(aanZonder.voortgang)")
-eis(aanZonder.resterend == nil, "zonder deadline valt er niets af te tellen")
 
 // Een deadline die voorbij is: nul, niet negatief, en de boog blijft binnen de rand.
 let over = KaartToestand(intendedOn: true, armTot: nil,
                          sessieStart: nu.addingTimeInterval(-7200),
                          deadline: nu.addingTimeInterval(-60), nu: nu)
-eis(over.resterend == 0, "een verstreken deadline telt 0 en niet negatief")
 eis(over.voortgang == 1.0, "voortgang klemt op 1")
+
+eis(KaartToestand(intendedOn: true, armTot: nil, sessieStart: nu, deadline: nu, nu: nu).voortgang == 0,
+    "deadline gelijk aan de start geeft geen NaN")
 
 // Aan wint van gearmd: staat de sessie al te lopen, dan is de arming niet meer het nieuws.
 let allebei = KaartToestand(intendedOn: true, armTot: nu.addingTimeInterval(270),

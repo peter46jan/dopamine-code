@@ -44,9 +44,9 @@ struct WarmteMeter {
     let aantal = 4
 
     /// 1 = `nominal`, 2 = `fair`, 3 = `serious`, 4 = `critical` — de volgorde van
-    /// `ProcessInfo.ThermalState`. De omzetting staat in `AppModel.warmteMeter`; deze eenheid
-    /// kent dat enum met opzet niet, want dan sleept ze `L10n`, `EventLog` en `Shell` haar
-    /// eigen proef in.
+    /// `ProcessInfo.ThermalState`. De omzetting komt in `AppModel`; deze eenheid neemt een
+    /// `Int` en geen `ThermalWatch.Pressure`, want dat enum sleept via zijn `.label` de hele
+    /// `L10n`-keten haar eigen proef in.
     let stap: Int
 
     init(stap: Int) {

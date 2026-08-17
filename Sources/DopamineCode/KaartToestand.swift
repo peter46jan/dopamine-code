@@ -8,33 +8,28 @@ import Foundation
 /// één antwoord, en de rangorde ligt vast in plaats van in de volgorde van een paar `if`s.
 struct KaartToestand {
 
-    enum Wat {
+    enum Fase {
         case uit
         case gearmd
         case aan
     }
 
-    let wat: Wat
+    let fase: Fase
 
     /// Waar de boog staat, 0…1. Nul als er niets af te tellen valt.
     let voortgang: Double
 
-    /// Seconden tot het einde: tot de arming afloopt, of tot de deadline. `nil` als er geen
-    /// einde bekend is — dan telt de kaart niets af in plaats van nul te tonen.
-    let resterend: TimeInterval?
-
-    var isUit: Bool { wat == .uit }
-    var isGearmd: Bool { wat == .gearmd }
-    var isAan: Bool { wat == .aan }
+    var isUit: Bool { fase == .uit }
+    var isGearmd: Bool { fase == .gearmd }
+    var isAan: Bool { fase == .aan }
 
     init(intendedOn: Bool, armTot: Date?, sessieStart: Date?, deadline: Date?, nu: Date) {
 
         // Een lopende sessie wint altijd. Staat er ook nog een arming open, dan is die niet
         // meer het nieuws — de Mac is al wakker.
         if intendedOn {
-            wat = .aan
+            fase = .aan
             if let deadline {
-                resterend = max(0, deadline.timeIntervalSince(nu))
                 if let sessieStart, deadline > sessieStart {
                     let totaal = deadline.timeIntervalSince(sessieStart)
                     let verstreken = nu.timeIntervalSince(sessieStart)
@@ -44,7 +39,6 @@ struct KaartToestand {
                 }
             } else {
                 // Geen deadline betekent niet "bijna klaar". Een volle boog zou dat zeggen.
-                resterend = nil
                 voortgang = 0
             }
             return
@@ -53,14 +47,12 @@ struct KaartToestand {
         // Een arming die al verlopen is, is geen arming meer. Zonder deze controle bleef de
         // kaart "wacht op de klep" tonen bij iets wat nooit meer afgaat.
         if let armTot, armTot > nu {
-            wat = .gearmd
-            resterend = armTot.timeIntervalSince(nu)
+            fase = .gearmd
             voortgang = 0
             return
         }
 
-        wat = .uit
-        resterend = nil
+        fase = .uit
         voortgang = 0
     }
 }
