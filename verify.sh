@@ -1209,6 +1209,78 @@ SWIFT
     fi
     rm -rf "$dir2"
   fi
+
+  # --- 3. De rangorde van waarschuwingen ----------------------------------------------
+  local src3="$PROJECT_DIR/Sources/DopamineCode/Aandacht.swift"
+  if [ ! -f "$src3" ]; then
+    fail "Aandacht.swift ontbreekt."
+  else
+    local dir3; dir3="$(mktemp -d)"
+    cat > "$dir3/main.swift" <<'SWIFT'
+import Foundation
+
+var fouten = 0
+func eis(_ voorwaarde: Bool, _ wat: String) {
+    if !voorwaarde { print("FOUT: \(wat)"); fouten += 1 }
+}
+
+func m(_ s: Aandacht.Soort) -> Aandacht.Melding { Aandacht.Melding(soort: s, tekst: "\(s)") }
+
+// Door elkaar erin, op ernst eruit — ongeacht de volgorde waarin het paneel ze aanbiedt.
+let door = Aandacht(meldingen: [m(.updateBeschikbaar), m(.geenToestemming), m(.vangnettenUit)])
+eis(door.lijst.first?.soort == .vangnettenUit, "vangnettenUit staat vooraan")
+eis(door.lijst.last?.soort == .updateBeschikbaar, "updateBeschikbaar staat achteraan")
+eis(door.lijst.count == 3, "er raakt niets kwijt")
+
+// De kop toont de ernstigste, de telling de rest.
+eis(door.kop?.soort == .vangnettenUit, "de kop is de ernstigste melding")
+eis(door.telling == 3, "de telling is het totaal, werd \(door.telling)")
+
+// Rood klapt altijd uit. Dat is het hele punt: rood is waar iemand iets moet doen, en dat
+// achter een driehoekje verstoppen is precies de fout die dit ontwerp oploste.
+eis(door.moetOpen, "een rode melding dwingt open")
+eis(Aandacht(meldingen: [m(.vangnettenUit)]).moetOpen, "vangnettenUit is rood")
+eis(Aandacht(meldingen: [m(.belofteGebroken)]).moetOpen, "belofteGebroken is rood")
+eis(Aandacht(meldingen: [m(.conflictDeeltVlag)]).moetOpen, "conflictDeeltVlag is rood")
+
+// Oranje en grijs niet — daar mag de rij ingeklapt blijven.
+eis(!Aandacht(meldingen: [m(.geenToestemming)]).moetOpen, "geenToestemming is oranje, niet rood")
+eis(!Aandacht(meldingen: [m(.conflict)]).moetOpen, "een conflict zonder gedeelde vlag is oranje")
+eis(!Aandacht(meldingen: [m(.storingen)]).moetOpen, "storingen zijn grijs")
+eis(!Aandacht(meldingen: [m(.updateBeschikbaar)]).moetOpen, "een update is grijs")
+
+// Leeg is leeg: geen rij, geen telling, geen lege balk in het paneel.
+let niets = Aandacht(meldingen: [])
+eis(niets.lijst.isEmpty && niets.kop == nil && !niets.moetOpen, "leeg levert geen rij op")
+eis(niets.telling == 0, "leeg telt nul")
+
+// Elke soort heeft precies één ernst, en elke ernst is toegekend. Zonder deze controle kan
+// een nieuwe soort er stil bij komen zonder rangorde en dan valt hij overal buiten.
+for soort in Aandacht.Soort.allCases {
+    eis([.rood, .oranje, .grijs].contains(soort.ernst), "\(soort) heeft geen ernst")
+}
+// En de rangorde is een echte ordening: geen twee soorten op dezelfde plek.
+let volgordes = Aandacht.Soort.allCases.map(\.rangorde)
+eis(Set(volgordes).count == volgordes.count, "twee soorten delen een rangorde")
+
+print(fouten == 0 ? "OK" : "FOUTEN=\(fouten)")
+exit(fouten == 0 ? 0 : 1)
+SWIFT
+    local build3
+    if ! command -v swiftc >/dev/null 2>&1; then
+      skip "swiftc niet gevonden; de rangorde is niet getest."
+    elif ! build3="$(swiftc -O -o "$dir3/probe" "$src3" "$dir3/main.swift" 2>&1)"; then
+      fail "De rangordeproef compileert niet: $(printf '%s' "$build3" | grep error: | head -2 | tr '\n' ' ')"
+    else
+      local uit3
+      if uit3="$("$dir3/probe" 2>&1)"; then
+        pass "Waarschuwingen sorteren op ernst; rood dwingt de rij open."
+      else
+        fail "De rangorde deugt niet: $(printf '%s' "$uit3" | tr '\n' ' ')"
+      fi
+    fi
+    rm -rf "$dir3"
+  fi
 }
 
 # De formule in de Homebrew-tap wijst naar een tarball van een tag. Blijft die achter op de
