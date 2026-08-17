@@ -1047,15 +1047,6 @@ final class AppModel: ObservableObject {
         // runs for weeks never rotated until the one time it did.
         if tickCount % 180 == 0 { EventLog.shared.rotateIfNeeded() }
 
-        // Hier en niet in de body: `pmset -g therm` kost tot acht seconden, en de body van
-        // het paneel draait elke seconde door de kloktik. Boven `nominal` doet elke tik één
-        // losse lezing; op `nominal` is er niets te knijpen, dus wordt de waarde gewist in
-        // plaats van bewaard — een oud percentage dat blijft staan liegt over nu.
-        if thermal != .nominal {
-            Task { @MainActor [weak self] in self?.cpuSpeedLimit = await ThermalWatch.cpuSpeedLimit() }
-        } else {
-            cpuSpeedLimit = nil
-        }
 
         wachterSinds = RestartGuard.timeSinceLastRound()
 
@@ -1768,6 +1759,7 @@ final class AppModel: ObservableObject {
         displayReassertTimer?.invalidate()
         displayReassertTimer = nil
         thermalWatch?.stop()
+        cpuSpeedLimit = nil
         thermal = .nominal
         if let network {
             network.stop()
@@ -2421,6 +2413,9 @@ final class AppModel: ObservableObject {
     /// its place. Serious pressure is a warning; critical releases the flag outright.
     private func handleThermal(_ pressure: ThermalWatch.Pressure) {
         thermal = pressure
+        // Zakt de druk, dan is de meting van daarnet niet meer waar. Zonder dit bleef
+        // "je Mac draait op 62%" staan nadat de Mac allang was afgekoeld.
+        if pressure == .nominal || pressure == .fair { cpuSpeedLimit = nil }
         guard intendedOn else { return }
 
         switch pressure {
@@ -2435,6 +2430,13 @@ final class AppModel: ObservableObject {
             Task { [weak self] in
                 let limit = await ThermalWatch.cpuSpeedLimit()
                 guard let self, self.thermal == .serious else { return }
+                // Ook het paneel voeden. Dit is de énige plek die `pmset -g therm` draait:
+                // één keer per overgang naar `.serious`, want `ThermalWatch.sample()` roept
+                // `onChange` alleen aan als de stand werkelijk verandert. Het stond even in
+                // de guardian-tik, en dat was een terugval op een fix uit BACKLOG.md §1 —
+                // de tik is gebeurtenisgedreven, dus elke app die start of stopt gaf er een
+                // extra subproces bij, urenlang, met de klep dicht.
+                self.cpuSpeedLimit = limit
                 self.lastMessage = L10n.t("melding.warm")
                     + (limit.map { $0 < 100 ? " en draait nu op \($0)% snelheid." : "." } ?? ".")
                     + " Wordt het kritiek, dan stopt Dopamine Code vanzelf."

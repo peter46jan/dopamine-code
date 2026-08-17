@@ -45,6 +45,7 @@ struct MenuView: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 13) {
             statuskaart
+            triggerregel
             duurkiezer
             vangnetten
             aandachtsrij
@@ -135,6 +136,21 @@ struct MenuView: View {
         if let tot = model.deadlineText { delen.append(L10n.t("kaart.tot", tot)) }
         delen.append(L10n.t(model.lidClosed ? "sub.klepdicht" : "sub.klepopen"))
         return delen.joined(separator: " · ")
+    }
+
+    /// Hoe deze sessie begonnen is.
+    ///
+    /// Altijd zichtbaar zolang er iets loopt — dat stond zo in het oude paneel, met de reden
+    /// erbij: "een regel die er soms wel en soms niet staat maakt zijn afwezigheid
+    /// dubbelzinnig, en dan is 'welke trigger heeft dit gestart?' niet te beantwoorden."
+    /// Bij de herindeling viel hij weg; dit zet hem terug.
+    @ViewBuilder private var triggerregel: some View {
+        if let regel = model.triggerLine {
+            Text(regel)
+                .font(.caption2)
+                .foregroundStyle(.secondary)
+                .fixedSize(horizontal: false, vertical: true)
+        }
     }
 
     // MARK: - De duur
