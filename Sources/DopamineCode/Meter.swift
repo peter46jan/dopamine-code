@@ -22,11 +22,15 @@ struct AccuMeter {
     /// zelf gebruikt (`battery.percent <= Prefs.batteryFloor` achter `!battery.onAC`). Wijkt
     /// deze regel daarvan af, dan tekent de meter iets anders dan er gebeurt, en dat is erger
     /// dan geen meter.
+    ///
+    /// Let op: dit rekent met de rauwe waarden en niet met `vulling`/`zone`. Dat is bewust —
+    /// `AppModel` vergelijkt ook rauw, en meeklemmen zou de meter stil van de app laten
+    /// afwijken.
     var grijptIn: Bool { !aanDeLader && percent <= grens }
 
     /// Aan de lader kán dit vangnet niet afgaan. Dat is geen storing maar het hoort wel
     /// zichtbaar te zijn: een gedempte meter in plaats van een scherpe.
-    var slaapt: Bool { aanDeLader }
+    var sluimert: Bool { aanDeLader }
 }
 
 /// De warmte, in vier stappen.
@@ -38,12 +42,17 @@ struct AccuMeter {
 /// er niet is.
 struct WarmteMeter {
     let aantal = 4
+
+    /// 1 = `nominal`, 2 = `fair`, 3 = `serious`, 4 = `critical` — de volgorde van
+    /// `ProcessInfo.ThermalState`. De omzetting staat in `AppModel.warmteMeter`; deze eenheid
+    /// kent dat enum met opzet niet, want dan sleept ze `L10n`, `EventLog` en `Shell` haar
+    /// eigen proef in.
     let stap: Int
 
     init(stap: Int) {
         // Klemmen en niet vertrouwen: een stap van 0 zou "alles in orde" tekenen bij een
         // waarde die we niet begrijpen, en dat is de verkeerde kant om op te falen.
-        self.stap = min(max(stap, 1), 4)
+        self.stap = min(max(stap, 1), aantal)
     }
 
     /// Bij welke stap de sessie stopt. Altijd de laatste — dat is `.critical`.
@@ -51,5 +60,5 @@ struct WarmteMeter {
 
     var grijptIn: Bool { stap >= stopBij }
 
-    func brandt(_ index: Int) -> Bool { index <= stap }
+    func brandt(_ index: Int) -> Bool { index >= 1 && index <= stap }
 }

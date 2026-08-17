@@ -1087,12 +1087,14 @@ eis(!AccuMeter(percent: 16, grens: 15, aanDeLader: false).grijptIn, "16 > 15 gri
 // Aan de lader kan dit vangnet niet afgaan — AppModel eist `!battery.onAC`. Een meter die
 // hem dan als scherp tekent, belooft iets wat niet gebeurt.
 eis(!AccuMeter(percent: 5, grens: 15, aanDeLader: true).grijptIn, "aan de lader grijpt hij niet in")
-eis(AccuMeter(percent: 5, grens: 15, aanDeLader: true).slaapt, "aan de lader slaapt het vangnet")
-eis(!AccuMeter(percent: 84, grens: 15, aanDeLader: false).slaapt, "op accu slaapt het niet")
+eis(AccuMeter(percent: 5, grens: 15, aanDeLader: true).sluimert, "aan de lader sluimert het vangnet")
+eis(!AccuMeter(percent: 84, grens: 15, aanDeLader: false).sluimert, "op accu sluimert het niet")
 
 // Rommel van buiten mag niet buiten de balk tekenen.
 eis(AccuMeter(percent: 140, grens: 15, aanDeLader: false).vulling == 1.0, "boven 100 klemt op 1")
 eis(AccuMeter(percent: -8, grens: 15, aanDeLader: false).vulling == 0.0, "onder 0 klemt op 0")
+eis(AccuMeter(percent: 50, grens: 140, aanDeLader: false).zone == 1.0, "grens boven 100 klemt op 1")
+eis(AccuMeter(percent: 50, grens: -8,  aanDeLader: false).zone == 0.0, "grens onder 0 klemt op 0")
 
 // --- de warmtemeter -----------------------------------------------------------
 // Vier stappen, want macOS geeft er vier. De laatste is waar de sessie stopt.
