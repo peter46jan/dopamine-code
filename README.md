@@ -84,6 +84,10 @@ DOPAMINE_SIGN_IDENTITY="Apple Development: Your Name (XXXXXXXXXX)" ./build.sh --
 
 `security find-identity -v -p codesigning` shows which ones you have.
 
+**Building without git.** `build.sh` takes the version from `git describe`. Building from a
+source tarball there is no `.git`, and the app would call itself `0.0.0`. Pass the version in
+instead: `DOPAMINE_VERSION=1.0.1 ./build.sh`. That is what the Homebrew formula does.
+
 ---
 
 ## Updating
@@ -931,6 +935,10 @@ DOPAMINE_SIGN_IDENTITY="Apple Development: Jouw Naam (XXXXXXXXXX)" ./build.sh --
 ```
 
 `security find-identity -v -p codesigning` laat zien welke je hebt.
+
+**Bouwen zonder git.** `build.sh` haalt de versie uit `git describe`. Bouw je uit een
+bron-tarball, dan is er geen `.git` en zou de app zichzelf `0.0.0` noemen. Geef de versie dan
+mee: `DOPAMINE_VERSION=1.0.1 ./build.sh`. Dat is wat de Homebrew-formule doet.
 
 ---
 

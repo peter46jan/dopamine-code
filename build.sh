@@ -152,10 +152,23 @@ printf 'APPL????' > "$APP/Contents/PkgInfo"
 # Built from a tarball with no git, or from a checkout with no tags, the short version
 # stays 0.0.0. That is not a placeholder anyone has to notice: UpdateCheck reads 0.0.0 as
 # "this build does not know what it is" and then refuses to claim you are up to date.
+#
+# DOPAMINE_VERSION overrules git. Nodig voor bouwers die geen git-checkout hebben maar wél
+# weten welke versie dit is — Homebrew pakt een tarball van een tag, en daar zit geen .git
+# in. Zonder deze uitweg zou zo'n build zichzelf 0.0.0 noemen en zou de updatecontrole van
+# een keurig geïnstalleerde 1.0.0 zeggen dat hij zijn eigen versie niet kent.
 SHORT_VERSION="0.0.0"
 BUILD_NUMBER="0"
 SOURCE_VERSION="onbekend"
-if git rev-parse --git-dir >/dev/null 2>&1; then
+if [ -n "${DOPAMINE_VERSION:-}" ]; then
+  case "${DOPAMINE_VERSION#v}" in
+    *[!0-9.]*|''|*..*|.*|*.) die "DOPAMINE_VERSION='$DOPAMINE_VERSION' is geen versienummer." ;;
+    *) SHORT_VERSION="${DOPAMINE_VERSION#v}" ;;
+  esac
+  SOURCE_VERSION="v$SHORT_VERSION"
+  # Geen commit-aantal beschikbaar; een monotone build uit de versie zelf is beter dan 0.
+  BUILD_NUMBER="$(printf '%s' "$SHORT_VERSION" | awk -F. '{printf "%d", $1*10000 + $2*100 + $3}')"
+elif git rev-parse --git-dir >/dev/null 2>&1; then
   SOURCE_VERSION="$(git describe --tags --always --dirty 2>/dev/null || echo onbekend)"
   BUILD_NUMBER="$(git rev-list --count HEAD 2>/dev/null || echo 0)"
   if TAG="$(git describe --tags --abbrev=0 2>/dev/null)"; then
