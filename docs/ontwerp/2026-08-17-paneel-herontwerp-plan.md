@@ -530,7 +530,97 @@ Co-Authored-By: Claude Opus 5 <noreply@anthropic.com>"
 
 **Bestanden:**
 - Aanmaken: `Sources/DopamineCode/Aandacht.swift`
-- Wijzigen: `verify.sh` (derde blok in `test_paneel`)
+- Wijzigen: `verify.sh` (derde blok in `test_paneel`, plus één ontbrekende bewering)
+
+- [ ] **Stap 0: zeven bevindingen uit de reviews van taak 2**
+
+Doe deze eerst, in één eigen commit, vóór je aan `Aandacht` begint.
+
+**a. Twee dragende bewakingen zijn ongedekt.** Allebei bewezen door ze weg te halen: de proef
+bleef groen.
+
+De ondergrens van `WarmteMeter.brandt(_:)` wordt alleen met index 1, 2 en 4 aangeroepen. En —
+ernstiger — de bewaking `deadline > sessieStart` in `KaartToestand`. Zonder die regel geeft
+`deadline == sessieStart` een deling door nul:
+
+```
+zonder de guard, deadline == sessieStart -> voortgang = nan, isNaN = true
+```
+
+`BoogIcoon` doet straks `.trim(from: 0, to: toestand.voortgang)`, en NaN is daar een ongeldige
+numerieke waarde in Core Animation. Er staat dus een regel die een crash tegenhoudt, met niets
+dat merkt of hij er nog staat. Voeg toe:
+
+```swift
+eis(!WarmteMeter(stap: 2).brandt(0), "index 0 brandt nooit")
+eis(!WarmteMeter(stap: 2).brandt(-3), "een negatieve index brandt nooit")
+```
+
+```swift
+eis(KaartToestand(intendedOn: true, armTot: nil, sessieStart: nu, deadline: nu, nu: nu).voortgang == 0,
+    "deadline gelijk aan de start geeft geen NaN")
+```
+
+Verifieer allebei omgekeerd: zet `brandt` terug op `index <= stap` en verwijder de
+`deadline > sessieStart`-bewaking, en eis dat je respectievelijk
+`FOUT: index 0 brandt nooit` en `FOUT: deadline gelijk aan de start geeft geen NaN` ziet.
+
+**b. `resterend` gaat eruit.** Niets leest hem: het grote getal bij `.aan` komt uit
+`model.remainingText`, de regel bij `.gearmd` uit `arm.resterendeTekst(op:)`, en `BoogIcoon`
+krijgt alleen `voortgang`. Het was daarmee een dérde berekening van "hoe lang nog" naast twee
+bestaande die verschillend afronden — `remainingText` kapt af, `resterendeTekst` rondt naar
+boven — in het bestand dat er juist staat om één vraag één antwoord te geven.
+
+Verwijder het veld, zijn documentatiecommentaar, en de vijf beweringen die eraan hangen.
+Vervang die door beweringen op `wat` en `voortgang` waar de bewering anders wegvalt.
+
+> **Niet oplossen in deze taak:** `remainingText` kapt af terwijl `menuBarCountdown` naar boven
+> rondt, dus de menubalk kan `3:13` tonen boven een paneel dat `3 u 12` zegt. Dat is bestaand
+> gedrag, staat los van dit herontwerp, en hoort in een eigen wijziging met een eigen
+> afweging. Noteer het in `BACKLOG.md` en laat het verder met rust.
+
+**c. De `return` in het eerste blok breekt nu het tweede af.** In `test_paneel` staat:
+
+```bash
+  if [ ! -f "$src" ]; then
+    fail "Meter.swift ontbreekt."
+    return
+  fi
+```
+
+Toen dit `test_paneel_meters` heette was dat onschadelijk. Nu onderdrukt een ontbrekende
+`Meter.swift` stilzwijgend álle volgende blokken. Maak er een `if/else` van, zoals het tweede
+blok al doet.
+
+**d. De sectietitel belooft iets dat er nog niet is.** Hij zegt "meters, kaarttoestand **en de
+rangorde van waarschuwingen**", maar dat derde blok bouw jij in deze taak. Dat komt vanzelf
+goed zodra je klaar bent — controleer alleen dat hij klopt als je commit.
+
+**e. Het commentaar boven `stap` noemt het verkeerde enum.** Er staat dat "dat enum" `L10n`,
+`EventLog` en `Shell` meesleept, maar de zin ervóór noemt `ProcessInfo.ThermalState`, en die
+zit in Foundation en sleept niets mee. De afhankelijkheid die bedoeld wordt is
+`ThermalWatch.Pressure`, waarvan `.label` `L10n.t` aanroept. Herschrijf naar:
+
+```swift
+    /// 1 = `nominal`, 2 = `fair`, 3 = `serious`, 4 = `critical` — de volgorde van
+    /// `ProcessInfo.ThermalState`. De omzetting komt in `AppModel`; deze eenheid neemt een
+    /// `Int` en geen `ThermalWatch.Pressure`, want dat enum sleept via zijn `.label` de hele
+    /// `L10n`-keten haar eigen proef in.
+```
+
+**f. `Wat` heet voortaan `Fase`.** Op de aanroepplek wordt het straks `model.kaart.wat`, en
+"kaart.wat" leest als een vraag. De struct heet al `KaartToestand`; het enum ís de toestand.
+Hernoem het type en alle gebruik ervan, ook in de proef.
+
+**g. Nog niet doen: de steiger in `verify.sh` samenvoegen.** De heredoc-compileer-draai-vorm
+wordt met jouw derde blok voor de derde keer woordelijk herhaald, en een hulpfunctie
+(`swift_proef <naam> <bron>` met de heredoc op stdin) zou er per blok een regel of vijftien
+uithalen. Dat is waar, maar het verandert de vorm van alle drie de blokken tegelijk terwijl er
+twee net doorgelicht zijn. Zet het in `BACKLOG.md` en doe het als los werk.
+
+Commit met een bericht dat uitlegt dat twee bewakingen crashes tegenhielden zonder dat iets
+merkte of ze er nog stonden, en dat `resterend` eruit gaat omdat een derde ongelezen waarheid
+precies is wat dit bestand moest voorkomen.
 
 - [ ] **Stap 1: voeg het derde blok aan de proef toe**
 
@@ -1086,7 +1176,7 @@ Vervang in `MenuView.swift` alles van `var body: some View {` tot en met de slui
     }
 
     @ViewBuilder private var grote: some View {
-        switch model.kaart.wat {
+        switch model.kaart.fase {
         case .uit:
             Text("kaart.uit").font(.headline)
         case .gearmd:
@@ -1099,7 +1189,7 @@ Vervang in `MenuView.swift` alles van `var body: some View {` tot en met de slui
     }
 
     @ViewBuilder private var onderregel: some View {
-        switch model.kaart.wat {
+        switch model.kaart.fase {
         case .uit:
             Button("menu.arm.aanzetten") { model.armForLidClose() }
                 .buttonStyle(.link).font(.caption).disabled(model.busy)
@@ -1378,7 +1468,7 @@ struct BoogIcoon: View {
     }
 
     private var symbool: String {
-        switch toestand.wat {
+        switch toestand.fase {
         case .uit:    return "moon.fill"
         case .gearmd: return "laptopcomputer.and.arrow.down"
         case .aan:    return "sun.max.fill"
