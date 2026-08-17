@@ -1248,7 +1248,7 @@ test_tap() {
 }
 
 case "${1:-}" in
-  --report)  report; test_paneel ;;
+  --report)  report; exit 0 ;;
   # Niet in de standaardronde: de kop bovenaan belooft dat die niets kapotmaakt.
   --killtest) test_killtest; exit "$FAILURES" ;;
   # Return the real count, not 0. This is the one check that judges the core promise, and
@@ -1263,6 +1263,7 @@ case "${1:-}" in
   --login)   test_login_item ;;
   --talen)   test_translations ;;
   --tap)     test_tap ;;
+  --paneel)  test_paneel ;;
   *)
     report
     test_includedir
