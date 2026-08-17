@@ -1036,12 +1036,17 @@ test_translations() {
   # documentatievoorbeeld staat mee als "in gebruik" — en dan meldt deze controle een fout
   # over een sleutel die nergens in de app voorkomt. Precies dat gebeurde bij het schrijven
   # ervan, met een voorbeeld in de doc-commentaar van L10n.swift.
+  #
+  # `naam:` en `tekst:` staan er sinds de tegels bij. De onderdelen van het paneel nemen hun
+  # opschrift als `LocalizedStringKey`-argument — `MeterTegel(naam: "tegel.accu")` — en niet
+  # als `Text("tegel.accu")`. Zonder deze twee vormen zag deze controle die sleutels niet, en
+  # dan levert een typefout een tegel op waar letterlijk "tegel.accuu" op staat.
   local gebruikt onbekend f
   gebruikt="$(for f in "$PROJECT_DIR/Sources"/*/*.swift; do
         [ -f "$f" ] || continue
         sed 's://.*::' "$f"
       done \
-      | grep -oE '(Text|Label|Button|LabeledContent|Section)\("[a-z]+(\.[a-z]+)+"|L10n\.t\("[a-z]+(\.[a-z]+)+"' \
+      | grep -oE '(Text|Label|Button|LabeledContent|Section)\("[a-z]+(\.[a-z]+)+"|L10n\.t\("[a-z]+(\.[a-z]+)+"|(naam|tekst): *"[a-z]+(\.[a-z]+)+"' \
       | grep -oE '"[a-z]+(\.[a-z]+)+"' | tr -d '"' | sort -u)"
   if [ -z "$gebruikt" ]; then
     skip "Geen sleutelgebruik in de bronnen gevonden; nog niets omgezet?"

@@ -405,7 +405,6 @@
 "kaart.tot" = "wakker tot %@";
 "kaart.eindigt" = "Eindigt om";
 "vangnet.kop" = "Vangnetten";
-"vangnet.legenda" = "nu · stopt bij";
 "vangnet.accu.lader" = "aan de lader";
 "vangnet.wachter.interval" = "elke 30 s";
 "vangnet.wachter.nognietgekeken" = "nog niet gekeken";
@@ -440,3 +439,12 @@
 "fout.vergrendelenmislukt" = "Vergrendelen lukte niet";
 "fout.nogwakker" = "De Mac wordt nog steeds wakker gehouden";
 "fout.nietinslaap" = "Niet in slaap gezet";
+
+/* De namen van de vangnettegels. Kort: het zijn etiketten, geen zinnen. */
+"tegel.accu" = "Accu";
+"tegel.warmte" = "Warmte";
+"tegel.wachter" = "Wachter";
+/* Waar een vangnet ingrijpt. Staat op elke tegel, want een stand zonder grens
+   zegt niets over wat er straks gaat gebeuren. */
+"tegel.grens.accu" = "stopt bij %d%%";
+"tegel.grens.warmte" = "stopt bij %1$d van %2$d";

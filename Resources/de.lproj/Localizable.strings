@@ -401,7 +401,6 @@
 "kaart.tot" = "wach bis %@";
 "kaart.eindigt" = "Endet um";
 "vangnet.kop" = "Sicherungen";
-"vangnet.legenda" = "jetzt · stoppt bei";
 "vangnet.accu.lader" = "am Netzteil";
 "vangnet.wachter.interval" = "alle 30 s";
 "vangnet.wachter.nognietgekeken" = "hat noch nicht nachgesehen";
@@ -418,7 +417,7 @@
 "vangnet.wachter.gelezen" = "Flag gelesen, %@";
 "aandacht.kop" = "Braucht Aufmerksamkeit";
 "kaart.fout" = "Etwas stimmt nicht";
-"vangnet.wachter.stil" = "Die Sicherung hat zu lange nicht nachgesehen";
+"vangnet.wachter.stil" = "Der Wächter hat zu lange nicht nachgesehen";
 
 /* --- Fehlerstatus: status = .error(...), sichtbar in der Statuskarte und der Aufmerksamkeitszeile --- */
 "fout.vlag.onleesbaar" = "Kann nicht auslesen, ob der Mac schlafen darf";
@@ -436,3 +435,10 @@
 "fout.vergrendelenmislukt" = "Sperren ist fehlgeschlagen";
 "fout.nogwakker" = "Der Mac wird weiterhin wach gehalten";
 "fout.nietinslaap" = "Nicht in den Schlaf versetzt";
+
+/* De namen van de vangnettegels. */
+"tegel.accu" = "Akku";
+"tegel.warmte" = "Wärme";
+"tegel.wachter" = "Wächter";
+"tegel.grens.accu" = "stoppt bei %d%%";
+"tegel.grens.warmte" = "stoppt bei %1$d von %2$d";

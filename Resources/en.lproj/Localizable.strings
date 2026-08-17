@@ -400,7 +400,6 @@
 "kaart.tot" = "awake until %@";
 "kaart.eindigt" = "Ends at";
 "vangnet.kop" = "Safety nets";
-"vangnet.legenda" = "now · stops at";
 "vangnet.accu.lader" = "on the charger";
 "vangnet.wachter.interval" = "every 30 s";
 "vangnet.wachter.nognietgekeken" = "has not looked yet";
@@ -435,3 +434,10 @@
 "fout.vergrendelenmislukt" = "Locking failed";
 "fout.nogwakker" = "The Mac is still being kept awake";
 "fout.nietinslaap" = "Not put to sleep";
+
+/* De namen van de vangnettegels. */
+"tegel.accu" = "Battery";
+"tegel.warmte" = "Heat";
+"tegel.wachter" = "Watchdog";
+"tegel.grens.accu" = "stops at %d%%";
+"tegel.grens.warmte" = "stops at %1$d of %2$d";

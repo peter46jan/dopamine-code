@@ -401,7 +401,6 @@
 "kaart.tot" = "éveillé jusqu'à %@";
 "kaart.eindigt" = "Se termine à";
 "vangnet.kop" = "Filets de sécurité";
-"vangnet.legenda" = "maintenant · s'arrête à";
 "vangnet.accu.lader" = "sur secteur";
 "vangnet.wachter.interval" = "toutes les 30 s";
 "vangnet.wachter.nognietgekeken" = "n'a pas encore regardé";
@@ -436,3 +435,10 @@
 "fout.vergrendelenmislukt" = "Le verrouillage a échoué";
 "fout.nogwakker" = "Le Mac est toujours maintenu éveillé";
 "fout.nietinslaap" = "Non mis en veille";
+
+/* De namen van de vangnettegels. */
+"tegel.accu" = "Batterie";
+"tegel.warmte" = "Chaleur";
+"tegel.wachter" = "Gardien";
+"tegel.grens.accu" = "s'arrête à %d%%";
+"tegel.grens.warmte" = "s'arrête à %1$d sur %2$d";

@@ -1,49 +1,110 @@
 import SwiftUI
 
-/// Liquid Glass, met een terugval voor macOS 14 en 15.
+/// Waar een tegel voor staat. Bepaalt zijn vulling en zijn rand, en verder niets.
+enum Tegelstijl {
+    /// De normale tegel: melkglas op het verloop.
+    case rustig
+    /// Er loopt een sessie. Alleen de heldentegel krijgt deze.
+    case op
+    /// Een waarschuwing, in de kleur van zijn ernst.
+    case aandacht(Aandacht.Ernst)
+}
+
+/// Liquid Glass op een eigen ondergrond, met een terugval voor macOS 14 tot en met 25.
 ///
-/// `.glassEffect()` bestaat pas vanaf macOS 26 en `build.sh` bouwt voor 14.0. Dat blijft zo:
-/// de terugval is één aftakking op één plek, en niemand wegsturen weegt zwaarder dan een
-/// schonere aanroep. Op 14 en 15 ziet het er soberder uit; de indeling is dezelfde.
+/// `.glassEffect()` breekt wat er ín hetzelfde venster achter ligt. Een `MenuBarExtra` heeft
+/// een egale systeemachtergrond, dus tot nu toe was er niets om te breken en zag je grijs op
+/// grijs. `MenuView` schildert nu eerst `Palet.achtergrond`; pas daardoor heeft dit effect
+/// betekenis.
 ///
-/// `.ultraThinMaterial` en niet een egale kleur, omdat het paneel dan op beide versies
-/// doorschijnend blijft — de indeling rekent op een achtergrond die meebeweegt.
+/// De aftakking blijft, want `build.sh` bouwt voor 14.0 en dat verandert niet. Let op welke
+/// tak je ziet: deze Mac draait macOS 26.5, dus hier loopt altijd de bovenste. De terugval is
+/// apart nagegaan door hem in een proef af te dwingen (glasproef).
+///
+/// Beide takken dragen dezelfde rand en dezelfde kleurlaag; alleen de ondergrond eronder
+/// verschilt. Wat er op 14 en 15 anders is, is dus hooguit de doorschijnendheid en nooit de
+/// indeling.
 struct Glas: ViewModifier {
-    var straal: CGFloat = 12
-    var oplichtend = false
+    var straal: CGFloat = 13
+    var stijl: Tegelstijl = .rustig
 
     func body(content: Content) -> some View {
         let vorm = RoundedRectangle(cornerRadius: straal, style: .continuous)
         if #available(macOS 26.0, *) {
             content
                 .glassEffect(.regular, in: vorm)
-                .overlay(randje(vorm))
+                .overlay(kleurlaag(vorm))
+                .overlay(rand(vorm))
         } else {
             content
-                .background(.ultraThinMaterial, in: vorm)
-                .overlay(vorm.strokeBorder(Color.primary.opacity(0.08), lineWidth: 0.5))
-                .overlay(randje(vorm))
+                .background(vulling, in: vorm)
+                .overlay(rand(vorm))
         }
     }
 
-    /// Een lopende sessie krijgt een accentrandje en verder niets.
+    /// De vulling van de tegel. Van linksboven naar rechtsonder, net als de achtergrond, zodat
+    /// een tegel niet tegen het verloop in lijkt te lichten.
+    private var vulling: LinearGradient {
+        LinearGradient(colors: [boven, onder],
+                       startPoint: UnitPoint(x: 0.1, y: 0), endPoint: UnitPoint(x: 0.9, y: 1))
+    }
+
+    /// Op macOS 26 doet het glas de ondergrond; hier komt alleen de kleur van de stijl
+    /// overheen. Bij `.rustig` is dat niets — glas dat je volgooit met kleur is geen glas meer,
+    /// en dat was precies de fout van de vorige ronde.
+    @ViewBuilder private func kleurlaag(_ vorm: RoundedRectangle) -> some View {
+        switch stijl {
+        case .rustig, .aandacht(.grijs):
+            EmptyView()
+        default:
+            vorm.fill(vulling).allowsHitTesting(false)
+        }
+    }
+
+    private var boven: Color {
+        switch stijl {
+        case .rustig:            return Color.white.opacity(0.15)
+        case .op:                return Palet.accent.opacity(0.26)
+        case .aandacht(.grijs):  return Color.white.opacity(0.15)
+        case .aandacht(let e):   return Palet.kleur(e).opacity(0.22)
+        }
+    }
+
+    private var onder: Color {
+        switch stijl {
+        case .rustig:            return Color.white.opacity(0.055)
+        case .op:                return Palet.accent.opacity(0.08)
+        case .aandacht(.grijs):  return Color.white.opacity(0.055)
+        case .aandacht(let e):   return Palet.kleur(e).opacity(0.06)
+        }
+    }
+
+    /// Rand en glansje in één streek: een verloop van licht naar bijna niets langs de bovenkant
+    /// geeft de tegel dezelfde opstaande rand als in het ontwerp, zonder een tweede laag.
     ///
-    /// Eerst stond hier `.tint(.accentColor)` op het glas zelf. Dat overspoelde de hele kaart
-    /// met de accentkleur — bij de standaardinstelling een egaal blauw vlak waar zwarte tekst
-    /// nauwelijks in te lezen was. Glas dat je volgooit met kleur is geen glas meer.
-    ///
-    /// Dat de sessie loopt staat toch al drie keer op de kaart: de zon, de gevulde boog en de
-    /// schakelaar. Een randje is genoeg.
-    @ViewBuilder private func randje(_ vorm: RoundedRectangle) -> some View {
-        if oplichtend {
-            vorm.strokeBorder(Color.accentColor.opacity(0.55), lineWidth: 1)
+    /// `allowsHitTesting(false)`, want deze laag ligt over de inhoud heen en de heldentegel
+    /// heeft een schakelaar onder zijn bovenrand zitten.
+    private func rand(_ vorm: RoundedRectangle) -> some View {
+        vorm.strokeBorder(
+            LinearGradient(colors: [randkleur.opacity(1), randkleur.opacity(0.35)],
+                           startPoint: .top, endPoint: .bottom),
+            lineWidth: 0.5)
+            .allowsHitTesting(false)
+    }
+
+    private var randkleur: Color {
+        switch stijl {
+        case .rustig:            return Color.white.opacity(0.16)
+        case .op:                return Palet.accent.opacity(0.45)
+        case .aandacht(.grijs):  return Color.white.opacity(0.16)
+        case .aandacht(let e):   return Palet.kleur(e).opacity(0.40)
         }
     }
 }
 
 extension View {
-    /// Zet dit onderdeel op glas. `oplichtend` is voor de statuskaart tijdens een sessie.
-    func glas(straal: CGFloat = 12, oplichtend: Bool = false) -> some View {
-        modifier(Glas(straal: straal, oplichtend: oplichtend))
+    /// Zet dit onderdeel op glas.
+    func glas(straal: CGFloat = 13, stijl: Tegelstijl = .rustig) -> some View {
+        modifier(Glas(straal: straal, stijl: stijl))
     }
 }

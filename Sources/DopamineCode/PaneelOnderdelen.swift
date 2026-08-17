@@ -1,5 +1,142 @@
 import SwiftUI
 
+// MARK: - De tegel zelf
+
+/// Eén tegel: glas op de eigen achtergrond, met de inhoud erin.
+///
+/// De randafstand staat hier en niet bij de aanroepers, zodat twee tegels naast elkaar altijd
+/// dezelfde binnenmaat hebben. Gemeten met die maat: de langste warmtelabel — het Franse
+/// "légèrement élevée" — is 131,4 pt in een tegel die 140,5 pt inhoud heeft.
+struct Tegel<Inhoud: View>: View {
+    var stijl: Tegelstijl = .rustig
+    var straal: CGFloat = 13
+    var rand: CGFloat = 11
+    @ViewBuilder let inhoud: Inhoud
+
+    var body: some View {
+        inhoud
+            .padding(rand)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .glas(straal: straal, stijl: stijl)
+    }
+}
+
+/// De kop van een tegel: symbool, naam in hoofdletters, en rechts iets kleins.
+///
+/// Hoofdletters en niet vetgedrukt: dit is een etiket en geen bewering. De waarde eronder moet
+/// het eerst gelezen worden.
+struct TegelKop: View {
+    let symbool: String
+    let naam: LocalizedStringKey
+    var rechts: String?
+
+    var body: some View {
+        HStack(spacing: 6) {
+            Image(systemName: symbool)
+                .font(.system(size: 9.5))
+                .frame(width: 13)
+            Text(naam)
+                .font(.system(size: 10, weight: .medium))
+                .textCase(.uppercase)
+                .tracking(0.5)
+            if let rechts {
+                Spacer(minLength: 6)
+                Text(rechts).font(.system(size: 10)).monospacedDigit()
+            }
+        }
+        .foregroundStyle(Palet.inktFlauw)
+        .lineLimit(1)
+    }
+}
+
+/// De kop boven een groep tegels.
+struct SectieKop: View {
+    let tekst: LocalizedStringKey
+
+    var body: some View {
+        Text(tekst)
+            .font(.system(size: 10, weight: .medium))
+            .textCase(.uppercase)
+            .tracking(0.6)
+            .foregroundStyle(Palet.inktFlauw)
+            .padding(.leading, 2)
+    }
+}
+
+// MARK: - De vangnettegels
+
+/// Een vangnet als tegel: naam, waarde, meter, en waar het stopt.
+///
+/// De grens staat er altijd bij, en dat is de hele reden dat dit blok bestaat — een percentage
+/// zonder grens zegt niets over wat er straks gaat gebeuren. In de oude rij vochten de waarde
+/// en de grens om één kolom van honderd punten; hier heeft elk zijn eigen regel.
+///
+/// Alle drie de regels zijn `lineLimit(1)`. Dat is niet cosmetisch: twee tegels naast elkaar
+/// horen even hoog te zijn, en één afbrekende zin zou de rij scheeftrekken.
+struct MeterTegel<Meter: View>: View {
+    let symbool: String
+    let naam: LocalizedStringKey
+    let waarde: String
+    let grens: String
+    var gedempt = false
+    @ViewBuilder let meter: Meter
+
+    var body: some View {
+        Tegel {
+            VStack(alignment: .leading, spacing: 0) {
+                TegelKop(symbool: symbool, naam: naam)
+                Text(waarde)
+                    .font(.system(size: 15, weight: .semibold))
+                    .monospacedDigit()
+                    .foregroundStyle(gedempt ? Palet.inktZacht : Palet.inktFel)
+                    .lineLimit(1)
+                    // Krimpen en niet afbreken: "légèrement élevée" houdt 9 pt over, en een
+                    // langere vertaling mag de tegel niet hoger maken dan zijn buurman.
+                    .minimumScaleFactor(0.75)
+                    .padding(.top, 5)
+                meter
+                    .padding(.top, 7)
+                Text(grens)
+                    .font(.system(size: 10))
+                    .monospacedDigit()
+                    .foregroundStyle(Palet.inktFlauw)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.8)
+                    .padding(.top, 6)
+            }
+        }
+    }
+}
+
+/// De wachter, over de volle breedte.
+///
+/// Breed en niet half, omdat hier een zin staat en geen getal — en omdat dit het enige vangnet
+/// is dat een `SIGKILL` van de app overleeft. Het verdient de onderste regel voor zichzelf.
+struct WachterTegel: View {
+    let zin: String
+    let interval: String
+    let leeft: Bool
+
+    var body: some View {
+        Tegel {
+            VStack(alignment: .leading, spacing: 6) {
+                TegelKop(symbool: "shield", naam: "tegel.wachter", rechts: interval)
+                // 11 en niet 8: de hartslag van de stip zwelt tot 2,6 keer zijn maat en raakte
+                // bij 8 de eerste letter van de zin.
+                HStack(spacing: 11) {
+                    WachterStip(leeft: leeft)
+                    Text(zin)
+                        .font(.system(size: 11))
+                        .foregroundStyle(leeft ? Palet.inktZacht : Palet.alarm)
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.8)
+                    Spacer(minLength: 0)
+                }
+            }
+        }
+    }
+}
+
 // MARK: - De meters
 
 /// Een vloeiende meter: een balk met de rode zone erin en een streepje op de stand.
@@ -15,15 +152,15 @@ struct AccuMeterView: View {
     var body: some View {
         GeometryReader { geo in
             ZStack(alignment: .leading) {
-                Capsule().fill(Color.primary.opacity(0.12))
+                Capsule().fill(Palet.baan)
                 Capsule()
-                    .fill(meter.sluimert ? Color.secondary : Color.accentColor)
+                    .fill(meter.sluimert ? Palet.inktFlauw : Palet.accent)
                     .frame(width: geo.size.width * meter.vulling)
                 Capsule()
-                    .fill(Color.red.opacity(meter.sluimert ? 0.18 : 0.40))
+                    .fill(Palet.alarm.opacity(meter.sluimert ? 0.20 : 0.42))
                     .frame(width: geo.size.width * meter.zone)
                 Rectangle()
-                    .fill(Color.primary)
+                    .fill(Palet.inktFel)
                     .frame(width: 1.5, height: 9)
                     .offset(x: max(0, geo.size.width * meter.vulling - 0.75))
             }
@@ -53,9 +190,9 @@ struct WarmteMeterView: View {
     private func kleur(_ index: Int) -> Color {
         // Het laatste blokje is de grens: rood en leeg zolang je hem niet haalt, zodat je
         // ziet wáár het stopt voordat het zover is.
-        if index == meter.stopBij && !meter.brandt(index) { return Color.red.opacity(0.30) }
-        if meter.brandt(index) { return index >= meter.stopBij ? .red : .accentColor }
-        return Color.primary.opacity(0.12)
+        if index == meter.stopBij && !meter.brandt(index) { return Palet.alarm.opacity(0.30) }
+        if meter.brandt(index) { return index >= meter.stopBij ? Palet.alarm : Palet.accent }
+        return Palet.baan
     }
 }
 
@@ -63,7 +200,7 @@ struct WarmteMeterView: View {
 ///
 /// Geen balk, want er valt niets te vullen. Wat er te zeggen valt is dat hij nog leeft, en
 /// dat zegt een hartslag beter dan een getal. Dit is het enige vangnet dat een `SIGKILL`
-/// van de app overleeft, en het stond tot nu toe nergens in de interface.
+/// van de app overleeft, en het stond tot voor kort nergens in de interface.
 struct WachterStip: View {
     /// Keek de wachter recent genoeg? Zo niet, dan hoort de stip dat te zeggen.
     ///
@@ -78,11 +215,11 @@ struct WachterStip: View {
 
     var body: some View {
         Circle()
-            .fill(leeft ? Color.green : Color.red)
-            .frame(width: 5, height: 5)
+            .fill(leeft ? Palet.leeft : Palet.alarm)
+            .frame(width: 6, height: 6)
             .overlay(
                 Circle()
-                    .stroke(Color.green.opacity(groot ? 0 : 0.55), lineWidth: 3)
+                    .stroke(Palet.leeft.opacity(groot ? 0 : 0.55), lineWidth: 3)
                     .scaleEffect(groot ? 2.6 : 1)
                     .opacity(leeft ? 1 : 0)
             )
@@ -98,47 +235,7 @@ struct WachterStip: View {
     }
 }
 
-/// Eén regel in het vangnettenblok: icoon, meter, waarde.
-///
-/// De waardekolom heeft een vaste breedte zodat de drie regels onder elkaar uitlijnen, en
-/// `monospacedDigit` zodat een tikkende waarde de kolom niet laat verspringen.
-struct MeterRij<Inhoud: View>: View {
-    let symbool: String
-    let inhoud: Inhoud
-    let waarde: String
-    let grens: String?
-    var gedempt = false
-
-    var body: some View {
-        HStack(spacing: 9) {
-            Image(systemName: symbool)
-                .font(.system(size: 9))
-                .frame(width: 13)
-                .foregroundStyle(.secondary)
-            inhoud
-            HStack(spacing: 3) {
-                if !waarde.isEmpty {
-                    Text(waarde)
-                        .foregroundStyle(gedempt ? Color.secondary : Color.primary)
-                }
-                if let grens {
-                    Text(waarde.isEmpty ? grens : "· " + grens)
-                        .foregroundStyle(.tertiary)
-                }
-            }
-            .font(.system(size: 10.5))
-            .monospacedDigit()
-            // Krimpen en niet afbreken. Gemeten: "100% · aan de lader" is 101,3 pt en
-            // "légèrement élevée · 4/4" 118,5 pt — allebei breder dan de kolom, en zonder dit
-            // werd de rij 13 pt hoger en stonden de drie meters niet meer op één lijn.
-            .lineLimit(1)
-            .minimumScaleFactor(0.72)
-            // 100 en niet 74: "62% · aan de lader" werd afgekapt tot "62% · aan d…", en dat is
-            // net de helft van de mededeling die ertoe doet.
-            .frame(width: 100, alignment: .trailing)
-        }
-    }
-}
+// MARK: - De heldentegel
 
 /// De boog om het icoon: het verstreken deel van de sessie.
 ///
@@ -149,18 +246,17 @@ struct MeterRij<Inhoud: View>: View {
 struct BoogIcoon: View {
     let toestand: KaartToestand
 
-    /// Staat de app in een foutstatus? Het oude paneel kleurde het icoon dan oranje; dat is
-    /// bij de herindeling weggevallen, terwijl er twintig plekken zijn die `status = .error`
-    /// zetten. Een maan bij een onleesbare kernelvlag stelt gerust over iets wat we juist
-    /// niet weten.
+    /// Staat de app in een foutstatus? Het paneel kleurde het icoon dan oranje. Rood nu, en
+    /// niet uit smaak: dezelfde toestand levert in `Aandacht` een `.foutstatus`, en die is
+    /// rood. Twee kleuren voor één feit maakt de rangorde onleesbaar.
     var fout = false
 
     var body: some View {
         ZStack {
-            Circle().stroke(Color.primary.opacity(0.14), lineWidth: 4)
+            Circle().stroke(Palet.baan, lineWidth: 4)
             Circle()
                 .trim(from: 0, to: toestand.voortgang)
-                .stroke(fout ? Color.orange : Color.accentColor,
+                .stroke(fout ? Palet.alarm : Palet.accent,
                         style: StrokeStyle(lineWidth: 4, lineCap: .round))
                 .rotationEffect(.degrees(-90))
             Image(systemName: symbool)
@@ -172,8 +268,8 @@ struct BoogIcoon: View {
     }
 
     private var kleur: Color {
-        if fout { return .orange }
-        return toestand.isAan ? .accentColor : .secondary
+        if fout { return Palet.alarm }
+        return toestand.isAan ? Palet.accent : Palet.inktZacht
     }
 
     private var symbool: String {

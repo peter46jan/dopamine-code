@@ -4,6 +4,11 @@ import SwiftUI
 ///
 /// This uses `.window` style rather than `.menu`: menu style drops non-text views and
 /// does not re-render its body when opened, which makes a live countdown impossible.
+///
+/// Het paneel schildert zijn eigen achtergrond. Dat is de kern van deze indeling en niet een
+/// smaakje: `.glassEffect()` breekt wat er ín hetzelfde venster achter ligt, en een
+/// `MenuBarExtra` heeft een egale systeemachtergrond — dus tot nu toe viel er niets te breken
+/// en zag je grijs op grijs. Zie `Palet`.
 struct MenuView: View {
     @ObservedObject var model: AppModel
 
@@ -31,11 +36,6 @@ struct MenuView: View {
     /// UserDefaults-uitlezing zijn voor een vraag die per paneelopening één keer telt.
     @State private var showUpdateNotice = false
 
-    /// Of de gebruiker de aandachtsrij zelf heeft opengeklapt. Alleen zíjn keuze staat hier;
-    /// of rood hem dwingt open te staan komt uit `Aandacht.moetOpen`, want dat is een feit
-    /// over de toestand en geen voorkeur.
-    @State private var aandachtOpen = false
-
     /// `KeyboardBacklight.canPostEvents` is `CGPreflightPostEventAccess()` en kost gemeten
     /// mediaan 9,3 ms. De body draait elke seconde — en blijft dat doen nadat het paneel
     /// dicht is — dus in de body stond hier negen milliseconde blokkerende IPC per seconde
@@ -44,20 +44,29 @@ struct MenuView: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 13) {
-            statuskaart
+            heldentegel
             triggerregel
             duurkiezer
             vangnetten
-            aandachtsrij
+            aandachtsblok
             updateNotice
             updateRow
-            Divider()
+            scheiding
             voet
         }
         .padding(13)
         // 360 en niet 320. Op 320 liep de segmentkiezer met vijf duren plus een afwijkende
         // waarde het paneel uit, en werd "62% · aan de lader" afgekapt tot "62% · aan d…".
         .frame(width: 360)
+        .background(Palet.achtergrond)
+        .foregroundStyle(Palet.inkt)
+        // Eén vaste look, licht of donker systeem. Dit is de prijs van een eigen achtergrond
+        // en hij is bewust betaald: op een donkerpaars verloop is `Color.primary` in lichte
+        // modus zwart, en zwart leest daar niet op. Wat het paneel zelf tekent haalt zijn
+        // kleur uit `Palet`; wat AppKit tekent — de segmentkiezer, de tijdkiezer, de
+        // schakelaar, de knoppen — luistert alleen hiernaar.
+        .environment(\.colorScheme, .dark)
+        .tint(Palet.accent)
         .onAppear {
             runningApps = RunningApps.list()
             showUpdateNotice = !Prefs.updateNoticeShown
@@ -68,24 +77,25 @@ struct MenuView: View {
         }
     }
 
-    // MARK: - De statuskaart
+    // MARK: - De heldentegel
 
-    private var statuskaart: some View {
-        HStack(spacing: 13) {
-            BoogIcoon(toestand: model.kaart, fout: model.status.isError)
-            VStack(alignment: .leading, spacing: 2) {
-                grote
-                onderregel
+    /// Wat er aan de hand is, in één tegel: de boog, het grote getal, en de schakelaar.
+    private var heldentegel: some View {
+        Tegel(stijl: model.kaart.isAan ? .op : .rustig) {
+            HStack(spacing: 13) {
+                BoogIcoon(toestand: model.kaart, fout: model.status.isError)
+                VStack(alignment: .leading, spacing: 2) {
+                    grote
+                    onderregel
+                }
+                Spacer(minLength: 0)
+                Toggle("", isOn: Binding(get: { model.intendedOn },
+                                         set: { model.setKeepAwake($0) }))
+                    .toggleStyle(.switch)
+                    .labelsHidden()
+                    .disabled(model.busy)
             }
-            Spacer(minLength: 0)
-            Toggle("", isOn: Binding(get: { model.intendedOn },
-                                     set: { model.setKeepAwake($0) }))
-                .toggleStyle(.switch)
-                .labelsHidden()
-                .disabled(model.busy)
         }
-        .padding(11)
-        .glas(oplichtend: model.kaart.isAan)
     }
 
     @ViewBuilder private var grote: some View {
@@ -95,18 +105,19 @@ struct MenuView: View {
             // terwijl de app weet dat er iets mis is — bij een onleesbare kernelvlag weet de
             // guardian juist níet of de Mac mag slapen. Dan staat de fout er zelf.
             if model.status.isError {
-                // Kort en zonder de zin zelf: die staat rood in de aandachtsrij, die bij een
-                // fout altijd openklapt. Hem hier hérhalen zette hem drie keer op één paneel.
-                Text("kaart.fout").font(.headline).foregroundStyle(.orange)
+                // Kort en zonder de zin zelf: die staat rood in het aandachtsblok, dat bij een
+                // fout altijd zichtbaar is. Hem hier hérhalen zette hem twee keer op één paneel.
+                Text("kaart.fout").font(.headline).foregroundStyle(Palet.alarm)
             } else {
-                Text("kaart.uit").font(.headline)
+                Text("kaart.uit").font(.headline).foregroundStyle(Palet.inktFel)
             }
         case .gearmd:
-            Text("kaart.gearmd").font(.headline)
+            Text("kaart.gearmd").font(.headline).foregroundStyle(Palet.inktFel)
         case .aan:
             Text(model.kaartAftelling ?? "—")
                 .font(.system(size: 32, weight: .light))
                 .monospacedDigit()
+                .foregroundStyle(Palet.inktFel)
                 .lineLimit(1)
                 .minimumScaleFactor(0.7)
         }
@@ -121,13 +132,21 @@ struct MenuView: View {
             HStack(spacing: 6) {
                 if let arm = model.lidArm {
                     Text(arm.resterendeTekst(op: model.now))
-                        .font(.caption).monospacedDigit().foregroundStyle(.secondary)
+                        .font(.caption).monospacedDigit().foregroundStyle(Palet.inktZacht)
                 }
                 Button("menu.arm.intrekken") { model.cancelArming() }
                     .buttonStyle(.link).font(.caption)
             }
         case .aan:
-            Text(onderregelAan).font(.caption).foregroundStyle(.secondary)
+            // Twee regels mogen. Op één regel werd het Franse "éveillé jusqu'à 21:56 · écran
+            // ouvert" afgekapt tot "… écran ouv…", en juist die laatste twee woorden zijn de
+            // klepstand — het onderwerp van deze app. Krimpen tot 8 pt was het alternatief en
+            // is slechter: dan staat de belangrijkste regel het kleinst.
+            Text(onderregelAan)
+                .font(.caption)
+                .foregroundStyle(Palet.inktZacht)
+                .lineLimit(2)
+                .fixedSize(horizontal: false, vertical: true)
         }
     }
 
@@ -143,13 +162,13 @@ struct MenuView: View {
     /// Altijd zichtbaar zolang er iets loopt — dat stond zo in het oude paneel, met de reden
     /// erbij: "een regel die er soms wel en soms niet staat maakt zijn afwezigheid
     /// dubbelzinnig, en dan is 'welke trigger heeft dit gestart?' niet te beantwoorden."
-    /// Bij de herindeling viel hij weg; dit zet hem terug.
     @ViewBuilder private var triggerregel: some View {
         if let regel = model.triggerLine {
             Text(regel)
                 .font(.caption2)
-                .foregroundStyle(.secondary)
+                .foregroundStyle(Palet.inktZacht)
                 .fixedSize(horizontal: false, vertical: true)
+                .padding(.leading, 2)
         }
     }
 
@@ -176,7 +195,7 @@ struct MenuView: View {
             .disabled(model.busy)
 
             HStack(spacing: 6) {
-                Text("kaart.eindigt").font(.caption).foregroundStyle(.secondary)
+                Text("kaart.eindigt").font(.caption).foregroundStyle(Palet.inktZacht)
                 DatePicker("", selection: $untilTime, displayedComponents: .hourAndMinute)
                     .labelsHidden().datePickerStyle(.field).controlSize(.small)
                 // Met een knop en niet bij elke wijziging van de kiezer: elke keer zetten
@@ -198,7 +217,7 @@ struct MenuView: View {
             }
 
             if let untilExplanation {
-                Text(untilExplanation).font(.caption2).foregroundStyle(.secondary)
+                Text(untilExplanation).font(.caption2).foregroundStyle(Palet.inktZacht)
                     .fixedSize(horizontal: false, vertical: true)
             }
         }
@@ -233,117 +252,99 @@ struct MenuView: View {
 
     // MARK: - De vangnetten
 
-    /// De drie vangnetten, als meters naast elkaar in plaats van als zinnen door het paneel
-    /// heen. Elk is een paar: waar je nu bent, en waar het ingrijpt. Dat tweede getal is de
-    /// hele reden dat dit blok bestaat — een percentage zonder grens zegt niets over wat er
-    /// straks gaat gebeuren.
+    /// De drie vangnetten als tegels: accu en warmte naast elkaar, de wachter eronder.
+    ///
+    /// Elk is een paar: waar je nu bent, en waar het ingrijpt. Dat tweede getal is de hele
+    /// reden dat dit blok bestaat — een percentage zonder grens zegt niets over wat er straks
+    /// gaat gebeuren. In de oude rij vochten die twee om één kolom; nu heeft elk zijn regel.
     private var vangnetten: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            HStack {
-                Text("vangnet.kop").font(.system(size: 10)).textCase(.uppercase)
-                    .foregroundStyle(.tertiary)
-                Spacer()
-                Text("vangnet.legenda").font(.system(size: 10)).foregroundStyle(.tertiary)
+        VStack(alignment: .leading, spacing: 9) {
+            SectieKop(tekst: "vangnet.kop")
+
+            HStack(alignment: .top, spacing: 9) {
+                // Alleen als er werkelijk een accumeting is. Nul tonen op een Mac zonder accu
+                // is een lege balk voor iets wat nooit gemeten is.
+                if let accu = model.accuMeter, let battery = model.battery {
+                    MeterTegel(symbool: "battery.50",
+                               naam: "tegel.accu",
+                               waarde: "\(battery.percent)%",
+                               grens: accu.sluimert ? L10n.t("vangnet.accu.lader")
+                                                    : L10n.t("tegel.grens.accu", Prefs.batteryFloor),
+                               gedempt: accu.sluimert) {
+                        AccuMeterView(meter: accu)
+                    }
+                }
+
+                MeterTegel(symbool: "thermometer.medium",
+                           naam: "tegel.warmte",
+                           waarde: model.warmteLabel,
+                           grens: L10n.t("tegel.grens.warmte",
+                                         model.warmteMeter.stopBij, model.warmteMeter.aantal)) {
+                    WarmteMeterView(meter: model.warmteMeter)
+                }
             }
 
-            // Alleen als er werkelijk een accumeting is. Nul tonen op een Mac zonder accu is
-            // een lege balk voor iets wat nooit gemeten is.
-            if let accu = model.accuMeter, let battery = model.battery {
-                MeterRij(symbool: "battery.50",
-                         inhoud: AccuMeterView(meter: accu),
-                         waarde: "\(battery.percent)%",
-                         grens: accu.sluimert ? L10n.t("vangnet.accu.lader")
-                                              : "\(Prefs.batteryFloor)%",
-                         gedempt: accu.sluimert)
-            }
-
-            MeterRij(symbool: "thermometer.medium",
-                     inhoud: WarmteMeterView(meter: model.warmteMeter),
-                     waarde: model.warmteLabel,
-                     grens: "4/4")
-
-            MeterRij(symbool: "shield",
-                     inhoud: HStack(spacing: 6) {
-                         WachterStip(leeft: model.wachterLeeft)
-                         Text(model.wachterZin).font(.system(size: 10))
-                             .foregroundStyle(model.wachterLeeft ? Color.secondary : Color.red)
-                             .lineLimit(1)
-                         Spacer(minLength: 0)
-                     },
-                     waarde: "",
-                     grens: L10n.t("vangnet.wachter.interval"))
+            WachterTegel(zin: model.wachterZin,
+                         interval: L10n.t("vangnet.wachter.interval"),
+                         leeft: model.wachterLeeft)
 
             if let limiet = model.cpuSpeedLimit, limiet < 100 {
                 Text(L10n.t("vangnet.afgeknepen", limiet))
-                    .font(.caption2).foregroundStyle(.orange)
+                    .font(.caption2).foregroundStyle(Palet.let_op)
                     .fixedSize(horizontal: false, vertical: true)
+                    .padding(.leading, 2)
             }
         }
     }
 
-    // MARK: - De aandachtsrij
+    // MARK: - Het aandachtsblok
 
-    /// Alle waarschuwingen in één rij, op ernst geordend door `AppModel.aandacht`. Ingeklapt
-    /// staat de ernstigste er met een telling naast; rood klapt altijd zelf open, want rood
-    /// is de toestand waarin iemand iets moet doen.
-    @ViewBuilder private var aandachtsrij: some View {
+    /// Alle waarschuwingen als tegels, op ernst geordend door `AppModel.aandacht`.
+    ///
+    /// Uitgevouwen en niet meer achter een driehoekje. Rood dwong dat al af; nu is het de
+    /// normale toestand. Een waarschuwing die je moet openklappen om te zien, is een
+    /// waarschuwing die je niet ziet.
+    @ViewBuilder private var aandachtsblok: some View {
         let aandacht = model.aandacht
         if let kop = aandacht.kop {
-            DisclosureGroup(isExpanded: Binding(
-                get: { aandacht.moetOpen || aandachtOpen },
-                set: { aandachtOpen = $0 }
-            )) {
-                VStack(alignment: .leading, spacing: 10) {
-                    ForEach(aandacht.lijst, id: \.soort) { melding in
-                        meldingVak(melding)
-                    }
-                }
-                .padding(.top, 6)
-            } label: {
+            VStack(alignment: .leading, spacing: 9) {
                 HStack(spacing: 7) {
+                    SectieKop(tekst: "aandacht.kop")
                     if aandacht.telling > 1 {
                         Text("\(aandacht.telling)")
                             .font(.system(size: 10, weight: .bold))
                             .padding(.horizontal, 5).padding(.vertical, 1)
-                            .background(kleur(kop.soort.ernst), in: Capsule())
-                            .foregroundStyle(.white)
+                            .background(Palet.kleur(kop.soort.ernst), in: Capsule())
+                            .foregroundStyle(Color.black.opacity(0.75))
                     }
-                    // Ingeklapt staat de zin hier; uitgeklapt staat hij eronder in het vak.
-                    // Allebei tegelijk zette dezelfde regel twee keer pal onder elkaar, en
-                    // omdat rood altijd uitklapt was dat bij elke rode toestand gegarandeerd.
-                    Text(aandacht.moetOpen || aandachtOpen ? L10n.t("aandacht.kop") : kop.tekst)
-                        .font(.caption)
-                        .foregroundStyle(kleur(kop.soort.ernst))
-                        .lineLimit(2)
+                    Spacer(minLength: 0)
+                }
+                ForEach(aandacht.lijst, id: \.soort) { melding in
+                    Tegel(stijl: .aandacht(melding.soort.ernst)) {
+                        meldingVak(melding)
+                    }
                 }
             }
-            .padding(9)
-            .glas(straal: 10)
         }
     }
 
-    private func kleur(_ ernst: Aandacht.Ernst) -> Color {
-        switch ernst {
-        case .rood:   return .red
-        case .oranje: return .orange
-        case .grijs:  return .secondary
-        }
-    }
-
-    /// De uitleg en de knoppen die bij één melding horen. De zin zelf staat al in de melding —
-    /// die is in `AppModel` samengesteld — dus hier staat alleen wat je ermee kunt doen.
+    /// De zin, de uitleg en de knoppen die bij één melding horen. De zin zelf is in `AppModel`
+    /// samengesteld; hier staat alleen wat je ermee kunt doen.
     @ViewBuilder private func meldingVak(_ melding: Aandacht.Melding) -> some View {
         VStack(alignment: .leading, spacing: 6) {
-            Text(melding.tekst).font(.caption).foregroundStyle(kleur(melding.soort.ernst))
+            Text(melding.tekst)
+                .font(.system(size: 12, weight: .medium))
+                .foregroundStyle(Palet.kleur(melding.soort.ernst))
                 .fixedSize(horizontal: false, vertical: true)
             switch melding.soort {
             case .vangnettenUit:
-                Text("menu.ontwapend.uitleg").font(.caption2).foregroundStyle(.secondary)
+                Text("menu.ontwapend.uitleg").font(.caption2).foregroundStyle(Palet.inktZacht)
                     .fixedSize(horizontal: false, vertical: true)
                 Text("sudo pmset -a disablesleep 0")
                     .font(.system(.caption2, design: .monospaced)).textSelection(.enabled)
+                    .foregroundStyle(Palet.inkt)
             case .geenToestemming:
-                Text("menu.grant.uitleg").font(.caption2).foregroundStyle(.secondary)
+                Text("menu.grant.uitleg").font(.caption2).foregroundStyle(Palet.inktZacht)
                     .fixedSize(horizontal: false, vertical: true)
                 HStack {
                     Button("menu.grant.installeren") { model.installGrant() }.disabled(model.busy)
@@ -353,25 +354,26 @@ struct MenuView: View {
                 // De Terminal-route, voor als het autorisatievenster zich misdraagt. Het is
                 // ook de eerlijke route: je leest het script voordat je het als root draait.
                 if !SudoersGrant.manualCommand.isEmpty {
-                    Text("menu.grant.terminal").font(.caption2).foregroundStyle(.secondary)
+                    Text("menu.grant.terminal").font(.caption2).foregroundStyle(Palet.inktZacht)
                     Text(SudoersGrant.manualCommand)
                         .font(.system(.caption2, design: .monospaced))
-                        .textSelection(.enabled).foregroundStyle(.secondary)
+                        .textSelection(.enabled).foregroundStyle(Palet.inktZacht)
                         .fixedSize(horizontal: false, vertical: true)
                 }
             case .storingen:
                 ForEach(model.outages.suffix(3)) { storing in
                     Text("• " + storing.describe()).font(.caption2)
-                        .foregroundStyle(storing.isOngoing ? Color.orange : Color.secondary)
+                        .foregroundStyle(storing.isOngoing ? Palet.let_op : Palet.inktZacht)
                         .fixedSize(horizontal: false, vertical: true)
                 }
             case .belofteGebroken:
-                Text("menu.gebroken.uitleg.wel").font(.caption2).foregroundStyle(.secondary)
+                Text("menu.gebroken.uitleg.wel").font(.caption2).foregroundStyle(Palet.inktZacht)
                     .fixedSize(horizontal: false, vertical: true)
                 Text("./verify.sh --after")
                     .font(.system(.caption2, design: .monospaced)).textSelection(.enabled)
+                    .foregroundStyle(Palet.inkt)
             case .wasGeslapen:
-                Text("menu.gebroken.uitleg.niet").font(.caption2).foregroundStyle(.secondary)
+                Text("menu.gebroken.uitleg.niet").font(.caption2).foregroundStyle(Palet.inktZacht)
                     .fixedSize(horizontal: false, vertical: true)
             // `.foutstatus` draagt zijn eigen zin uit `AppModel.status` en heeft geen knop:
             // de twintig plekken die hem zetten hebben elk hun eigen herstelpad, en één
@@ -394,21 +396,21 @@ struct MenuView: View {
     @ViewBuilder
     private var updateNotice: some View {
         if showUpdateNotice {
-            VStack(alignment: .leading, spacing: 6) {
-                Label("menu.update.mededeling.titel", systemImage: "info.circle")
-                    .font(.caption)
-                Text("menu.update.mededeling.tekst")
-                    .font(.caption2)
-                    .foregroundStyle(.secondary)
-                    .fixedSize(horizontal: false, vertical: true)
-                HStack {
-                    Button("menu.update.mededeling.prima") { dismissUpdateNotice(disable: false) }
-                    Button("menu.update.mededeling.uit") { dismissUpdateNotice(disable: true) }
+            Tegel {
+                VStack(alignment: .leading, spacing: 6) {
+                    Label("menu.update.mededeling.titel", systemImage: "info.circle")
+                        .font(.caption)
+                    Text("menu.update.mededeling.tekst")
+                        .font(.caption2)
+                        .foregroundStyle(Palet.inktZacht)
+                        .fixedSize(horizontal: false, vertical: true)
+                    HStack {
+                        Button("menu.update.mededeling.prima") { dismissUpdateNotice(disable: false) }
+                        Button("menu.update.mededeling.uit") { dismissUpdateNotice(disable: true) }
+                    }
+                    .controlSize(.small)
                 }
-                .controlSize(.small)
             }
-            .padding(9)
-            .glas(straal: 10)
         }
     }
 
@@ -424,42 +426,50 @@ struct MenuView: View {
     @ViewBuilder
     private var updateRow: some View {
         if case let .beschikbaar(versie, notities) = updates.toestand {
-            VStack(alignment: .leading, spacing: 6) {
-                Label(updates.huidige == nil
-                      ? L10n.t("menu.update.nieuwste", versie.description)
-                      : L10n.t("menu.update.beschikbaar", versie.description),
-                      systemImage: "arrow.down.circle")
-                    .font(.caption)
-                Text(updates.huidige == nil
-                     ? "menu.update.uitleg.onbekend"
-                     : "menu.update.uitleg")
-                    .font(.caption2)
-                    .foregroundStyle(.secondary)
-                    .fixedSize(horizontal: false, vertical: true)
-                Text(Installatie.huidige.bijwerkCommando)
-                    .font(.system(.caption2, design: .monospaced))
-                    .textSelection(.enabled)
-                    .foregroundStyle(.secondary)
-                HStack {
-                    Button("menu.update.kopieer") {
-                        NSPasteboard.general.clearContents()
-                        NSPasteboard.general.setString(Installatie.huidige.bijwerkCommando, forType: .string)
+            Tegel {
+                VStack(alignment: .leading, spacing: 6) {
+                    Label(updates.huidige == nil
+                          ? L10n.t("menu.update.nieuwste", versie.description)
+                          : L10n.t("menu.update.beschikbaar", versie.description),
+                          systemImage: "arrow.down.circle")
+                        .font(.caption)
+                    Text(updates.huidige == nil
+                         ? "menu.update.uitleg.onbekend"
+                         : "menu.update.uitleg")
+                        .font(.caption2)
+                        .foregroundStyle(Palet.inktZacht)
+                        .fixedSize(horizontal: false, vertical: true)
+                    Text(Installatie.huidige.bijwerkCommando)
+                        .font(.system(.caption2, design: .monospaced))
+                        .textSelection(.enabled)
+                        .foregroundStyle(Palet.inktZacht)
+                    HStack {
+                        Button("menu.update.kopieer") {
+                            NSPasteboard.general.clearContents()
+                            NSPasteboard.general.setString(Installatie.huidige.bijwerkCommando, forType: .string)
+                        }
+                        // Ontbreekt als de URL uit het antwoord de controle in `UpdateCheck`
+                        // niet haalde. Dan blijft het versienummer staan en verdwijnt alleen
+                        // deze knop — zie `veiligeNotitieURL`.
+                        if let notities {
+                            Button("menu.update.watnieuw") { NSWorkspace.shared.open(notities) }
+                        }
                     }
-                    // Ontbreekt als de URL uit het antwoord de controle in `UpdateCheck`
-                    // niet haalde. Dan blijft het versienummer staan en verdwijnt alleen
-                    // deze knop — zie `veiligeNotitieURL`.
-                    if let notities {
-                        Button("menu.update.watnieuw") { NSWorkspace.shared.open(notities) }
-                    }
+                    .controlSize(.small)
                 }
-                .controlSize(.small)
             }
-            .padding(9)
-            .glas(straal: 10)
         }
     }
 
     // MARK: - De voet
+
+    /// Eigen streep en geen `Divider()`: die haalt zijn kleur uit de systeemscheiding, en op
+    /// een eigen verloop is dat of onzichtbaar of een harde balk.
+    private var scheiding: some View {
+        Rectangle()
+            .fill(Color.white.opacity(0.13))
+            .frame(height: 0.5)
+    }
 
     private var voet: some View {
         HStack(spacing: 6) {
@@ -472,7 +482,7 @@ struct MenuView: View {
                 Button { model.toggleBacklight() } label: {
                     Image(systemName: "keyboard")
                 }
-                .foregroundStyle(model.backlightOn == true ? Color.accentColor : Color.secondary)
+                .foregroundStyle(model.backlightOn == true ? Palet.accent : Palet.inktZacht)
                 .help(Text("menu.verlichting.titel"))
             }
 
