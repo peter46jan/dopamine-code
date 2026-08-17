@@ -400,3 +400,20 @@
 "taal.uitleg" = "Independent of the language of the rest of your Mac. This writes the same setting as System Settings → Language & Region → Applications, so the two cannot drift apart.";
 "taal.pasnavolgende" = "The new language appears the next time the app starts. Quit it from the menu and open it again.";
 "taal.nuactief" = "Currently active: %@";
+
+/* --- Panel: the status card and the safety nets --- */
+"kaart.uit" = "Sleeping normally";
+"kaart.gearmd" = "Waiting for the lid";
+"kaart.tot" = "awake until %@";
+"kaart.eindigt" = "Ends at";
+"vangnet.kop" = "Safety nets";
+"vangnet.legenda" = "now · stops at";
+"vangnet.wachter.interval" = "every 30 s";
+"vangnet.wachter.gekeken" = "flag read, %d s ago";
+"vangnet.wachter.nognietgekeken" = "has not looked yet";
+"vangnet.afgeknepen" = "Your Mac is running at %d%% because of the heat";
+
+/* --- Settings: what moved out of the panel --- */
+"alg.verlichting.titel" = "Keyboard backlight";
+"alg.verlichting.sterkte" = "Brightness";
+"alg.gedrag.titel" = "During a session";

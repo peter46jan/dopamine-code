@@ -401,3 +401,20 @@
 "taal.uitleg" = "Indépendant de la langue du reste de votre Mac. Ceci écrit le même réglage que Réglages Système → Langue et région → Applications, les deux ne peuvent donc pas diverger.";
 "taal.pasnavolgende" = "La nouvelle langue apparaîtra au prochain démarrage de l'app. Quittez-la depuis le menu et rouvrez-la.";
 "taal.nuactief" = "Actuellement active : %@";
+
+/* --- Panneau : la carte d'état et les filets de sécurité --- */
+"kaart.uit" = "Veille normale";
+"kaart.gearmd" = "En attente de l'écran rabattu";
+"kaart.tot" = "éveillé jusqu'à %@";
+"kaart.eindigt" = "Se termine à";
+"vangnet.kop" = "Filets de sécurité";
+"vangnet.legenda" = "maintenant · s'arrête à";
+"vangnet.wachter.interval" = "toutes les 30 s";
+"vangnet.wachter.gekeken" = "drapeau lu, il y a %d s";
+"vangnet.wachter.nognietgekeken" = "n'a pas encore regardé";
+"vangnet.afgeknepen" = "Votre Mac tourne à %d%% à cause de la chaleur";
+
+/* --- Réglages : ce qui a été déplacé hors du panneau --- */
+"alg.verlichting.titel" = "Rétroéclairage du clavier";
+"alg.verlichting.sterkte" = "Intensité";
+"alg.gedrag.titel" = "Pendant une session";

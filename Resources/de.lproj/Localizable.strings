@@ -401,3 +401,20 @@
 "taal.uitleg" = "Unabhängig von der Sprache des restlichen Macs. Das schreibt dieselbe Einstellung wie Systemeinstellungen → Sprache & Region → Apps, die beiden können also nicht auseinanderlaufen.";
 "taal.pasnavolgende" = "Die neue Sprache erscheint beim nächsten Start der App. Beende sie über das Menü und öffne sie erneut.";
 "taal.nuactief" = "Jetzt aktiv: %@";
+
+/* --- Panel: die Statuskarte und die Sicherungen --- */
+"kaart.uit" = "Schläft normal";
+"kaart.gearmd" = "Wartet auf den Deckel";
+"kaart.tot" = "wach bis %@";
+"kaart.eindigt" = "Endet um";
+"vangnet.kop" = "Sicherungen";
+"vangnet.legenda" = "jetzt · stoppt bei";
+"vangnet.wachter.interval" = "alle 30 s";
+"vangnet.wachter.gekeken" = "Flag gelesen, vor %d s";
+"vangnet.wachter.nognietgekeken" = "hat noch nicht nachgesehen";
+"vangnet.afgeknepen" = "Dein Mac läuft wegen der Wärme mit %d%%";
+
+/* --- Einstellungen: was aus dem Panel gezogen ist --- */
+"alg.verlichting.titel" = "Tastaturbeleuchtung";
+"alg.verlichting.sterkte" = "Helligkeit";
+"alg.gedrag.titel" = "Während einer Sitzung";

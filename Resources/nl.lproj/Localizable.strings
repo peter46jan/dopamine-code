@@ -405,3 +405,20 @@
 "taal.uitleg" = "Los van de taal van de rest van je Mac. Dit schrijft dezelfde instelling als Systeeminstellingen → Taal en regio → Apps, dus de twee kunnen niet uit de pas lopen.";
 "taal.pasnavolgende" = "De nieuwe taal verschijnt bij de volgende start van de app. Stop hem via het menu en open hem opnieuw.";
 "taal.nuactief" = "Nu actief: %@";
+
+/* --- Paneel: de statuskaart en de vangnetten --- */
+"kaart.uit" = "Slaapt normaal";
+"kaart.gearmd" = "Wacht op de klep";
+"kaart.tot" = "wakker tot %@";
+"kaart.eindigt" = "Eindigt om";
+"vangnet.kop" = "Vangnetten";
+"vangnet.legenda" = "nu · stopt bij";
+"vangnet.wachter.interval" = "elke 30 s";
+"vangnet.wachter.gekeken" = "vlag gelezen, %d s geleden";
+"vangnet.wachter.nognietgekeken" = "nog niet gekeken";
+"vangnet.afgeknepen" = "Je Mac draait op %d%% door de warmte";
+
+/* --- Instellingen: wat uit het paneel verhuisd is --- */
+"alg.verlichting.titel" = "Toetsenbordverlichting";
+"alg.verlichting.sterkte" = "Sterkte";
+"alg.gedrag.titel" = "Tijdens een sessie";
