@@ -20,10 +20,9 @@
 "menu.tot.zetten" = "Setzen";
 
 /* --- Menü: aufhören, sobald ein Programm fertig ist --- */
-"menu.stoppenals.titel" = "Aufhören, wenn";
 "menu.stoppenals.geenapps" = "Keine Apps gefunden";
-"menu.stoppenals.klaar" = "%@ fertig ist";
-"menu.stoppenals.placeholder" = "eine App fertig ist…";
+"menu.stoppenals.klaar" = "Stoppt, wenn %@ fertig ist";
+"menu.stoppenals.placeholder" = "Aufhören, wenn eine App fertig ist…";
 
 /* --- Menü: Warnung, dass die Sicherungen nicht greifen können --- */
 "menu.ontwapend.titel" = "Automatisches Beenden geht gerade nicht";
@@ -409,6 +408,7 @@
 "kaart.eindigt" = "Endet um";
 "vangnet.kop" = "Sicherungen";
 "vangnet.legenda" = "jetzt · stoppt bei";
+"vangnet.accu.lader" = "am Netzteil";
 "vangnet.wachter.interval" = "alle 30 s";
 "vangnet.wachter.gekeken" = "Flag gelesen, vor %d s";
 "vangnet.wachter.nognietgekeken" = "hat noch nicht nachgesehen";

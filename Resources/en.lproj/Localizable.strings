@@ -19,10 +19,9 @@
 "menu.tot.zetten" = "Set";
 
 /* --- Menu: stop when a program finishes --- */
-"menu.stoppenals.titel" = "Stop when";
 "menu.stoppenals.geenapps" = "No apps found";
-"menu.stoppenals.klaar" = "%@ has finished";
-"menu.stoppenals.placeholder" = "an app has finished…";
+"menu.stoppenals.klaar" = "Stops when %@ has finished";
+"menu.stoppenals.placeholder" = "Stop when an app has finished…";
 
 /* --- Menu: warning that the safety nets cannot work --- */
 "menu.ontwapend.titel" = "Stopping by itself will not work";
@@ -408,6 +407,7 @@
 "kaart.eindigt" = "Ends at";
 "vangnet.kop" = "Safety nets";
 "vangnet.legenda" = "now · stops at";
+"vangnet.accu.lader" = "on the charger";
 "vangnet.wachter.interval" = "every 30 s";
 "vangnet.wachter.gekeken" = "flag read, %d s ago";
 "vangnet.wachter.nognietgekeken" = "has not looked yet";

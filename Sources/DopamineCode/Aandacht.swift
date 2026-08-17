@@ -23,6 +23,7 @@ struct Aandacht {
         case vangnettenUit        // de vlag staat aan en er is niets meer dat hem terugzet
         case belofteGebroken      // de Mac heeft geslapen terwijl wij hem vasthielden
         case conflictDeeltVlag    // een andere app schrijft dezelfde vlag
+        case laatsteMelding       // een handeling die mislukte of iets meldde
         case geenToestemming      // zonder de sudoers-regel werkt er niets
         case conflict             // een andere app houdt de Mac op zijn eigen manier wakker
         case wasGeslapen          // geslapen, maar de vlag stond niet aan: dat hoort te kunnen
@@ -35,12 +36,13 @@ struct Aandacht {
             case .vangnettenUit:     return 1
             case .belofteGebroken:   return 2
             case .conflictDeeltVlag: return 3
-            case .geenToestemming:   return 4
-            case .conflict:          return 5
-            case .wasGeslapen:       return 6
-            case .storingen:         return 7
-            case .updateBeschikbaar: return 8
-            case .updateMededeling:  return 9
+            case .laatsteMelding:    return 4
+            case .geenToestemming:   return 5
+            case .conflict:          return 6
+            case .wasGeslapen:       return 7
+            case .storingen:         return 8
+            case .updateBeschikbaar: return 9
+            case .updateMededeling:  return 10
             }
         }
 
@@ -48,7 +50,7 @@ struct Aandacht {
             switch self {
             case .vangnettenUit, .belofteGebroken, .conflictDeeltVlag:
                 return .rood
-            case .geenToestemming, .conflict, .wasGeslapen:
+            case .laatsteMelding, .geenToestemming, .conflict, .wasGeslapen:
                 return .oranje
             case .storingen, .updateBeschikbaar, .updateMededeling:
                 return .grijs

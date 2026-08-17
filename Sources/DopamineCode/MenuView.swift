@@ -206,7 +206,8 @@ struct MenuView: View {
                 MeterRij(symbool: "battery.50",
                          inhoud: AccuMeterView(meter: accu),
                          waarde: "\(battery.percent)%",
-                         grens: "\(Prefs.batteryFloor)%",
+                         grens: accu.sluimert ? L10n.t("vangnet.accu.lader")
+                                              : "\(Prefs.batteryFloor)%",
                          gedempt: accu.sluimert)
             }
 
@@ -333,7 +334,7 @@ struct MenuView: View {
             case .wasGeslapen:
                 Text("menu.gebroken.uitleg.niet").font(.caption2).foregroundStyle(.secondary)
                     .fixedSize(horizontal: false, vertical: true)
-            case .updateBeschikbaar, .updateMededeling:
+            case .laatsteMelding, .updateBeschikbaar, .updateMededeling:
                 EmptyView()
             }
         }
@@ -371,8 +372,8 @@ struct MenuView: View {
                 }
                 .controlSize(.small)
             }
-            .padding(8)
-            .background(Color.secondary.opacity(0.10), in: RoundedRectangle(cornerRadius: 6))
+            .padding(9)
+            .glas(straal: 10)
         }
     }
 
@@ -418,8 +419,8 @@ struct MenuView: View {
                 }
                 .controlSize(.small)
             }
-            .padding(8)
-            .background(Color.accentColor.opacity(0.10), in: RoundedRectangle(cornerRadius: 6))
+            .padding(9)
+            .glas(straal: 10)
         }
     }
 

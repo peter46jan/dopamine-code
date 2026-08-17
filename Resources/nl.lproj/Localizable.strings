@@ -24,10 +24,9 @@
 "menu.tot.zetten" = "Zetten";
 
 /* --- Menu: stoppen zodra een programma klaar is --- */
-"menu.stoppenals.titel" = "Stoppen als";
 "menu.stoppenals.geenapps" = "Geen apps gevonden";
-"menu.stoppenals.klaar" = "%@ klaar is";
-"menu.stoppenals.placeholder" = "een app klaar is…";
+"menu.stoppenals.klaar" = "Stopt als %@ klaar is";
+"menu.stoppenals.placeholder" = "Stoppen als een app klaar is…";
 
 /* --- Menu: waarschuwing dat de vangnetten niet kunnen werken --- */
 "menu.ontwapend.titel" = "Vanzelf stoppen werkt nu niet";
@@ -413,6 +412,7 @@
 "kaart.eindigt" = "Eindigt om";
 "vangnet.kop" = "Vangnetten";
 "vangnet.legenda" = "nu · stopt bij";
+"vangnet.accu.lader" = "aan de lader";
 "vangnet.wachter.interval" = "elke 30 s";
 "vangnet.wachter.gekeken" = "vlag gelezen, %d s geleden";
 "vangnet.wachter.nognietgekeken" = "nog niet gekeken";

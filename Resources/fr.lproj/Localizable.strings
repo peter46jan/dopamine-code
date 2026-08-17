@@ -20,10 +20,9 @@
 "menu.tot.zetten" = "Définir";
 
 /* --- Menu : arrêter dès qu'un programme se termine --- */
-"menu.stoppenals.titel" = "Arrêter quand";
 "menu.stoppenals.geenapps" = "Aucune app trouvée";
-"menu.stoppenals.klaar" = "%@ a terminé";
-"menu.stoppenals.placeholder" = "une app a terminé…";
+"menu.stoppenals.klaar" = "S'arrête quand %@ a terminé";
+"menu.stoppenals.placeholder" = "Arrêter quand une app a terminé…";
 
 /* --- Menu : avertissement que les garde-fous ne peuvent pas agir --- */
 "menu.ontwapend.titel" = "L'arrêt automatique ne fonctionne pas";
@@ -409,6 +408,7 @@
 "kaart.eindigt" = "Se termine à";
 "vangnet.kop" = "Filets de sécurité";
 "vangnet.legenda" = "maintenant · s'arrête à";
+"vangnet.accu.lader" = "sur secteur";
 "vangnet.wachter.interval" = "toutes les 30 s";
 "vangnet.wachter.gekeken" = "drapeau lu, il y a %d s";
 "vangnet.wachter.nognietgekeken" = "n'a pas encore regardé";

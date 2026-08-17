@@ -390,6 +390,9 @@ final class AppModel: ObservableObject {
                                                                         : "menu.conflict.draait",
                                                  conflict.name)))
         }
+        if let lastMessage {
+            meldingen.append(.init(soort: .laatsteMelding, tekst: lastMessage))
+        }
         if grantStatus != .granted {
             meldingen.append(.init(soort: .geenToestemming, tekst: grantText))
         }
