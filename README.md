@@ -26,6 +26,8 @@ diagnostic tooling, and `verify.sh` and the audit read those lines back.
 ./verify.sh --talen      check that the four languages stay in step
 ```
 
+Or install it with `brew tap peter46jan/dopamine && brew install dopamine-code`.
+
 ---
 
 ## Why this needs root, and what it does not get
@@ -52,13 +54,28 @@ reasoning, including two findings a security audit turned up and how they were f
 
 ## Building it yourself
 
+With Homebrew:
+
+```bash
+brew tap peter46jan/dopamine
+brew install dopamine-code
+ln -sfn "$(brew --prefix)/opt/dopamine-code/Dopamine Code.app" /Applications/
+```
+
+That builds from source rather than downloading a binary, and deliberately so: Homebrew puts
+the quarantine attribute on anything it downloads, so an app that is not notarised by Apple
+gets blocked by Gatekeeper. A locally compiled one never is. The third line is needed because
+a formula may not write outside its own prefix.
+
+Or straight from the source:
+
 ```bash
 git clone https://github.com/peter46jan/dopamine-code.git
 cd dopamine-code
 ./build.sh --install
 ```
 
-You need **macOS 14 or newer** and the Xcode command line tools (`xcode-select --install`).
+Either way you need **macOS 14 or newer** and the Xcode command line tools (`xcode-select --install`).
 No Xcode project, no Apple Developer account. There is no Gatekeeper warning either: a
 locally built app never gets a `com.apple.quarantine` attribute, so the right-click-Open
 detour is not needed.
@@ -877,6 +894,8 @@ dat is diagnostisch gereedschap, en `verify.sh` en de audit lezen die regels ter
 ./verify.sh --talen      controleer of de vier talen gelijk lopen
 ```
 
+Of installeer hem met `brew tap peter46jan/dopamine && brew install dopamine-code`.
+
 ---
 
 ## Waarom hier root voor nodig is, en wat het níet krijgt
@@ -905,13 +924,28 @@ hoe die gedicht zijn, staat in [De sudoers-regel](#de-sudoers-regel) en
 
 ## Zelf bouwen
 
+Met Homebrew:
+
+```bash
+brew tap peter46jan/dopamine
+brew install dopamine-code
+ln -sfn "$(brew --prefix)/opt/dopamine-code/Dopamine Code.app" /Applications/
+```
+
+Dat bouwt uit de bron in plaats van een binary te downloaden, en dat is met opzet: Homebrew
+zet het quarantaine-attribuut op alles wat het ophaalt, dus een app die niet door Apple
+genotariseerd is wordt door Gatekeeper geblokkeerd. Een lokaal gecompileerde nooit. De derde
+regel is nodig omdat een formule niet buiten zijn eigen map mag schrijven.
+
+Of rechtstreeks uit de bron:
+
 ```bash
 git clone https://github.com/peter46jan/dopamine-code.git
 cd dopamine-code
 ./build.sh --install
 ```
 
-Nodig: **macOS 14 of nieuwer** en de Xcode command line tools (`xcode-select --install`).
+Hoe dan ook nodig: **macOS 14 of nieuwer** en de Xcode command line tools (`xcode-select --install`).
 Geen Xcode-project, geen Apple Developer-account. Er komt geen Gatekeeper-waarschuwing:
 een lokaal gebouwde app krijgt geen `com.apple.quarantine`-attribuut, dus er is geen
 rechtsklik-Openen-omweg nodig.
