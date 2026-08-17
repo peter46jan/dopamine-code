@@ -422,3 +422,4 @@
 /* --- Durée compacte pour le sélecteur segmenté : 30m, 2h, 10h30 --- */
 "duur.kort.uur" = "h";
 "duur.kort.min" = "m";
+"vangnet.wachter.gelezen" = "drapeau lu, %@";

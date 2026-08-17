@@ -65,20 +65,31 @@ struct WarmteMeterView: View {
 /// dat zegt een hartslag beter dan een getal. Dit is het enige vangnet dat een `SIGKILL`
 /// van de app overleeft, en het stond tot nu toe nergens in de interface.
 struct WachterStip: View {
+    /// Keek de wachter recent genoeg? Zo niet, dan hoort de stip dat te zeggen.
+    ///
+    /// Hij was hard groen en klopte altijd door — ook als de LaunchAgent uitgezet was bij
+    /// Systeeminstellingen → Inloggen en extensies, en ook als er nog nooit iemand gekeken
+    /// had. Een indicator die per constructie geen storing kan melden is erger dan geen
+    /// indicator, zeker voor het enige vangnet dat een `SIGKILL` van de app overleeft.
+    var leeft = true
+
     @Environment(\.accessibilityReduceMotion) private var minderBeweging
     @State private var groot = false
 
     var body: some View {
         Circle()
-            .fill(Color.green)
+            .fill(leeft ? Color.green : Color.red)
             .frame(width: 5, height: 5)
             .overlay(
                 Circle()
                     .stroke(Color.green.opacity(groot ? 0 : 0.55), lineWidth: 3)
                     .scaleEffect(groot ? 2.6 : 1)
+                    .opacity(leeft ? 1 : 0)
             )
             .onAppear {
-                guard !minderBeweging else { return }
+                // Alleen kloppen als er werkelijk iets klopt. Een hartslag naast een dode
+                // wachter is precies de geruststelling die hier niet mag staan.
+                guard leeft, !minderBeweging else { return }
                 withAnimation(.easeOut(duration: 2.4).repeatForever(autoreverses: false)) {
                     groot = true
                 }

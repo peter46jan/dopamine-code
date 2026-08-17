@@ -231,14 +231,15 @@ struct MenuView: View {
 
             MeterRij(symbool: "thermometer.medium",
                      inhoud: WarmteMeterView(meter: model.warmteMeter),
-                     waarde: model.thermal.label,
+                     waarde: model.warmteLabel,
                      grens: "4/4")
 
             MeterRij(symbool: "shield",
                      inhoud: HStack(spacing: 6) {
-                         WachterStip()
+                         WachterStip(leeft: model.wachterLeeft)
                          Text(model.wachterZin).font(.system(size: 10))
-                             .foregroundStyle(.secondary).lineLimit(1)
+                             .foregroundStyle(model.wachterLeeft ? Color.secondary : Color.red)
+                             .lineLimit(1)
                          Spacer(minLength: 0)
                      },
                      waarde: "",

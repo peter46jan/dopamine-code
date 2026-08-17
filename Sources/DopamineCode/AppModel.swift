@@ -362,8 +362,29 @@ final class AppModel: ObservableObject {
                          aanDeLader: battery.onAC)
     }
 
+    /// De warmtestand, en buiten een sessie rechtstreeks gemeten.
+    ///
+    /// `ThermalWatch` draait alléén tijdens een sessie: `startSession` doet `start()`,
+    /// `endSession` doet `stop()` en zet `thermal = .nominal`. Buiten een sessie is `thermal`
+    /// dus altijd `.nominal`, ongeacht wat de Mac werkelijk doet — en het paneel tekende dan
+    /// "Normaal · 4/4" op een machine die op dat moment ernstig onder druk kon staan.
+    ///
+    /// `activate()` kende dit probleem al en leest daar met zoveel woorden de líve waarde:
+    /// "the cached value is ALWAYS .nominal here". Dezelfde reden geldt hier. De lezing is
+    /// een goedkope synchrone property, geen systeemaanroep.
+    ///
+    /// Dit is dezelfde regel die `accuMeter` al volgt: liever niets tonen of echt meten dan
+    /// een waarde tekenen die nooit gemeten is.
+    var warmteStand: ThermalWatch.Pressure {
+        intendedOn ? thermal : ThermalWatch.Pressure(ProcessInfo.processInfo.thermalState)
+    }
+
+    /// Het woord naast de warmtemeter. Uit dezelfde bron als de meter zelf, want anders kan er
+    /// "normaal" staan naast drie van de vier blokjes aan.
+    var warmteLabel: String { warmteStand.label }
+
     var warmteMeter: WarmteMeter {
-        switch thermal {
+        switch warmteStand {
         case .nominal:  return WarmteMeter(stap: 1)
         case .fair:     return WarmteMeter(stap: 2)
         case .serious:  return WarmteMeter(stap: 3)
@@ -431,7 +452,25 @@ final class AppModel: ObservableObject {
         guard let sinds = wachterSinds else {
             return L10n.t("vangnet.wachter.nognietgekeken")
         }
-        return L10n.t("vangnet.wachter.gekeken", max(0, Int(sinds)))
+        // Boven de twee minuten in minuten, net als `RestartGuard.statusSentence()`. Rauwe
+        // seconden gaven "vlag gelezen, 4211 s geleden" — een getal dat je moet omrekenen om
+        // te merken dat er ruim een uur niemand gekeken heeft.
+        let seconden = max(0, Int(sinds))
+        let ouderdom = seconden < 120 ? L10n.t("wachter.secondengeleden", seconden)
+                                      : L10n.t("wachter.minutengeleden", seconden / 60)
+        return L10n.t("vangnet.wachter.gelezen", ouderdom)
+    }
+
+    /// Kijkt de wachter nog? Dezelfde grens van 300 seconden die `checkRestartGuardIsAwake()`
+    /// hanteert, en net als daar telt "nog nooit gekeken" als niet levend.
+    ///
+    /// Het paneel had dit niet: `WachterStip` was hard groen en klopte altijd door, ook als de
+    /// LaunchAgent uitgezet was bij Systeeminstellingen → Inloggen en extensies. Een indicator
+    /// die per constructie geen storing kan melden, is erger dan geen indicator — zeker voor
+    /// het enige vangnet dat een `SIGKILL` van de app overleeft.
+    var wachterLeeft: Bool {
+        guard let sinds = wachterSinds else { return false }
+        return sinds <= 300
     }
 
     static func durationText(_ total: Int) -> String {
