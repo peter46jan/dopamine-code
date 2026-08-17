@@ -1055,6 +1055,40 @@ test_translations() {
   fi
 }
 
+# De formule in de Homebrew-tap wijst naar een tarball van een tag. Blijft die achter op de
+# nieuwste release, dan installeert `brew install` stilletjes een oude versie — geen fout,
+# geen melding, en de beheerder merkt het niet omdat zijn eigen app gewoon werkt. release.sh
+# werkt de formule bij, maar dit is de controle die het opmerkt als dat ooit misgaat.
+test_tap() {
+  section "13. Homebrew-tap: wijst de formule naar de nieuwste release?"
+
+  local formule
+  if ! command -v brew >/dev/null 2>&1; then
+    skip "brew niet geïnstalleerd; de tap is niet te controleren."
+    return
+  fi
+  formule="$(brew --repository 2>/dev/null)/Library/Taps/peter46jan/homebrew-dopamine/Formula/dopamine-code.rb"
+  if [ ! -f "$formule" ]; then
+    skip "De tap staat hier niet; haal hem op met 'brew tap peter46jan/dopamine'."
+    return
+  fi
+
+  local in_formule laatste_tag
+  in_formule="$(grep -oE 'tags/v[0-9]+\.[0-9]+\.[0-9]+\.tar\.gz' "$formule" \
+                | head -1 | sed 's|tags/||; s|\.tar\.gz||')"
+  laatste_tag="$(cd "$PROJECT_DIR" && git tag -l 'v*' --sort=-v:refname | head -1)"
+
+  if [ -z "$in_formule" ]; then
+    fail "Kon geen versie uit de formule lezen; staat er nog een geldige url in?"
+  elif [ -z "$laatste_tag" ]; then
+    skip "Nog geen tags in deze repo, dus niets om tegen af te zetten."
+  elif [ "$in_formule" = "$laatste_tag" ]; then
+    pass "Formule en nieuwste tag staan allebei op $laatste_tag."
+  else
+    fail "Formule wijst naar $in_formule, maar de nieuwste tag is $laatste_tag — 'brew install' geeft dus de oude versie."
+  fi
+}
+
 case "${1:-}" in
   --report)  report; exit 0 ;;
   # Niet in de standaardronde: de kop bovenaan belooft dat die niets kapotmaakt.
@@ -1070,6 +1104,7 @@ case "${1:-}" in
   --update)  test_update_check ;;
   --login)   test_login_item ;;
   --talen)   test_translations ;;
+  --tap)     test_tap ;;
   *)
     report
     test_includedir
@@ -1083,6 +1118,7 @@ case "${1:-}" in
     test_update_check
     test_login_item
     test_translations
+    test_tap
     ;;
 esac
 

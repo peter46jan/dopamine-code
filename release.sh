@@ -123,6 +123,56 @@ if ! URL="$(gh release create "$TAG" --repo "$REPO" --draft --title "$TAG" --not
 fi
 say "✓ concept-release aangemaakt"
 
+# --- de Homebrew-tap bijwerken -------------------------------------------------
+#
+# De formule wijst naar een tarball van een tag, met de checksum erbij. Blijft die op de
+# vorige versie staan, dan installeert `brew install` stilletjes de oude versie — voor
+# altijd, zonder foutmelding, en je merkt het niet want je eigen app werkt gewoon. Daarom
+# gebeurt het hier en niet in een tweede handeling die je kunt vergeten.
+#
+# Ontbreekt de tap, dan is dat luidruchtig en niet stil: hem overslaan zonder iets te zeggen
+# is precies hoe de twee repo's uit elkaar gaan lopen.
+TAP_FORMULA=""
+if command -v brew >/dev/null 2>&1; then
+  TAP_FORMULA="$(brew --repository 2>/dev/null)/Library/Taps/$REPO_EIGENAAR/homebrew-dopamine/Formula/dopamine-code.rb"
+fi
+
+if [ -z "$TAP_FORMULA" ] || [ ! -f "$TAP_FORMULA" ]; then
+  warn ""
+  warn "De Homebrew-tap is hier niet gevonden, dus de formule is NIET bijgewerkt."
+  warn "Zolang dat zo blijft installeert 'brew install dopamine-code' de vórige versie."
+  warn "Haal hem op met:  brew tap $REPO_EIGENAAR/dopamine"
+  warn "en draai dit script opnieuw, of werk url en sha256 met de hand bij."
+else
+  TARBALL="https://github.com/$REPO/archive/refs/tags/$TAG.tar.gz"
+  say "Checksum van $TAG ophalen"
+  TMP_TGZ="$(mktemp -t dopamine-tarball)"
+  if ! curl -sfL -o "$TMP_TGZ" "$TARBALL"; then
+    rm -f "$TMP_TGZ"
+    warn "Kon $TARBALL niet ophalen; de formule is niet bijgewerkt."
+  else
+    SHA="$(shasum -a 256 "$TMP_TGZ" | cut -d' ' -f1)"
+    rm -f "$TMP_TGZ"
+
+    # In place, met een backup die meteen weer weg gaat: sed -i verschilt tussen BSD en GNU
+    # en dit script draait op macOS.
+    sed -i '' -e "s#^\( *url \).*#\1\"$TARBALL\"#" \
+              -e "s#^\( *sha256 \).*#\1\"$SHA\"#" "$TAP_FORMULA"
+
+    TAP_DIR="$(dirname "$(dirname "$TAP_FORMULA")")"
+    if git -C "$TAP_DIR" diff --quiet -- "$TAP_FORMULA"; then
+      warn "De formule wees al naar $TAG; niets te committen."
+    elif ! git -C "$TAP_DIR" commit -q -m "dopamine-code $VERSION" -- "$TAP_FORMULA"; then
+      warn "Committen in de tap mislukte; de wijziging staat er nog wel."
+    elif ! git -C "$TAP_DIR" push -q; then
+      warn "De formule is lokaal bijgewerkt en gecommit, maar pushen mislukte."
+      warn "Draai met de hand:  git -C '$TAP_DIR' push"
+    else
+      say "✓ formule bijgewerkt naar $TAG en gepusht"
+    fi
+  fi
+fi
+
 printf '\n'
 say "Nu jij: lees de notities na en publiceer hem."
 printf '  %s\n' "$URL"
