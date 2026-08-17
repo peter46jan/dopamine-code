@@ -1055,6 +1055,81 @@ test_translations() {
   fi
 }
 
+test_paneel_meters() {
+  section "13. Paneel: de meters rekenen goed"
+
+  local src="$PROJECT_DIR/Sources/DopamineCode/Meter.swift"
+  if [ ! -f "$src" ]; then
+    fail "Meter.swift ontbreekt."
+    return
+  fi
+
+  local dir; dir="$(mktemp -d)"
+  cat > "$dir/main.swift" <<'SWIFT'
+import Foundation
+
+var fouten = 0
+func eis(_ voorwaarde: Bool, _ wat: String) {
+    if !voorwaarde { print("FOUT: \(wat)"); fouten += 1 }
+}
+
+// --- de accumeter -------------------------------------------------------------
+// De vulling is de stand, de zone is de grens. Ze mogen nooit hetzelfde getal zijn.
+let vol = AccuMeter(percent: 84, grens: 15, aanDeLader: false)
+eis(vol.vulling == 0.84, "84% vult 0,84, werd \(vol.vulling)")
+eis(vol.zone == 0.15, "grens 15% geeft zone 0,15, werd \(vol.zone)")
+eis(!vol.grijptIn, "84% boven een grens van 15% grijpt niet in")
+
+// De grens is `<=`, precies zoals AppModel hem toepast. Op de grens zelf grijpt hij dus in.
+eis(AccuMeter(percent: 15, grens: 15, aanDeLader: false).grijptIn, "15 <= 15 grijpt in")
+eis(!AccuMeter(percent: 16, grens: 15, aanDeLader: false).grijptIn, "16 > 15 grijpt niet in")
+
+// Aan de lader kan dit vangnet niet afgaan — AppModel eist `!battery.onAC`. Een meter die
+// hem dan als scherp tekent, belooft iets wat niet gebeurt.
+eis(!AccuMeter(percent: 5, grens: 15, aanDeLader: true).grijptIn, "aan de lader grijpt hij niet in")
+eis(AccuMeter(percent: 5, grens: 15, aanDeLader: true).slaapt, "aan de lader slaapt het vangnet")
+eis(!AccuMeter(percent: 84, grens: 15, aanDeLader: false).slaapt, "op accu slaapt het niet")
+
+// Rommel van buiten mag niet buiten de balk tekenen.
+eis(AccuMeter(percent: 140, grens: 15, aanDeLader: false).vulling == 1.0, "boven 100 klemt op 1")
+eis(AccuMeter(percent: -8, grens: 15, aanDeLader: false).vulling == 0.0, "onder 0 klemt op 0")
+
+// --- de warmtemeter -----------------------------------------------------------
+// Vier stappen, want macOS geeft er vier. De laatste is waar de sessie stopt.
+let koel = WarmteMeter(stap: 1)
+eis(koel.aantal == 4, "vier stappen, werd \(koel.aantal)")
+eis(koel.stopBij == 4, "stopt bij de vierde")
+eis(koel.brandt(1) && !koel.brandt(2), "bij stap 1 brandt alleen het eerste blokje")
+eis(!koel.grijptIn, "stap 1 grijpt niet in")
+
+let heet = WarmteMeter(stap: 4)
+eis(heet.grijptIn, "stap 4 grijpt in")
+eis(heet.brandt(1) && heet.brandt(4), "bij stap 4 branden ze allemaal")
+
+// Een stap buiten 1…4 mag niet stil doorglippen naar "alles in orde".
+eis(WarmteMeter(stap: 9).stap == 4, "boven het aantal klemt op het aantal")
+eis(WarmteMeter(stap: 0).stap == 1, "onder 1 klemt op 1")
+
+print(fouten == 0 ? "OK" : "FOUTEN=\(fouten)")
+exit(fouten == 0 ? 0 : 1)
+SWIFT
+
+  local build
+  if ! command -v swiftc >/dev/null 2>&1; then
+    skip "swiftc niet gevonden; de meters zijn niet getest."
+  elif ! build="$(swiftc -O -o "$dir/probe" "$src" "$dir/main.swift" 2>&1)"; then
+    fail "De meterproef compileert niet: $(printf '%s' "$build" | grep error: | head -2 | tr '\n' ' ')"
+  else
+    local uit
+    if uit="$("$dir/probe" 2>&1)"; then
+      pass "Accumeter en warmtemeter rekenen goed, inclusief de lader-uitzondering."
+    else
+      fail "Meters deugen niet: $(printf '%s' "$uit" | tr '\n' ' ')"
+    fi
+  fi
+  rm -rf "$dir"
+}
+
 # De formule in de Homebrew-tap wijst naar een tarball van een tag. Blijft die achter op de
 # nieuwste release, dan installeert `brew install` stilletjes een oude versie — geen fout,
 # geen melding, en de beheerder merkt het niet omdat zijn eigen app gewoon werkt. release.sh
