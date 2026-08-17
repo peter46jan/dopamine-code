@@ -128,6 +128,11 @@ struct MeterRij<Inhoud: View>: View {
             }
             .font(.system(size: 10.5))
             .monospacedDigit()
+            // Krimpen en niet afbreken. Gemeten: "100% · aan de lader" is 101,3 pt en
+            // "légèrement élevée · 4/4" 118,5 pt — allebei breder dan de kolom, en zonder dit
+            // werd de rij 13 pt hoger en stonden de drie meters niet meer op één lijn.
+            .lineLimit(1)
+            .minimumScaleFactor(0.72)
             // 100 en niet 74: "62% · aan de lader" werd afgekapt tot "62% · aan d…", en dat is
             // net de helft van de mededeling die ertoe doet.
             .frame(width: 100, alignment: .trailing)

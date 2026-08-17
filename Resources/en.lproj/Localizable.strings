@@ -422,3 +422,5 @@
 "duur.kort.uur" = "h";
 "duur.kort.min" = "m";
 "vangnet.wachter.gelezen" = "flag read, %@";
+"aandacht.kop" = "Needs attention";
+"kaart.fout" = "Something is wrong";

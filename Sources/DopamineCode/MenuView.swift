@@ -36,6 +36,12 @@ struct MenuView: View {
     /// over de toestand en geen voorkeur.
     @State private var aandachtOpen = false
 
+    /// `KeyboardBacklight.canPostEvents` is `CGPreflightPostEventAccess()` en kost gemeten
+    /// mediaan 9,3 ms. De body draait elke seconde — en blijft dat doen nadat het paneel
+    /// dicht is — dus in de body stond hier negen milliseconde blokkerende IPC per seconde
+    /// op de hoofddraad, en dat is de draad die de guardian aandrijft. Eén keer per opening.
+    @State private var kanToetsenbord = false
+
     var body: some View {
         VStack(alignment: .leading, spacing: 13) {
             statuskaart
@@ -57,6 +63,7 @@ struct MenuView: View {
             untilTime = model.deadline
                 ?? Date().addingTimeInterval(Double(model.autoOffMinutes) * 60)
             untilExplanation = nil
+            kanToetsenbord = KeyboardBacklight.canPostEvents
         }
     }
 
@@ -86,12 +93,10 @@ struct MenuView: View {
             // "Slaapt normaal" is een bewering over het systeem, en die mogen we niet doen
             // terwijl de app weet dat er iets mis is — bij een onleesbare kernelvlag weet de
             // guardian juist níet of de Mac mag slapen. Dan staat de fout er zelf.
-            if case .error(let melding) = model.status {
-                Text(melding)
-                    .font(.headline)
-                    .foregroundStyle(.orange)
-                    .lineLimit(3)
-                    .fixedSize(horizontal: false, vertical: true)
+            if model.status.isError {
+                // Kort en zonder de zin zelf: die staat rood in de aandachtsrij, die bij een
+                // fout altijd openklapt. Hem hier hérhalen zette hem drie keer op één paneel.
+                Text("kaart.fout").font(.headline).foregroundStyle(.orange)
             } else {
                 Text("kaart.uit").font(.headline)
             }
@@ -166,7 +171,14 @@ struct MenuView: View {
                     .buttonStyle(.link).font(.caption)
                     .fixedSize()          // anders breekt "Zetten" over twee regels
                 Spacer(minLength: 4)
+            }
+
+            // Eigen regel. Naast de tijdkiezer erbij liep de rij in het Frans met een
+            // gekoppelde app 19 punten buiten het paneel, en "Se termine à" werd dan tot
+            // drie regels platgedrukt omdat het als enige mocht krimpen.
+            HStack(spacing: 6) {
                 procesKiezer
+                Spacer(minLength: 0)
             }
 
             if let untilExplanation {
@@ -266,7 +278,7 @@ struct MenuView: View {
                 set: { aandachtOpen = $0 }
             )) {
                 VStack(alignment: .leading, spacing: 10) {
-                    ForEach(Array(aandacht.lijst.enumerated()), id: \.offset) { _, melding in
+                    ForEach(aandacht.lijst, id: \.soort) { melding in
                         meldingVak(melding)
                     }
                 }
@@ -280,7 +292,11 @@ struct MenuView: View {
                             .background(kleur(kop.soort.ernst), in: Capsule())
                             .foregroundStyle(.white)
                     }
-                    Text(kop.tekst).font(.caption)
+                    // Ingeklapt staat de zin hier; uitgeklapt staat hij eronder in het vak.
+                    // Allebei tegelijk zette dezelfde regel twee keer pal onder elkaar, en
+                    // omdat rood altijd uitklapt was dat bij elke rode toestand gegarandeerd.
+                    Text(aandacht.moetOpen || aandachtOpen ? L10n.t("aandacht.kop") : kop.tekst)
+                        .font(.caption)
                         .foregroundStyle(kleur(kop.soort.ernst))
                         .lineLimit(2)
                 }
@@ -456,7 +472,7 @@ struct MenuView: View {
             }
             .disabled(model.busy)
 
-            if model.backlight.hasDirectControl || KeyboardBacklight.canPostEvents {
+            if model.backlight.hasDirectControl || kanToetsenbord {
                 Button { model.toggleBacklight() } label: {
                     Image(systemName: "keyboard")
                 }

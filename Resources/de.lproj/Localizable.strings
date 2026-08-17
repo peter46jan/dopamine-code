@@ -11,7 +11,7 @@
 /* --- Menü: beim Zuklappen einschalten --- */
 "menu.arm.actief" = "Schaltet sich ein, sobald du den Deckel schließt";
 "menu.arm.intrekken" = "Abbrechen";
-"menu.arm.aanzetten" = "Einschalten, sobald ich den Deckel schließe";
+"menu.arm.aanzetten" = "Bei Deckelschluss starten";
 
 /* --- Menü: wie lange --- */
 "menu.duur.titel" = "Dauer";
@@ -423,3 +423,5 @@
 "duur.kort.uur" = "h";
 "duur.kort.min" = "m";
 "vangnet.wachter.gelezen" = "Flag gelesen, %@";
+"aandacht.kop" = "Braucht Aufmerksamkeit";
+"kaart.fout" = "Etwas stimmt nicht";

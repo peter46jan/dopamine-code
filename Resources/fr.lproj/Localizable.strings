@@ -423,3 +423,5 @@
 "duur.kort.uur" = "h";
 "duur.kort.min" = "m";
 "vangnet.wachter.gelezen" = "drapeau lu, %@";
+"aandacht.kop" = "Demande attention";
+"kaart.fout" = "Quelque chose ne va pas";

@@ -427,3 +427,5 @@
 "duur.kort.uur" = "u";
 "duur.kort.min" = "m";
 "vangnet.wachter.gelezen" = "vlag gelezen, %@";
+"aandacht.kop" = "Vraagt aandacht";
+"kaart.fout" = "Er klopt iets niet";
