@@ -99,6 +99,10 @@ final class AppModel: ObservableObject {
     @Published private(set) var conflict: ConflictWatch.Conflict?
     @Published private(set) var lastMessage: String?
     @Published private(set) var thermal: ThermalWatch.Pressure = .nominal
+    /// Onder 100 wordt de Mac door de warmte afgeknepen. Bijgewerkt door de guardian-tik en
+    /// niet in de body uitgelezen: `pmset -g therm` kost tot acht seconden, en de body draait
+    /// elke seconde door de kloktik.
+    @Published private(set) var cpuSpeedLimit: Int?
     @Published private(set) var busy = false
 
     /// True when the flag is set but the app has no passwordless way to clear it. In that
@@ -332,6 +336,77 @@ final class AppModel: ObservableObject {
             return L10n.t("kop.zondersessie")
         }
         return nil
+    }
+
+    // MARK: - Wat het paneel nodig heeft
+
+    /// De toestand van de statuskaart. Eén vraag, één antwoord — zie `KaartToestand`.
+    var kaart: KaartToestand {
+        KaartToestand(intendedOn: intendedOn,
+                      armTot: lidArm?.verlooptOp,
+                      sessieStart: sessionStart,
+                      deadline: deadline,
+                      nu: now)
+    }
+
+    var accuMeter: AccuMeter {
+        AccuMeter(percent: battery?.percent ?? 0,
+                  grens: Prefs.batteryFloor,
+                  aanDeLader: battery?.onAC ?? false)
+    }
+
+    var warmteMeter: WarmteMeter {
+        switch thermal {
+        case .nominal:  return WarmteMeter(stap: 1)
+        case .fair:     return WarmteMeter(stap: 2)
+        case .serious:  return WarmteMeter(stap: 3)
+        case .critical: return WarmteMeter(stap: 4)
+        }
+    }
+
+    /// Alle waarschuwingen in één gesorteerde lijst.
+    ///
+    /// Bewust hier en niet in de view: de rangorde is een beslissing over wat er bovenaan
+    /// komt te staan, en die hoort niet in de opmaak te zitten.
+    var aandacht: Aandacht {
+        var meldingen: [Aandacht.Melding] = []
+        if safetyNetsDisarmed {
+            meldingen.append(.init(soort: .vangnettenUit, tekst: L10n.t("menu.ontwapend.titel")))
+        }
+        if let slept = sleepDuringSession {
+            meldingen.append(.init(soort: sleepBrokeThePromise ? .belofteGebroken : .wasGeslapen,
+                                   tekst: slept.describe()))
+        }
+        if let conflict {
+            meldingen.append(.init(soort: conflict.sharesTheFlag ? .conflictDeeltVlag : .conflict,
+                                   tekst: L10n.t(conflict.sharesTheFlag ? "menu.conflict.deelt"
+                                                                        : "menu.conflict.draait",
+                                                 conflict.name)))
+        }
+        if grantStatus != .granted {
+            meldingen.append(.init(soort: .geenToestemming, tekst: grantText))
+        }
+        if !outages.isEmpty {
+            meldingen.append(.init(soort: .storingen,
+                                   tekst: L10n.t(outagesFromFinishedSession ? "menu.storing.vorige"
+                                                                            : "menu.storing.nu")))
+        }
+        return Aandacht(meldingen: meldingen)
+    }
+
+    /// Wanneer de wachter voor het laatst keek. Dat is het bewijs dat hij leeft, en het is
+    /// het enige vangnet dat een `SIGKILL` van de app overleeft — het stond tot nu toe
+    /// nergens in de interface. `nil` als hij nog nooit gedraaid heeft.
+    ///
+    /// Leest via `RestartGuard.timeSinceLastRound()`, dat er al was voor de guardian en
+    /// uitsluitend het statusbestand inleest. Geen tweede ingang naar diezelfde toestand:
+    /// de wachter mag niets uitvoeren en niets schrijven, en één leesweg is één ding om
+    /// zuiver te houden.
+    var wachterZin: String {
+        guard let sinds = RestartGuard.timeSinceLastRound() else {
+            return L10n.t("vangnet.wachter.nognietgekeken")
+        }
+        return L10n.t("vangnet.wachter.gekeken", max(0, Int(sinds)))
     }
 
     static func durationText(_ total: Int) -> String {
@@ -872,6 +947,16 @@ final class AppModel: ObservableObject {
         // Hourly. Rotation used to run only at launch, so an app that starts at login and
         // runs for weeks never rotated until the one time it did.
         if tickCount % 180 == 0 { EventLog.shared.rotateIfNeeded() }
+
+        // Hier en niet in de body: `pmset -g therm` kost tot acht seconden, en de body van
+        // het paneel draait elke seconde door de kloktik. Boven `nominal` doet elke tik één
+        // losse lezing; op `nominal` is er niets te knijpen, dus wordt de waarde gewist in
+        // plaats van bewaard — een oud percentage dat blijft staan liegt over nu.
+        if thermal != .nominal {
+            Task { @MainActor [weak self] in self?.cpuSpeedLimit = await ThermalWatch.cpuSpeedLimit() }
+        } else {
+            cpuSpeedLimit = nil
+        }
 
         // Kijken hoort bij élke tik, ook met een lopende sessie. Handelen niet — dat gebeurt
         // verderop, alleen in de tak waar de vlag aantoonbaar op 0 staat.
