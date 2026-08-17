@@ -40,12 +40,6 @@
 "menu.grant.opnieuw" = "Erneut prüfen";
 "menu.grant.terminal" = "Oder im Terminal:";
 
-/* --- Menü: ein anderes Programm hält den Mac ebenfalls wach --- */
-"menu.conflict.deelt" = "%@ ändert dieselbe Einstellung";
-"menu.conflict.draait" = "%@ läuft ebenfalls";
-"menu.conflict.afsluiten" = "%@ beenden";
-"menu.conflict.nietmelden" = "Nicht mehr melden";
-
 /* --- Menü: Internetausfälle --- */
 "menu.storing.vorige" = "Internet — letztes Mal";
 "menu.storing.nu" = "Internet — diese Sitzung";

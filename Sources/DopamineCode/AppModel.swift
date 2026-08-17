@@ -96,7 +96,6 @@ final class AppModel: ObservableObject {
     /// IPC round trips per second for as long as the menu stayed open.
     @Published private(set) var backlightLevel: Float?
     @Published private(set) var backlightSuppressed = false
-    @Published private(set) var conflict: ConflictWatch.Conflict?
     @Published private(set) var lastMessage: String?
     @Published private(set) var thermal: ThermalWatch.Pressure = .nominal
     /// Onder 100 wordt de Mac door de warmte afgeknepen. Bijgewerkt door de guardian-tik en
@@ -418,12 +417,6 @@ final class AppModel: ObservableObject {
             meldingen.append(.init(soort: sleepBrokeThePromise ? .belofteGebroken : .wasGeslapen,
                                    tekst: slept.describe()))
         }
-        if let conflict {
-            meldingen.append(.init(soort: conflict.sharesTheFlag ? .conflictDeeltVlag : .conflict,
-                                   tekst: L10n.t(conflict.sharesTheFlag ? "menu.conflict.deelt"
-                                                                        : "menu.conflict.draait",
-                                                 conflict.name)))
-        }
         // Alleen oranje als er werkelijk iets mislukte. `lastMessage` draagt ook
         // geruststellingen — "opgeruimd", "staat al aan" — en die als waarschuwing bovenaan
         // zetten is precies het te-luid-zijn dat deze herindeling moest wegnemen. De oude
@@ -728,7 +721,6 @@ final class AppModel: ObservableObject {
         }
 
         refreshBacklight()
-        Task { conflict = await ConflictWatch.current() }
 
         powerMonitor = PowerSourceMonitor { [weak self] snapshot in
             self?.handlePower(snapshot)
@@ -2615,7 +2607,6 @@ final class AppModel: ObservableObject {
     func refreshGrant() {
         refreshBacklight()
         Task {
-            conflict = await ConflictWatch.current()
             await refreshGrantAsync()
             // Opening the menu is a deliberate act; do not make the user wait out a
             // ten-minute backoff to see whether the flag can be released now.
@@ -2872,19 +2863,6 @@ final class AppModel: ObservableObject {
         guard intendedOn, let start = sessionStart else { return }
         applyDeadline(start: start)
         Task { await guardianTick() }
-    }
-
-    func quitAmphetamine() {
-        ConflictWatch.quitAmphetamine()
-        Task { [weak self] in
-            try? await Task.sleep(nanoseconds: 1_000_000_000)
-            self?.conflict = await ConflictWatch.current()
-        }
-    }
-
-    func dismissConflictWarning() {
-        Prefs.warnAboutAmphetamine = false
-        conflict = nil
     }
 
     func openLog() {

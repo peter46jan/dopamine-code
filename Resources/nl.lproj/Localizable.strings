@@ -44,12 +44,6 @@
 "menu.grant.opnieuw" = "Opnieuw controleren";
 "menu.grant.terminal" = "Of in Terminal:";
 
-/* --- Menu: een ander programma houdt de Mac ook wakker --- */
-"menu.conflict.deelt" = "%@ schakelt dezelfde instelling";
-"menu.conflict.draait" = "%@ draait ook";
-"menu.conflict.afsluiten" = "%@ afsluiten";
-"menu.conflict.nietmelden" = "Niet meer melden";
-
 /* --- Menu: internetstoringen --- */
 "menu.storing.vorige" = "Internet — vorige keer";
 "menu.storing.nu" = "Internet — nu actief";

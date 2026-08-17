@@ -359,18 +359,6 @@ struct MenuView: View {
                         .textSelection(.enabled).foregroundStyle(.secondary)
                         .fixedSize(horizontal: false, vertical: true)
                 }
-            case .conflict, .conflictDeeltVlag:
-                if let conflict = model.conflict {
-                    Text(conflict.detail).font(.caption2).foregroundStyle(.secondary)
-                        .fixedSize(horizontal: false, vertical: true)
-                    HStack {
-                        Button(L10n.t("menu.conflict.afsluiten", conflict.name)) {
-                            model.quitAmphetamine()
-                        }
-                        Button("menu.conflict.nietmelden") { model.dismissConflictWarning() }
-                    }
-                    .controlSize(.small)
-                }
             case .storingen:
                 ForEach(model.outages.suffix(3)) { storing in
                     Text("• " + storing.describe()).font(.caption2)

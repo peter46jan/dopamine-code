@@ -39,12 +39,6 @@
 "menu.grant.opnieuw" = "Check again";
 "menu.grant.terminal" = "Or in Terminal:";
 
-/* --- Menu: another program is holding the Mac awake too --- */
-"menu.conflict.deelt" = "%@ changes the same setting";
-"menu.conflict.draait" = "%@ is running too";
-"menu.conflict.afsluiten" = "Quit %@";
-"menu.conflict.nietmelden" = "Stop telling me";
-
 /* --- Menu: internet outages --- */
 "menu.storing.vorige" = "Internet — last time";
 "menu.storing.nu" = "Internet — this session";

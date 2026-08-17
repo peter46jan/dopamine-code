@@ -40,12 +40,6 @@
 "menu.grant.opnieuw" = "Vérifier à nouveau";
 "menu.grant.terminal" = "Ou dans Terminal :";
 
-/* --- Menu : un autre programme garde aussi le Mac éveillé --- */
-"menu.conflict.deelt" = "%@ modifie le même réglage";
-"menu.conflict.draait" = "%@ tourne aussi";
-"menu.conflict.afsluiten" = "Quitter %@";
-"menu.conflict.nietmelden" = "Ne plus me prévenir";
-
 /* --- Menu : coupures d'internet --- */
 "menu.storing.vorige" = "Internet — la dernière fois";
 "menu.storing.nu" = "Internet — cette session";

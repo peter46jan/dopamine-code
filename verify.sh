@@ -1241,11 +1241,9 @@ eis(door.telling == 3, "de telling is het totaal, werd \(door.telling)")
 eis(door.moetOpen, "een rode melding dwingt open")
 eis(Aandacht(meldingen: [m(.vangnettenUit)]).moetOpen, "vangnettenUit is rood")
 eis(Aandacht(meldingen: [m(.belofteGebroken)]).moetOpen, "belofteGebroken is rood")
-eis(Aandacht(meldingen: [m(.conflictDeeltVlag)]).moetOpen, "conflictDeeltVlag is rood")
 
 // Oranje en grijs niet — daar mag de rij ingeklapt blijven.
 eis(!Aandacht(meldingen: [m(.geenToestemming)]).moetOpen, "geenToestemming is oranje, niet rood")
-eis(!Aandacht(meldingen: [m(.conflict)]).moetOpen, "een conflict zonder gedeelde vlag is oranje")
 eis(!Aandacht(meldingen: [m(.storingen)]).moetOpen, "storingen zijn grijs")
 eis(!Aandacht(meldingen: [m(.updateBeschikbaar)]).moetOpen, "een update is grijs")
 

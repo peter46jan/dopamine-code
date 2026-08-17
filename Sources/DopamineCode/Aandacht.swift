@@ -7,8 +7,8 @@ import Foundation
 /// niets luid. Hier is het één lijst met een vaste rangorde.
 ///
 /// Dit type kent de meldingen niet die het ordent: het krijgt een soort en een kant-en-klare
-/// zin. Dat is met opzet. Zou het `ConflictWatch.Conflict` en `SleepWatch.Episode` kennen,
-/// dan sleept het de halve app zijn proef in en is de rangorde niet meer los te testen.
+/// zin. Dat is met opzet. Zou het `SleepWatch.Episode` kennen, dan sleept het de halve app
+/// zijn proef in en is de rangorde niet meer los te testen.
 struct Aandacht {
 
     enum Ernst {
@@ -32,10 +32,8 @@ struct Aandacht {
         // het enige vangnet dat een SIGKILL overleeft stil was.
         case wachterStil
         case belofteGebroken      // de Mac heeft geslapen terwijl wij hem vasthielden
-        case conflictDeeltVlag    // een andere app schrijft dezelfde vlag
         case laatsteMelding       // een handeling die mislukte — `status.isError`
         case geenToestemming      // zonder de sudoers-regel werkt er niets
-        case conflict             // een andere app houdt de Mac op zijn eigen manier wakker
         case wasGeslapen          // geslapen, maar de vlag stond niet aan: dat hoort te kunnen
         case storingen            // netwerkonderbrekingen, verslag achteraf
         // Dezelfde `lastMessage`, maar zonder foutstatus: "opgeruimd", "staat al aan". Een
@@ -51,23 +49,21 @@ struct Aandacht {
             case .foutstatus:         return 2
             case .wachterStil:        return 3
             case .belofteGebroken:    return 4
-            case .conflictDeeltVlag:  return 5
-            case .laatsteMelding:     return 6
-            case .geenToestemming:    return 7
-            case .conflict:           return 8
-            case .wasGeslapen:        return 9
-            case .storingen:          return 10
-            case .laatsteMededeling:  return 11
-            case .updateBeschikbaar:  return 12
-            case .updateMededeling:   return 13
+            case .laatsteMelding:     return 5
+            case .geenToestemming:    return 6
+            case .wasGeslapen:        return 7
+            case .storingen:          return 8
+            case .laatsteMededeling:  return 9
+            case .updateBeschikbaar:  return 10
+            case .updateMededeling:   return 11
             }
         }
 
         var ernst: Ernst {
             switch self {
-            case .vangnettenUit, .foutstatus, .wachterStil, .belofteGebroken, .conflictDeeltVlag:
+            case .vangnettenUit, .foutstatus, .wachterStil, .belofteGebroken:
                 return .rood
-            case .laatsteMelding, .geenToestemming, .conflict, .wasGeslapen:
+            case .laatsteMelding, .geenToestemming, .wasGeslapen:
                 return .oranje
             case .storingen, .laatsteMededeling, .updateBeschikbaar, .updateMededeling:
                 return .grijs

@@ -17,7 +17,6 @@ enum Prefs {
         static let notifications = "notifications"
         static let launchAtLogin = "launchAtLogin"
         static let backlightRestoreLevel = "backlightRestoreLevel"
-        static let warnAboutAmphetamine = "warnAboutAmphetamine"
         static let blinkBacklightOnToggle = "blinkBacklightOnToggle"
         static let autoBrightnessWasSuppressed = "autoBrightnessWasSuppressed"
         static let autoBrightnessOriginallyOn = "autoBrightnessOriginallyOn"
@@ -67,7 +66,6 @@ enum Prefs {
             Key.notifications: true,
             Key.launchAtLogin: false,
             Key.backlightRestoreLevel: 0.5,
-            Key.warnAboutAmphetamine: true,
             Key.blinkBacklightOnToggle: false,
             Key.autoBrightnessWasSuppressed: false,
             Key.autoBrightnessOriginallyOn: true,
@@ -232,11 +230,6 @@ enum Prefs {
             return v > 0.01 ? min(v, 1) : 0.5
         }
         set { d.set(min(max(newValue, 0), 1), forKey: Key.backlightRestoreLevel) }
-    }
-
-    static var warnAboutAmphetamine: Bool {
-        get { d.bool(forKey: Key.warnAboutAmphetamine) }
-        set { d.set(newValue, forKey: Key.warnAboutAmphetamine) }
     }
 
     // MARK: - Zelf aanzetten (fase 3)
