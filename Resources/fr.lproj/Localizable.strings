@@ -410,7 +410,6 @@
 "vangnet.legenda" = "maintenant · s'arrête à";
 "vangnet.accu.lader" = "sur secteur";
 "vangnet.wachter.interval" = "toutes les 30 s";
-"vangnet.wachter.gekeken" = "drapeau lu, il y a %d s";
 "vangnet.wachter.nognietgekeken" = "n'a pas encore regardé";
 "vangnet.afgeknepen" = "Votre Mac tourne à %d%% à cause de la chaleur";
 
@@ -423,5 +422,6 @@
 "duur.kort.uur" = "h";
 "duur.kort.min" = "m";
 "vangnet.wachter.gelezen" = "drapeau lu, %@";
-"aandacht.kop" = "Demande attention";
+"aandacht.kop" = "Nécessite votre attention";
 "kaart.fout" = "Quelque chose ne va pas";
+"vangnet.wachter.stil" = "Le gardien n'a pas regardé depuis trop longtemps";

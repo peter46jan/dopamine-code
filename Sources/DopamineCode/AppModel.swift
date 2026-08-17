@@ -409,6 +409,11 @@ final class AppModel: ObservableObject {
         if case .error(let melding) = status {
             meldingen.append(.init(soort: .foutstatus, tekst: melding))
         }
+        // Een stille wachter is rood, en rood klapt de rij open. De stip werd hier al rood
+        // van, maar zonder melding bleef de rij dicht en telde hij niet mee.
+        if !wachterLeeft {
+            meldingen.append(.init(soort: .wachterStil, tekst: L10n.t("vangnet.wachter.stil")))
+        }
         if let slept = sleepDuringSession {
             meldingen.append(.init(soort: sleepBrokeThePromise ? .belofteGebroken : .wasGeslapen,
                                    tekst: slept.describe()))

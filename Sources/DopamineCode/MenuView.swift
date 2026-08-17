@@ -372,7 +372,7 @@ struct MenuView: View {
             // `.foutstatus` draagt zijn eigen zin uit `AppModel.status` en heeft geen knop:
             // de twintig plekken die hem zetten hebben elk hun eigen herstelpad, en één
             // algemene actie zou bij de meeste het verkeerde doen.
-            case .foutstatus, .laatsteMelding, .laatsteMededeling,
+            case .foutstatus, .wachterStil, .laatsteMelding, .laatsteMededeling,
                  .updateBeschikbaar, .updateMededeling:
                 EmptyView()
             }

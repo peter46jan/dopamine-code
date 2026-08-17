@@ -26,6 +26,11 @@ struct Aandacht {
         // mis was. De ergste: de kernelvlag is onleesbaar. De code faalt daar dicht ("failing
         // open here would silently disable all three"); de weergave deed dat niet.
         case foutstatus
+        // De wachter heeft te lang niet gekeken. De stip werd hier al rood van, maar er kwam
+        // geen melding bij — dus de rij klapte niet open en de telling zag hem niet. Bij een
+        // grijze storing van gisteren als enige andere melding stond díe dan bovenaan terwijl
+        // het enige vangnet dat een SIGKILL overleeft stil was.
+        case wachterStil
         case belofteGebroken      // de Mac heeft geslapen terwijl wij hem vasthielden
         case conflictDeeltVlag    // een andere app schrijft dezelfde vlag
         case laatsteMelding       // een handeling die mislukte — `status.isError`
@@ -44,22 +49,23 @@ struct Aandacht {
             switch self {
             case .vangnettenUit:      return 1
             case .foutstatus:         return 2
-            case .belofteGebroken:    return 3
-            case .conflictDeeltVlag:  return 4
-            case .laatsteMelding:     return 5
-            case .geenToestemming:    return 6
-            case .conflict:           return 7
-            case .wasGeslapen:        return 8
-            case .storingen:          return 9
-            case .laatsteMededeling:  return 10
-            case .updateBeschikbaar:  return 11
-            case .updateMededeling:   return 12
+            case .wachterStil:        return 3
+            case .belofteGebroken:    return 4
+            case .conflictDeeltVlag:  return 5
+            case .laatsteMelding:     return 6
+            case .geenToestemming:    return 7
+            case .conflict:           return 8
+            case .wasGeslapen:        return 9
+            case .storingen:          return 10
+            case .laatsteMededeling:  return 11
+            case .updateBeschikbaar:  return 12
+            case .updateMededeling:   return 13
             }
         }
 
         var ernst: Ernst {
             switch self {
-            case .vangnettenUit, .foutstatus, .belofteGebroken, .conflictDeeltVlag:
+            case .vangnettenUit, .foutstatus, .wachterStil, .belofteGebroken, .conflictDeeltVlag:
                 return .rood
             case .laatsteMelding, .geenToestemming, .conflict, .wasGeslapen:
                 return .oranje

@@ -409,7 +409,6 @@
 "vangnet.legenda" = "now · stops at";
 "vangnet.accu.lader" = "on the charger";
 "vangnet.wachter.interval" = "every 30 s";
-"vangnet.wachter.gekeken" = "flag read, %d s ago";
 "vangnet.wachter.nognietgekeken" = "has not looked yet";
 "vangnet.afgeknepen" = "Your Mac is running at %d%% because of the heat";
 
@@ -424,3 +423,4 @@
 "vangnet.wachter.gelezen" = "flag read, %@";
 "aandacht.kop" = "Needs attention";
 "kaart.fout" = "Something is wrong";
+"vangnet.wachter.stil" = "The watchdog has not looked in too long";

@@ -410,7 +410,6 @@
 "vangnet.legenda" = "jetzt · stoppt bei";
 "vangnet.accu.lader" = "am Netzteil";
 "vangnet.wachter.interval" = "alle 30 s";
-"vangnet.wachter.gekeken" = "Flag gelesen, vor %d s";
 "vangnet.wachter.nognietgekeken" = "hat noch nicht nachgesehen";
 "vangnet.afgeknepen" = "Dein Mac läuft wegen der Wärme mit %d%%";
 
@@ -425,3 +424,4 @@
 "vangnet.wachter.gelezen" = "Flag gelesen, %@";
 "aandacht.kop" = "Braucht Aufmerksamkeit";
 "kaart.fout" = "Etwas stimmt nicht";
+"vangnet.wachter.stil" = "Die Sicherung hat zu lange nicht nachgesehen";

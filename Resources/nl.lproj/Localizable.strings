@@ -414,7 +414,6 @@
 "vangnet.legenda" = "nu · stopt bij";
 "vangnet.accu.lader" = "aan de lader";
 "vangnet.wachter.interval" = "elke 30 s";
-"vangnet.wachter.gekeken" = "vlag gelezen, %d s geleden";
 "vangnet.wachter.nognietgekeken" = "nog niet gekeken";
 "vangnet.afgeknepen" = "Je Mac draait op %d%% door de warmte";
 
@@ -429,3 +428,4 @@
 "vangnet.wachter.gelezen" = "vlag gelezen, %@";
 "aandacht.kop" = "Vraagt aandacht";
 "kaart.fout" = "Er klopt iets niet";
+"vangnet.wachter.stil" = "De wachter heeft te lang niet gekeken";
