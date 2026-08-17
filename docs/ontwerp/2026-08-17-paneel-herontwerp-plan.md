@@ -828,10 +828,59 @@ Co-Authored-By: Claude Opus 5 <noreply@anthropic.com>"
 
 **Bestanden:**
 - Aanmaken: `Sources/DopamineCode/Glas.swift`
+- Wijzigen: `verify.sh` (één bewering vervangen — zie stap 0)
 
-Hier is geen proef voor: dit is puur weergave en `#available` is niet uit te lokken in een
-programma dat op één macOS-versie draait. De controle is dat het op beide doelversies
+Voor `Glas` zelf is geen proef: dit is puur weergave en `#available` is niet uit te lokken in
+een programma dat op één macOS-versie draait. De controle is dat het op beide doelversies
 compileert, en dat staat in stap 3.
+
+- [ ] **Stap 0: vervang een tautologie door de invariant die er wél toe doet**
+
+De spec-review van taak 3 stelde vast dat deze bewering in het rangordeblok bij geen enkele
+wijziging kan falen:
+
+```swift
+for soort in Aandacht.Soort.allCases {
+    eis([.rood, .oranje, .grijs].contains(soort.ernst), "\(soort) heeft geen ernst")
+}
+```
+
+`Ernst` heeft precies die drie cases en `ernst` geeft een niet-optionele `Ernst`, dus `contains`
+is altijd waar. Het commentaar erboven belooft dat dit een nieuwe `Soort` zonder rangorde
+tegenhoudt; dat doet de uitputtende `switch` in `rangorde` en `ernst`, dus de compiler.
+
+Er is wél een echte invariant, en het paneel hangt eraan: **rood moet vóór oranje staan en
+oranje vóór grijs.** `rangorde` en `ernst` zijn twee losse tabellen. Krijgt een grijze soort
+ooit rangorde 1, dan is `kop` — `lijst.first` — een grijze melding, en dan staat er een grijze
+regel bovenaan de ingeklapte rij terwijl er een rode onder verstopt zit. Dat is exact de fout
+die dit ontwerp moest oplossen.
+
+Vervang het blok door:
+
+```swift
+// Rood vóór oranje, oranje vóór grijs. Dat is niet automatisch: `rangorde` en `ernst` zijn
+// twee losse tabellen. Krijgt een grijze soort ooit rangorde 1, dan is `kop` een grijze
+// melding en verstopt de ingeklapte rij een rode eronder.
+func gewicht(_ e: Aandacht.Ernst) -> Int {
+    switch e {
+    case .rood: return 0
+    case .oranje: return 1
+    case .grijs: return 2
+    }
+}
+let gewichten = Aandacht.Soort.allCases
+    .sorted { $0.rangorde < $1.rangorde }
+    .map { gewicht($0.ernst) }
+eis(gewichten == gewichten.sorted(), "rood staat vóór oranje, oranje vóór grijs")
+```
+
+Laat de bewering eronder staan — `Set(volgordes).count == volgordes.count` is wél
+falsifieerbaar.
+
+Verifieer omgekeerd: geef `.geenToestemming` (rangorde 4) tijdelijk `return .grijs`, draai
+`./verify.sh --paneel`, en eis `FOUT: rood staat vóór oranje, oranje vóór grijs`. Zet terug.
+
+Commit dit apart, vóór `Glas`.
 
 - [ ] **Stap 1: schrijf de modifier**
 
