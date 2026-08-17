@@ -240,7 +240,87 @@ Co-Authored-By: Claude Opus 5 <noreply@anthropic.com>"
 
 **Bestanden:**
 - Aanmaken: `Sources/DopamineCode/KaartToestand.swift`
+- Wijzigen: `Sources/DopamineCode/Meter.swift` (bevindingen uit de review van taak 1)
 - Wijzigen: `verify.sh` (uitbreiding van `test_paneel_meters` → hernoemen naar `test_paneel`)
+
+- [ ] **Stap 0: verwerk de bevindingen uit de review van taak 1**
+
+Vijf kleine wijzigingen in `Meter.swift` en de proef. Doe ze eerst, in één commit, vóór je aan
+`KaartToestand` begint — dan blijft de geschiedenis leesbaar.
+
+**a. De vier stond er twee keer, en de tweede kant op faalde stil.** `WarmteMeter` had
+`let aantal = 4` naast een `init` die op de letterlijke `4` klemde. Wordt `aantal` ooit 5 —
+`ThermalWatch.Pressure` heeft een `@unknown default` juist omdat Apple er een stap bij kan
+zetten — dan klemt de init nog op 4, wordt `stopBij` 5, en is `grijptIn` (`4 >= 5`) permanent
+onwaar. Het warmtevangnet zou dan nooit meer laten zien dat het ingrijpt.
+
+```swift
+        self.stap = min(max(stap, 1), aantal)
+```
+
+**b. `stap` zei nergens wat 1 tot 4 betekenen.** De omzetting komt pas in taak 6 en zit in
+`AppModel`, buiten de eenheid die te testen is — een off-by-one daar ziet de proef per
+definitie niet. Zet boven `let stap: Int`:
+
+```swift
+    /// 1 = `nominal`, 2 = `fair`, 3 = `serious`, 4 = `critical` — de volgorde van
+    /// `ProcessInfo.ThermalState`. De omzetting staat in `AppModel.warmteMeter`; deze eenheid
+    /// kent dat enum met opzet niet, want dan sleept ze `L10n`, `EventLog` en `Shell` haar
+    /// eigen proef in.
+```
+
+**c. `slaapt` botste met het kernbegrip van de app.** Overal in deze codebase betekent "slaap"
+dat de Mác gaat slapen — `SleepFlag`, `SleepWatch`, `SleepDisabled`, noodslaap. Hier betekende
+het dat een vángnet stilligt. Hernoem `slaapt` naar `sluimert`, ook in de proef.
+
+**d. `brandt(_:)` had geen ondergrens.** `brandt(0)` en `brandt(-3)` gaven `true`. Het is een
+1-gebaseerd contract in een taal waar `ForEach(0..<n)` het gangbare idioom is, en nul-gebaseerd
+tellen zou bij stap 1 twee blokjes laten branden.
+
+```swift
+    func brandt(_ index: Int) -> Bool { index >= 1 && index <= stap }
+```
+
+**e. De klem op `zone` werd niet getest.** Die op `vulling` twee keer, die op `grens` geen
+enkele keer — dezelfde regel, één keer wel bewaakt en één keer niet. Voeg naast de bestaande
+klem-beweringen toe:
+
+```swift
+eis(AccuMeter(percent: 50, grens: 140, aanDeLader: false).zone == 1.0, "grens boven 100 klemt op 1")
+eis(AccuMeter(percent: 50, grens: -8,  aanDeLader: false).zone == 0.0, "grens onder 0 klemt op 0")
+```
+
+Voeg ook één zin toe aan het commentaar boven `grijptIn`, zodat een latere opruimer hem niet
+"consistent maakt":
+
+```swift
+    /// Let op: dit rekent met de rauwe waarden en niet met `vulling`/`zone`. Dat is bewust —
+    /// `AppModel` vergelijkt ook rauw, en meeklemmen zou de meter stil van de app laten
+    /// afwijken.
+```
+
+Draai daarna de proef en commit:
+
+```bash
+git add Sources/DopamineCode/Meter.swift verify.sh
+git commit -m "Koppel de warmtegrens aan het aantal stappen
+
+De vier stond twee keer in WarmteMeter: als \`aantal\` en als literal in de
+klem van de init. Wordt \`aantal\` ooit vijf — ThermalWatch.Pressure heeft een
+@unknown default juist omdat Apple er een stap bij kan zetten — dan klemt de
+init nog op vier, wordt stopBij vijf, en is grijptIn (4 >= 5) permanent
+onwaar. Het warmtevangnet zou dan nooit meer laten zien dat het ingrijpt, en
+dat is de verkeerde kant om op te falen voor een bestand dat bestaat om te
+voorkomen dat de tekening iets anders belooft dan er gebeurt.
+
+Verder: stap documenteert nu welke stand 1 tot 4 zijn, want de omzetting komt
+pas in AppModel en een off-by-one daar ziet de proef niet. \`slaapt\` heet
+\`sluimert\`, omdat slaap in deze codebase overal betekent dat de Mac gaat
+slapen en niet dat een vangnet stilligt. brandt() klemt ook aan de onderkant.
+En de klem op \`zone\` wordt nu getest, net als die op \`vulling\` al werd.
+
+Co-Authored-By: Claude Opus 5 <noreply@anthropic.com>"
+```
 
 - [ ] **Stap 1: hernoem de proeffunctie en voeg de falende gevallen toe**
 
@@ -769,10 +849,10 @@ struct AccuMeterView: View {
             ZStack(alignment: .leading) {
                 Capsule().fill(Color.primary.opacity(0.12))
                 Capsule()
-                    .fill(meter.slaapt ? Color.secondary : Color.accentColor)
+                    .fill(meter.sluimert ? Color.secondary : Color.accentColor)
                     .frame(width: geo.size.width * meter.vulling)
                 Capsule()
-                    .fill(Color.red.opacity(meter.slaapt ? 0.18 : 0.40))
+                    .fill(Color.red.opacity(meter.sluimert ? 0.18 : 0.40))
                     .frame(width: geo.size.width * meter.zone)
                 Rectangle()
                     .fill(Color.primary)
@@ -1116,7 +1196,7 @@ Vervang in `MenuView.swift` alles van `var body: some View {` tot en met de slui
                      meter: AccuMeterView(meter: model.accuMeter),
                      waarde: "\(model.battery?.percent ?? 0)%",
                      grens: "\(Prefs.batteryFloor)%",
-                     gedempt: model.accuMeter.slaapt)
+                     gedempt: model.accuMeter.sluimert)
 
             MeterRij(symbool: "thermometer.medium",
                      meter: WarmteMeterView(meter: model.warmteMeter),
