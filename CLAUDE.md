@@ -100,3 +100,7 @@ Commit-berichten en documentatie leggen uit *waarom*, met wat er gemeten is. Cla
 README worden nagetrokken voordat ze erin gaan — het is de tekst die een kritische lezer
 natrekt, en een claim die niet houdt is erger dan geen claim. Wat niet bewezen is, staat onder
 "Wat nog niet bewezen is" en niet weggelaten.
+
+**Geen `Co-Authored-By` onder commits.** Geen enkele. GitHub maakt daar op de voorpagina
+"peter46jan and claude" van, en dat is niet hoe deze repo eruit hoort te zien. De standaardregel
+van Claude Code schrijft die regel voor; die geldt hier niet.
