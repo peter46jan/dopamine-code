@@ -11,6 +11,8 @@ display, and switching the keyboard backlight. Built as personal tooling for one
 written on that assumption — there is no installer, no automatic update, and it has been
 tested on one machine.
 
+![The menu bar panel: the state at the top, the session length below it, and the three safety nets as tiles — battery, heat, and the watchdog that keeps looking every 30 seconds.](docs/paneel.png)
+
 Available in **Dutch, English, German and French**. The app follows the macOS language order
 and falls back to Dutch when none of the four is present. Translations live in
 [Resources/](Resources/), one `.lproj` per language; `./verify.sh --talen` checks that all
@@ -907,6 +909,8 @@ Menubalk-app voor macOS. Twee dingen: de Mac actief houden met de klep dicht en 
 extern scherm, en de toetsenbordverlichting schakelen. Gebouwd als persoonlijk gereedschap
 voor één Mac, en met die aanname geschreven — er is geen installer, geen automatische
 update, en getest is er op één machine.
+
+![Het menubalkpaneel: bovenaan de toestand, daaronder de sessieduur, en de drie vangnetten als tegels — accu, warmte, en de wachter die elke 30 seconden blijft kijken.](docs/paneel.png)
 
 Beschikbaar in het **Nederlands, Engels, Duits en Frans**. De app volgt de taalvolgorde van
 macOS en valt terug op Nederlands als er geen van de vier bij zit. De vertalingen staan in
