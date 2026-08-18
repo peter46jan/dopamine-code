@@ -23,11 +23,19 @@ struct MenuView: View {
     /// venster, dus je bleef met een icoon en niets zitten.
     @Environment(\.openSettings) private var openSettings
 
-    /// De gekozen eindtijd bij "Tot", en wat daaruit volgde. Lokaal, want dit is een vraag die
-    /// je stelt en geen instelling die bewaard wordt — wat er van de vraag terechtkwam staat
+    /// De eindtijd in het veld, en wat daaruit volgde. Lokaal, want dit is een vraag die je
+    /// stelt en geen instelling die bewaard wordt — wat er van de vraag terechtkwam staat
     /// daarna in `Prefs.autoOffMinutes`, op de enige plek waar een duur hoort te staan.
     @State private var untilTime = Date()
     @State private var untilExplanation: String?
+
+    /// Wat het paneel er zélf in zette, de laatste keer dat het synchroniseerde.
+    ///
+    /// Zonder dit is niet te zien of het veld door de gebruiker is aangeraakt of door de app is
+    /// bijgewerkt, en dan verschijnt de knop "Toepassen" vanzelf zodra de klok een minuut
+    /// verder loopt. Vergelijken met een vaste waarde en niet met "nu + de duur" houdt die
+    /// vraag stabiel.
+    @State private var gezetteTijd = Date()
 
     @ObservedObject private var updates = UpdateCheck.shared
 
@@ -70,11 +78,32 @@ struct MenuView: View {
         .onAppear {
             runningApps = RunningApps.list()
             showUpdateNotice = !Prefs.updateNoticeShown
-            untilTime = model.deadline
-                ?? Date().addingTimeInterval(Double(model.autoOffMinutes) * 60)
+            synchroniseerEindtijd()
             untilExplanation = nil
             kanToetsenbord = KeyboardBacklight.canPostEvents
         }
+        // De eindtijd volgt de duur. Zonder deze twee bleef "Eindigt om 14:57" staan terwijl je
+        // van 8 u naar 30 min sprong — het paneel toonde dan een tijd die nergens meer op sloeg.
+        // Alleen deze kant op: de omgekeerde weg, het veld dat de duur schrijft, gaat nog steeds
+        // uitsluitend via de knop. Elke wijziging zetten schrijft namelijk ook de standaardduur
+        // voor de vólgende sessie, en dat hoort te gebeuren op het moment dat je het vraagt.
+        .onChange(of: model.autoOffMinutes) { _, _ in synchroniseerEindtijd() }
+        .onChange(of: model.deadline) { _, _ in synchroniseerEindtijd() }
+    }
+
+    /// Zet het tijdveld op de eindtijd die nu geldt: de deadline van een lopende sessie, of
+    /// anders nu plus de ingestelde duur.
+    private func synchroniseerEindtijd() {
+        let eind = model.deadline
+            ?? Date().addingTimeInterval(Double(model.autoOffMinutes) * 60)
+        untilTime = eind
+        gezetteTijd = eind
+    }
+
+    /// Heeft de gebruiker het tijdveld zelf veranderd? Dertig seconden speling, want de
+    /// tijdkiezer werkt op hele minuten en de bron waar hij mee vergeleken wordt niet.
+    private var tijdZelfGewijzigd: Bool {
+        abs(untilTime.timeIntervalSince(gezetteTijd)) >= 30
     }
 
     // MARK: - De heldentegel
@@ -198,13 +227,22 @@ struct MenuView: View {
                 Text("kaart.eindigt").font(.caption).foregroundStyle(Palet.inktZacht)
                 DatePicker("", selection: $untilTime, displayedComponents: .hourAndMinute)
                     .labelsHidden().datePickerStyle(.field).controlSize(.small)
-                // Met een knop en niet bij elke wijziging van de kiezer: elke keer zetten
+                // De knop verschijnt pas als je het veld zelf verandert. Anders staat er een
+                // knop naast een tijd die de app zojuist zelf heeft ingevuld, en dan is niet
+                // te zien wat hij zou doen. Nu is hij het antwoord op iets wat jij deed.
+                //
+                // Met een knop en niet bij elke wijziging van het veld: elke keer zetten
                 // schrijft ook de standaardduur voor de vólgende sessie, en dat hoort te
                 // gebeuren op het moment dat je het vraagt — niet terwijl je nog aan het
                 // typen bent. Deze regel stond al in de oude untilRow en blijft gelden.
-                Button("menu.tot.zetten") { untilExplanation = model.setAutoOffUntil(untilTime) }
-                    .buttonStyle(.link).font(.caption)
-                    .fixedSize()          // anders breekt "Zetten" over twee regels
+                if tijdZelfGewijzigd {
+                    Button("menu.tot.toepassen") {
+                        untilExplanation = model.setAutoOffUntil(untilTime)
+                    }
+                    .buttonStyle(.borderless).font(.caption)
+                    .foregroundStyle(Palet.accent)
+                    .fixedSize()          // anders breekt het woord over twee regels
+                }
                 Spacer(minLength: 4)
             }
 
@@ -241,9 +279,13 @@ struct MenuView: View {
                 }
             }
         } label: {
+            // Gedempt en niet in de accentkleur. In het ontwerp is dit een terzijde naast de
+            // eindtijd; als felle paarse link trok hij meer aandacht dan de aftelling erboven.
+            // Gekoppeld wordt hij wél helder — dan is het een feit over deze sessie.
             Text(model.binding.map { L10n.t("menu.stoppenals.klaar", $0.identity.naam) }
                  ?? L10n.t("menu.stoppenals.placeholder"))
                 .font(.caption)
+                .foregroundStyle(model.binding == nil ? Palet.inktZacht : Palet.inkt)
         }
         .menuStyle(.borderlessButton)
         .fixedSize()

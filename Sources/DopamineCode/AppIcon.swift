@@ -31,23 +31,43 @@ enum AppIcon {
     /// twee losse items in de menubalk zouden apart aan te klikken zijn en apart kunnen
     /// verspringen. De cijfers staan in een monospaced font, want een breedte die per minuut
     /// verandert schuift alles wat er links van hem staat heen en weer.
-    static func menuBar(_ state: State, pointSize: CGFloat = 18, countdown: String? = nil) -> NSImage {
+    /// Het beeld voor de menubalk: het merk, en ernaast ruimte voor de aftelling.
+    ///
+    /// `ruimteVoorAftelling` reserveert die ruimte ook als er niets af te tellen valt, en dat is
+    /// niet cosmetisch. Het paneel hangt aan dit statusitem: wordt het item breder, dan schuift
+    /// het paneel mee over het scherm. Gemeten op 18 pt — 18,0 pt zonder aftelling en 46,2 tot
+    /// 53,2 pt met — dus het paneel versprong bij elke keer aan- en uitzetten zo'n vijftien
+    /// punten opzij, terwijl je er net in aan het klikken was.
+    ///
+    /// De ruimte is die van vijf cijferposities ("00:00"), en niet die van de huidige waarde:
+    /// een sessie mag tot 24 uur lopen, en anders sprong het item alsnog bij het passeren van
+    /// tien uur. Monospaced cijfers, dus binnen dat vak schuift er verder niets.
+    ///
+    /// De prijs is een lege plek naast het merk zolang er niets loopt. Wie die niet wil, zet de
+    /// aftelling uit bij Instellingen; dan is het item altijd smal en staat het net zo stil.
+    static func menuBar(_ state: State, pointSize: CGFloat = 18,
+                        countdown: String? = nil,
+                        ruimteVoorAftelling: Bool = false) -> NSImage {
         let image: NSImage
-        if let countdown, !countdown.isEmpty {
+        let ietsAfTeTellen = !(countdown ?? "").isEmpty
+        if ietsAfTeTellen || ruimteVoorAftelling {
             let font = NSFont.monospacedDigitSystemFont(ofSize: pointSize * 0.62, weight: .regular)
             // Zwart, net als het merk zelf: `isTemplate` gooit de kleur toch weg en laat de
             // menubalk zelf bepalen wat het wordt — wit op een donkere balk, zwart op een lichte.
             let opmaak: [NSAttributedString.Key: Any] = [.font: font, .foregroundColor: NSColor.black]
-            let tekst = countdown as NSString
+            let tekst = (countdown ?? "") as NSString
             let afmeting = tekst.size(withAttributes: opmaak)
+            let vak = ceil(("00:00" as NSString).size(withAttributes: opmaak).width)
             let tussenruimte = pointSize * 0.18
-            let breedte = pointSize + tussenruimte + ceil(afmeting.width)
+            let breedte = pointSize + tussenruimte + vak
             image = NSImage(size: NSSize(width: breedte, height: pointSize), flipped: false) { rect in
                 draw(state, in: NSRect(x: rect.minX, y: rect.minY,
                                        width: pointSize, height: pointSize))
-                tekst.draw(at: NSPoint(x: rect.minX + pointSize + tussenruimte,
-                                       y: rect.midY - afmeting.height / 2),
-                           withAttributes: opmaak)
+                if ietsAfTeTellen {
+                    tekst.draw(at: NSPoint(x: rect.minX + pointSize + tussenruimte,
+                                           y: rect.midY - afmeting.height / 2),
+                               withAttributes: opmaak)
+                }
                 return true
             }
         } else {

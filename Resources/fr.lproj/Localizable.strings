@@ -17,7 +17,7 @@
 "menu.duur.titel" = "Durée";
 "menu.duur.tot" = "jusqu'à %@";
 "menu.tot.titel" = "Jusqu'à";
-"menu.tot.zetten" = "Définir";
+"menu.tot.toepassen" = "Appliquer";
 
 /* --- Menu : arrêter dès qu'un programme se termine --- */
 "menu.stoppenals.geenapps" = "Aucune app trouvée";

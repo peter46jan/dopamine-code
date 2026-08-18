@@ -17,7 +17,7 @@
 "menu.duur.titel" = "Dauer";
 "menu.duur.tot" = "bis %@";
 "menu.tot.titel" = "Bis";
-"menu.tot.zetten" = "Setzen";
+"menu.tot.toepassen" = "Übernehmen";
 
 /* --- Menü: aufhören, sobald ein Programm fertig ist --- */
 "menu.stoppenals.geenapps" = "Keine Apps gefunden";

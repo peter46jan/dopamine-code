@@ -21,7 +21,7 @@
 "menu.duur.titel" = "Duur";
 "menu.duur.tot" = "tot %@";
 "menu.tot.titel" = "Tot";
-"menu.tot.zetten" = "Zetten";
+"menu.tot.toepassen" = "Toepassen";
 
 /* --- Menu: stoppen zodra een programma klaar is --- */
 "menu.stoppenals.geenapps" = "Geen apps gevonden";

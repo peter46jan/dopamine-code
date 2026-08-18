@@ -16,7 +16,7 @@
 "menu.duur.titel" = "Duration";
 "menu.duur.tot" = "until %@";
 "menu.tot.titel" = "Until";
-"menu.tot.zetten" = "Set";
+"menu.tot.toepassen" = "Apply";
 
 /* --- Menu: stop when a program finishes --- */
 "menu.stoppenals.geenapps" = "No apps found";

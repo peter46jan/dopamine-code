@@ -242,16 +242,21 @@ final class AppModel: ObservableObject {
     /// Gebufferd op (staat, tekst). De scene wordt door de kloktik van `startTicking` elke
     /// seconde opnieuw geëvalueerd, en zonder deze buffer zou er dus elke seconde een nieuw
     /// beeld getekend worden terwijl er hooguit één keer per minuut iets aan verandert.
-    private var gebufferdIcoon: (staat: AppIcon.State, aftelling: String?, beeld: NSImage)?
+    private var gebufferdIcoon: (staat: AppIcon.State, aftelling: String?,
+                                 ruimte: Bool, beeld: NSImage)?
 
     var menuBarLabel: NSImage {
         let staat = iconState
         let aftelling = menuBarCountdown
-        if let gebufferd = gebufferdIcoon, gebufferd.staat == staat, gebufferd.aftelling == aftelling {
-            return gebufferd.beeld
+        // De ruimte blijft gereserveerd zolang de voorkeur aanstaat, ook als er nu niets af te
+        // tellen valt. Anders wordt het statusitem smaller bij het uitzetten en schuift het
+        // paneel dat eraan hangt over het scherm — precies op het moment dat je erin klikt.
+        let ruimte = Prefs.showCountdownInMenuBar
+        if let g = gebufferdIcoon, g.staat == staat, g.aftelling == aftelling, g.ruimte == ruimte {
+            return g.beeld
         }
-        let beeld = AppIcon.menuBar(staat, countdown: aftelling)
-        gebufferdIcoon = (staat, aftelling, beeld)
+        let beeld = AppIcon.menuBar(staat, countdown: aftelling, ruimteVoorAftelling: ruimte)
+        gebufferdIcoon = (staat, aftelling, ruimte, beeld)
         return beeld
     }
 
