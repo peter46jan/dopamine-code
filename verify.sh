@@ -1216,6 +1216,67 @@ SWIFT
   fi
 
   # --- 3. De rangorde van waarschuwingen ----------------------------------------------
+  # --- de klok ------------------------------------------------------------------
+  #
+  # Drie plekken telden dit zelf uit en twee daarvan rondden anders af dan de derde. Nu is er
+  # één functie, en deze proef bewaakt dat hij naar boven afrondt en niet onder nul zakt.
+  local srcA="$PROJECT_DIR/Sources/DopamineCode/Aftelling.swift"
+  if [ ! -f "$srcA" ]; then
+    fail "Aftelling.swift ontbreekt."
+  else
+    local dirA; dirA="$(mktemp -d)"
+    cat > "$dirA/main.swift" <<'SWIFT'
+import Foundation
+
+var fouten = 0
+func eis(_ voorwaarde: Bool, _ wat: String) {
+    if !voorwaarde { print("FOUT: \(wat)"); fouten += 1 }
+}
+
+let nu = Date(timeIntervalSince1970: 1_000_000)
+func over(_ seconden: Double) -> Int {
+    Aftelling.minutenTot(nu.addingTimeInterval(seconden), vanaf: nu)
+}
+
+// Naar boven, en niet afkappen. Dit is de fout die er zat: 90 seconden gaf 1 met een gehele
+// deling, terwijl de menubalk er 2 van maakte.
+eis(over(90) == 2, "90 s is 2 minuten (naar boven), werd \(over(90))")
+eis(over(60) == 1, "60 s is precies 1 minuut, werd \(over(60))")
+eis(over(61) == 2, "61 s rondt op naar 2, werd \(over(61))")
+eis(over(1) == 1, "1 s is nog een minuut en geen nul, werd \(over(1))")
+
+// Nul is nul, en gepasseerd is ook nul — nooit negatief.
+eis(over(0) == 0, "op de deadline zelf is het 0, werd \(over(0))")
+eis(over(-1) == 0, "1 s te laat geeft 0 en niet -1, werd \(over(-1))")
+eis(over(-3600) == 0, "een uur te laat geeft 0, werd \(over(-3600))")
+
+// De grenzen waar uren en minuten uit elkaar gehaald worden.
+eis(over(3600) == 60, "een uur is 60 minuten, werd \(over(3600))")
+eis(over(3601) == 61, "een uur en een seconde is 61 minuten, werd \(over(3601))")
+eis(over(24 * 3600) == 1440, "24 uur is 1440 minuten, werd \(over(24 * 3600))")
+
+// En het getal dat de menubalk ervan maakt, op de plek waar hij van uur wisselt.
+let m = over(3601)
+eis("\(m / 60):" + String(format: "%02d", m % 60) == "1:01",
+    "3601 s toont 1:01 in de menubalk")
+
+if fouten == 0 { print("OK") }
+SWIFT
+    if ! command -v swiftc >/dev/null 2>&1; then
+      skip "swiftc niet gevonden; de aftelling is niet getest."
+    elif ! buildA="$(swiftc -O -o "$dirA/probe" "$srcA" "$dirA/main.swift" 2>&1)"; then
+      fail "De aftellingsproef compileert niet: $(printf '%s' "$buildA" | grep error: | head -2 | tr '\n' ' ')"
+    else
+      local uitA; uitA="$("$dirA/probe")"
+      if [ "$uitA" = "OK" ]; then
+        pass "De aftelling rondt overal naar boven af en zakt nooit onder nul."
+      else
+        fail "De aftelling deugt niet: $(printf '%s' "$uitA" | tr '\n' ' ')"
+      fi
+    fi
+    rm -rf "$dirA"
+  fi
+
   local src3="$PROJECT_DIR/Sources/DopamineCode/Aandacht.swift"
   if [ ! -f "$src3" ]; then
     fail "Aandacht.swift ontbreekt."

@@ -72,7 +72,6 @@
 "kop.resterend.uren" = "endet von selbst in %1$d Std. %2$d Min.";
 "kop.resterend.minuten" = "endet von selbst in %d Min.";
 "kop.resterend.bijna" = "endet von selbst innerhalb einer Minute";
-"kop.zondersessie" = "der Mac wird wach gehalten, ohne dass etwas läuft — nichts beendet das von selbst";
 "kop.gebonden" = "endet auch, sobald %@ fertig ist";
 
 /* --- Duur, zoals hij op de Duur-rij en in de kop staat --- */

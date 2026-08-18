@@ -285,12 +285,11 @@ final class AppModel: ObservableObject {
     ///
     /// Alleen bij een echte sessie. Staat de vlag aan zónder sessie, dan is er geen eindtijd en
     /// loopt er dus ook niets af; een aftelling zou daar precies de leugen zijn die
-    /// `safetyNetLine` in zijn derde tak expres vermijdt. Er staat dan alleen het bliksem-icoon.
+    /// `reconcile` vermijdt door `status` op `fout.zondersessie` te zetten. Er staat dan alleen
+    /// het bliksem-icoon.
     var menuBarCountdown: String? {
         guard Prefs.showCountdownInMenuBar, intendedOn, let deadline else { return nil }
-        // Naar boven afronden, net als bij de arming: "0:00" terwijl er nog veertig seconden
-        // staan leest als "voorbij".
-        let minuten = max(0, Int((deadline.timeIntervalSince(now) / 60).rounded(.up)))
+        let minuten = Aftelling.minutenTot(deadline, vanaf: now)
         return "\(minuten / 60):" + String(format: "%02d", minuten % 60)
     }
 
@@ -314,9 +313,9 @@ final class AppModel: ObservableObject {
         // Keyed off the session, not off `status`: a session that has drifted into an
         // error state is exactly when you want to see how long the flag has left to run.
         guard let deadline, intendedOn else { return nil }
-        let seconds = max(0, Int(deadline.timeIntervalSince(now)))
-        let hours = seconds / 3600
-        let minutes = (seconds % 3600) / 60
+        let totaal = Aftelling.minutenTot(deadline, vanaf: now)
+        let hours = totaal / 60
+        let minutes = totaal % 60
         if hours > 0 { return L10n.t("kop.resterend.uren", hours, minutes) }
         if minutes > 0 { return L10n.t("kop.resterend.minuten", minutes) }
         return L10n.t("kop.resterend.bijna")
@@ -340,26 +339,6 @@ final class AppModel: ObservableObject {
     /// the moment you flip the switch rather than only inside Settings.
     var configuredDurationText: String {
         Self.durationText(autoOffMinutes)
-    }
-
-    /// The line under the status text in the menu header.
-    ///
-    /// The subtlety is the third case. With the flag stuck at 1 and no session there is no
-    /// scheduled release at all — no deadline, nothing armed — and printing the *configured*
-    /// duration there rendered "vangnet na 7 uur" directly above the red "vangnetten staan
-    /// uit" panel: a promise that the Mac would be allowed to sleep in seven hours, made at
-    /// the one moment nothing was going to release it.
-    ///
-    /// The off case returns nil. It used to preview "stopt straks vanzelf na 4 u 30 min", but
-    /// under the header "Wakker houden staat uit" that reads as a running countdown while
-    /// nothing is running — and the duration is already on the Duur row right below, so the
-    /// line was both contradictory and redundant.
-    var safetyNetLine: String? {
-        if let remaining = remainingText { return remaining }
-        if kernelFlag == true && !intendedOn {
-            return L10n.t("kop.zondersessie")
-        }
-        return nil
     }
 
     // MARK: - Wat het paneel nodig heeft
@@ -512,8 +491,7 @@ final class AppModel: ObservableObject {
     /// elkaar kunnen lopen terwijl ze tegelijk zichtbaar zijn.
     var kaartAftelling: String? {
         guard let deadline, intendedOn else { return nil }
-        let minuten = max(0, Int((deadline.timeIntervalSince(now) / 60).rounded(.up)))
-        return AppModel.durationTextKort(minuten)
+        return AppModel.durationTextKort(Aftelling.minutenTot(deadline, vanaf: now))
     }
 
     /// Compacte vorm voor de segmentkiezer: `30m`, `2u`, `10u30`.
@@ -541,8 +519,8 @@ final class AppModel: ObservableObject {
 
     /// Waar de lopende sessie aan hangt, voor het paneel. `nil` = alleen de timer.
     ///
-    /// Bewust naast `safetyNetLine` en niet erin: die zin gaat over wat de Mac straks weer
-    /// laat slapen, en zijn derde tak (vlag aan zonder sessie) mag niet verwateren.
+    /// Bewust een eigen eigenschap: deze zin gaat over hoe de sessie begonnen is, en niet over
+    /// wanneer hij eindigt. Die twee door elkaar halen maakte de vorige kopregel dubbelzinnig.
     var bindingLine: String? {
         guard intendedOn, let binding else { return nil }
         return L10n.t("kop.gebonden", binding.identity.label)
@@ -554,7 +532,7 @@ final class AppModel: ObservableObject {
     /// soms wel en soms niet staat maakt zijn afwezigheid dubbelzinnig, en dan is "welke
     /// trigger heeft dit gestart?" niet met zekerheid te beantwoorden — precies de vraag die
     /// fase 3 moest beantwoorden. Staat de vlag aan zónder sessie, dan is er ook geen trigger
-    /// en zegt deze regel niets: dat is dezelfde eerlijkheid als in `safetyNetLine`.
+    /// en zegt deze regel niets — die toestand meldt zich als fout, niet als sessie.
     var triggerLine: String? {
         guard intendedOn, let sessionTrigger else { return nil }
         let zin = sessionTrigger.zin

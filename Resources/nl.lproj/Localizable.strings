@@ -76,7 +76,6 @@
 "kop.resterend.uren" = "stopt vanzelf over %1$d u %2$d min";
 "kop.resterend.minuten" = "stopt vanzelf over %d min";
 "kop.resterend.bijna" = "stopt vanzelf binnen een minuut";
-"kop.zondersessie" = "de Mac wordt wakker gehouden zonder dat er iets loopt — niets stopt dat vanzelf";
 "kop.gebonden" = "stopt ook zodra %@ klaar is";
 
 /* --- Duur, zoals hij op de Duur-rij en in de kop staat --- */
