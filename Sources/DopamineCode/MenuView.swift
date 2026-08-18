@@ -221,6 +221,11 @@ struct MenuView: View {
             }
             .pickerStyle(.segmented)
             .labelsHidden()
+            // Vol de breedte, ongeacht het aantal segmenten. De standaardduur is 7 uur en die
+            // zit niet bij de vijf vaste, dus staat er tot de eerste klik een zesde segment
+            // bij. Zonder deze regel koos de kiezer zijn eigen maat naar wat erin stond en
+            // kromp hij op het moment dat dat zesde segment verdween — precies onder de muis.
+            .frame(maxWidth: .infinity)
             .disabled(model.busy)
 
             HStack(spacing: 6) {
