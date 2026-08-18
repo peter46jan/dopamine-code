@@ -11,7 +11,7 @@
 /* --- Menü: beim Zuklappen einschalten --- */
 "menu.arm.actief" = "Schaltet sich ein, sobald du den Deckel schließt";
 "menu.arm.intrekken" = "Abbrechen";
-"menu.arm.aanzetten" = "Bei Deckelschluss starten";
+"menu.arm.aanzetten" = "Wach halten, sobald ich den Deckel schließe";
 
 /* --- Menü: wie lange --- */
 "menu.duur.titel" = "Dauer";

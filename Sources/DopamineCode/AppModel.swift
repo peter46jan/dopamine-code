@@ -245,13 +245,29 @@ final class AppModel: ObservableObject {
     private var gebufferdIcoon: (staat: AppIcon.State, aftelling: String?,
                                  ruimte: Bool, beeld: NSImage)?
 
+    /// Staat het paneel open? Alleen het menubalkitem doet hier iets mee.
+    ///
+    /// Het paneel hangt aan het statusitem, dus als dat item breder wordt schuift het paneel
+    /// mee over het scherm. Dat gebeurde bij elke keer aan- en uitzetten, want de aftelling
+    /// komt er dan bij of gaat eraf. Reserveren lost het op, maar altijd reserveren laat een
+    /// lege plek naast het merk staan de rest van de dag.
+    ///
+    /// Dus alleen zolang je kijkt. Gemeten dat `onAppear` en `onDisappear` van een
+    /// MenuBarExtra-paneel betrouwbaar vuren bij elk openen en sluiten.
+    @Published private(set) var paneelOpen = false
+
+    func paneelGeopend() { paneelOpen = true }
+    func paneelGesloten() { paneelOpen = false }
+
     var menuBarLabel: NSImage {
         let staat = iconState
         let aftelling = menuBarCountdown
-        // De ruimte blijft gereserveerd zolang de voorkeur aanstaat, ook als er nu niets af te
+        // De ruimte blijft gereserveerd zolang het paneel openstaat, ook als er nu niets af te
         // tellen valt. Anders wordt het statusitem smaller bij het uitzetten en schuift het
         // paneel dat eraan hangt over het scherm — precies op het moment dat je erin klikt.
-        let ruimte = Prefs.showCountdownInMenuBar
+        // Buiten het paneel om reserveren we niets: dan stond er de rest van de dag een lege
+        // plek naast het merk.
+        let ruimte = Prefs.showCountdownInMenuBar && paneelOpen
         if let g = gebufferdIcoon, g.staat == staat, g.aftelling == aftelling, g.ruimte == ruimte {
             return g.beeld
         }

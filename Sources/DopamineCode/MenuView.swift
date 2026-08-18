@@ -81,7 +81,11 @@ struct MenuView: View {
             synchroniseerEindtijd()
             untilExplanation = nil
             kanToetsenbord = KeyboardBacklight.canPostEvents
+            model.paneelGeopend()
         }
+        // Zodat het menubalkitem zijn breedte vasthoudt zolang je erin klikt. Zie
+        // `AppModel.paneelOpen`.
+        .onDisappear { model.paneelGesloten() }
         // De eindtijd volgt de duur. Zonder deze twee bleef "Eindigt om 14:57" staan terwijl je
         // van 8 u naar 30 min sprong — het paneel toonde dan een tijd die nergens meer op sloeg.
         // Alleen deze kant op: de omgekeerde weg, het veld dat de duur schrijft, gaat nog steeds

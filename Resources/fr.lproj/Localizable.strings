@@ -11,7 +11,7 @@
 /* --- Menu : activer à la fermeture de l'écran --- */
 "menu.arm.actief" = "S'active dès que vous rabattez l'écran";
 "menu.arm.intrekken" = "Annuler";
-"menu.arm.aanzetten" = "Activer dès que je rabats l'écran";
+"menu.arm.aanzetten" = "Garder éveillé dès que je rabats l'écran";
 
 /* --- Menu : pour combien de temps --- */
 "menu.duur.titel" = "Durée";

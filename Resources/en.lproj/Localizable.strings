@@ -10,7 +10,7 @@
 /* --- Menu: arm on lid close --- */
 "menu.arm.actief" = "Turns on when you close the lid";
 "menu.arm.intrekken" = "Cancel";
-"menu.arm.aanzetten" = "Turn on when I close the lid";
+"menu.arm.aanzetten" = "Keep awake when I close the lid";
 
 /* --- Menu: for how long --- */
 "menu.duur.titel" = "Duration";

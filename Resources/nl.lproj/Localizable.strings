@@ -15,7 +15,7 @@
 /* --- Menu: aanzetten bij het dichtklappen --- */
 "menu.arm.actief" = "Gaat aan zodra je de klep dichtdoet";
 "menu.arm.intrekken" = "Intrekken";
-"menu.arm.aanzetten" = "Aanzetten zodra ik de klep dichtdoe";
+"menu.arm.aanzetten" = "Wakker houden zodra ik de klep sluit";
 
 /* --- Menu: hoe lang --- */
 "menu.duur.titel" = "Duur";
