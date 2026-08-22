@@ -1,10 +1,29 @@
-# Dopamine Code
+<a id="dopamine-code"></a>
 
-**English** · [Nederlands](#nederlands)
+<h1 align="center">
+  <img src="icons/appicon-aan-512.png" width="120" alt=""><br>
+  Dopamine Code
+</h1>
 
-*Was called "Wakker" until 11 August 2026. The sudoers rule and the log moved along with it.
-Coming from an older install with a different bundle ID? The app starts with empty settings;
-move them across with `defaults export <old-id> - | defaults import <new-id> -`.*
+<p align="center">
+  <b>Keeps your Mac awake with the lid closed. No external display needed.</b><br>
+  Doing that switches off macOS's emergency sleep. This one puts it back.
+</p>
+
+<p align="center">
+  <a href="https://github.com/peter46jan/dopamine-code/releases"><img alt="Latest release" src="https://img.shields.io/github/v/release/peter46jan/dopamine-code?label=release&color=7A3FBF"></a>
+  <img alt="macOS 14 or newer" src="https://img.shields.io/badge/macOS-14%2B-7A3FBF">
+  <img alt="Written in Swift" src="https://img.shields.io/github/languages/top/peter46jan/dopamine-code?color=7A3FBF">
+  <a href="LICENSE"><img alt="MIT licence" src="https://img.shields.io/github/license/peter46jan/dopamine-code?color=7A3FBF"></a>
+</p>
+
+<p align="center"><b>English</b> · <a href="#nederlands">Nederlands</a></p>
+
+```bash
+brew tap peter46jan/dopamine
+brew install dopamine-code
+ln -sfn "$(brew --prefix)/opt/dopamine-code/Dopamine Code.app" /Applications/
+```
 
 A macOS menu bar app. Two things: keeping the Mac awake with the lid closed and no external
 display, and switching the keyboard backlight. Built as personal tooling for one Mac, and
@@ -105,6 +124,10 @@ git clone https://github.com/peter46jan/dopamine-code.git
 cd dopamine-code
 ./build.sh --install
 ```
+
+*Was called "Wakker" until 11 August 2026. The sudoers rule and the log moved along with it.
+Coming from an older install with a different bundle ID? The app starts with empty settings;
+move them across with `defaults export <old-id> - | defaults import <new-id> -`.*
 
 Either way you need **macOS 14 or newer** and the Xcode command line tools (`xcode-select --install`).
 No Xcode project, no Apple Developer account. There is no Gatekeeper warning either: a
@@ -899,7 +922,25 @@ and [SECURITY-AUDIT.md](SECURITY-AUDIT.md) before putting it on a machine where 
 
 # Nederlands
 
-[English](#dopamine-code) · **Nederlands**
+<p align="center">
+  <b>Houdt je Mac wakker met de klep dicht. Zonder extern scherm.</b><br>
+  Dat zet de noodslaap van macOS uit. Deze zet er zijn eigen voor terug.
+</p>
+
+<p align="center">
+  <a href="https://github.com/peter46jan/dopamine-code/releases"><img alt="Nieuwste release" src="https://img.shields.io/github/v/release/peter46jan/dopamine-code?label=release&color=7A3FBF"></a>
+  <img alt="macOS 14 of nieuwer" src="https://img.shields.io/badge/macOS-14%2B-7A3FBF">
+  <img alt="Geschreven in Swift" src="https://img.shields.io/github/languages/top/peter46jan/dopamine-code?color=7A3FBF">
+  <a href="LICENSE"><img alt="MIT-licentie" src="https://img.shields.io/github/license/peter46jan/dopamine-code?color=7A3FBF"></a>
+</p>
+
+<p align="center"><a href="#dopamine-code">English</a> · <b>Nederlands</b></p>
+
+```bash
+brew tap peter46jan/dopamine
+brew install dopamine-code
+ln -sfn "$(brew --prefix)/opt/dopamine-code/Dopamine Code.app" /Applications/
+```
 
 *Heette tot 11 augustus 2026 "Wakker". Sudoers-regel en logboek zijn meeverhuisd. Kom je van
 een oudere installatie met een ander bundle-ID, dan begint de app met lege instellingen:
