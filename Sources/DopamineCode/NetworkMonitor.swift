@@ -12,22 +12,36 @@ struct Outage: Identifiable, Equatable {
     var isOngoing: Bool { ended == nil }
 
     /// "internet was 12 minuten weg om 03:41"
+    ///
+    /// Vertaald, en dat was het niet. Deze zin werd hard in het Nederlands opgebouwd en kwam
+    /// zo ook in een Engels, Duits of Frans paneel te staan: "internet was 1 seconden weg om
+    /// 16:47" onder de kop NEEDS ATTENTION. Twee fouten in één regel, want dat enkelvoud
+    /// klopte ook niet.
+    ///
+    /// Enkelvoud en meervoud zijn aparte sleutels. In het Nederlands is "1 seconde" een ander
+    /// woord dan "2 seconden", en in de andere drie talen net zo goed; één sleutel met %d
+    /// levert daar "1 seconds" op.
     func describe() -> String {
         let clock = DateFormatter()
         clock.dateFormat = "HH:mm"
+        let tijdstip = clock.string(from: began)
         let minutes = Int((duration / 60).rounded())
-        let length: String
+        // Elke sleutel staat pal achter `L10n.t(` en niet achter een vraagteken. Dat is geen
+        // stijl maar noodzaak: `verify.sh --talen` zoekt naar dat patroon om te controleren of
+        // elke gebruikte sleutel bestaat, en een sleutel in een ternaire operator ziet hij niet
+        // staan. Zo geschreven telt hij mee, en vangt hij een typefout.
         if isOngoing {
-            length = minutes < 1 ? "nog steeds weg sinds" : "al \(minutes) min weg sinds"
-            return "internet \(length) \(clock.string(from: began))"
+            if minutes < 1 { return L10n.t("storing.nogsteeds", tijdstip) }
+            if minutes == 1 { return L10n.t("storing.al.min.een", minutes, tijdstip) }
+            return L10n.t("storing.al.min.meer", minutes, tijdstip)
         }
         if minutes < 1 {
             let seconds = Int(duration.rounded())
-            length = "\(seconds) seconden"
-        } else {
-            length = "\(minutes) minuten"
+            if seconds == 1 { return L10n.t("storing.was.sec.een", seconds, tijdstip) }
+            return L10n.t("storing.was.sec.meer", seconds, tijdstip)
         }
-        return "internet was \(length) weg om \(clock.string(from: began))"
+        if minutes == 1 { return L10n.t("storing.was.min.een", minutes, tijdstip) }
+        return L10n.t("storing.was.min.meer", minutes, tijdstip)
     }
 }
 

@@ -441,3 +441,13 @@
 "tegel.wachter" = "Gardien";
 "tegel.grens.accu" = "s'arrête à %d%%";
 "tegel.grens.warmte" = "s'arrête à %1$d sur %2$d";
+
+/* Netwerkstoringen tijdens een sessie. Enkelvoud en meervoud apart: één sleutel
+   met %d levert "1 seconds" op. */
+"storing.nogsteeds" = "internet toujours coupé depuis %@";
+"storing.al.min.een" = "internet coupé depuis %1$d minute, à partir de %2$@";
+"storing.al.min.meer" = "internet coupé depuis %1$d minutes, à partir de %2$@";
+"storing.was.sec.een" = "internet a été coupé %1$d seconde à %2$@";
+"storing.was.sec.meer" = "internet a été coupé %1$d secondes à %2$@";
+"storing.was.min.een" = "internet a été coupé %1$d minute à %2$@";
+"storing.was.min.meer" = "internet a été coupé %1$d minutes à %2$@";

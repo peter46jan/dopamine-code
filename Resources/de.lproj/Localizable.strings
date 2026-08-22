@@ -441,3 +441,13 @@
 "tegel.wachter" = "Wächter";
 "tegel.grens.accu" = "stoppt bei %d%%";
 "tegel.grens.warmte" = "stoppt bei %1$d von %2$d";
+
+/* Netwerkstoringen tijdens een sessie. Enkelvoud en meervoud apart: één sleutel
+   met %d levert "1 seconds" op. */
+"storing.nogsteeds" = "Internet immer noch weg seit %@";
+"storing.al.min.een" = "Internet schon %1$d Minute weg, seit %2$@";
+"storing.al.min.meer" = "Internet schon %1$d Minuten weg, seit %2$@";
+"storing.was.sec.een" = "Internet war %1$d Sekunde weg um %2$@";
+"storing.was.sec.meer" = "Internet war %1$d Sekunden weg um %2$@";
+"storing.was.min.een" = "Internet war %1$d Minute weg um %2$@";
+"storing.was.min.meer" = "Internet war %1$d Minuten weg um %2$@";

@@ -440,3 +440,13 @@
 "tegel.wachter" = "Watchdog";
 "tegel.grens.accu" = "stops at %d%%";
 "tegel.grens.warmte" = "stops at %1$d of %2$d";
+
+/* Netwerkstoringen tijdens een sessie. Enkelvoud en meervoud apart: één sleutel
+   met %d levert "1 seconds" op. */
+"storing.nogsteeds" = "internet still down since %@";
+"storing.al.min.een" = "internet down for %1$d minute now, since %2$@";
+"storing.al.min.meer" = "internet down for %1$d minutes now, since %2$@";
+"storing.was.sec.een" = "internet was down for %1$d second at %2$@";
+"storing.was.sec.meer" = "internet was down for %1$d seconds at %2$@";
+"storing.was.min.een" = "internet was down for %1$d minute at %2$@";
+"storing.was.min.meer" = "internet was down for %1$d minutes at %2$@";

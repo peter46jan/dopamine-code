@@ -447,3 +447,13 @@
    zegt niets over wat er straks gaat gebeuren. */
 "tegel.grens.accu" = "stopt bij %d%%";
 "tegel.grens.warmte" = "stopt bij %1$d van %2$d";
+
+/* Netwerkstoringen tijdens een sessie. Enkelvoud en meervoud apart: één sleutel
+   met %d levert "1 seconds" op. */
+"storing.nogsteeds" = "internet nog steeds weg sinds %@";
+"storing.al.min.een" = "internet al %1$d minuut weg sinds %2$@";
+"storing.al.min.meer" = "internet al %1$d minuten weg sinds %2$@";
+"storing.was.sec.een" = "internet was %1$d seconde weg om %2$@";
+"storing.was.sec.meer" = "internet was %1$d seconden weg om %2$@";
+"storing.was.min.een" = "internet was %1$d minuut weg om %2$@";
+"storing.was.min.meer" = "internet was %1$d minuten weg om %2$@";
