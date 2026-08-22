@@ -451,3 +451,10 @@
 "storing.was.sec.meer" = "internet a été coupé %1$d secondes à %2$@";
 "storing.was.min.een" = "internet a été coupé %1$d minute à %2$@";
 "storing.was.min.meer" = "internet a été coupé %1$d minutes à %2$@";
+
+/* De eenheid voor de gemeten chiptemperatuur. */
+"stop.warm.eenheid" = "Afficher la température en";
+"stop.warm.eenheid.systeem" = "Comme macOS";
+"stop.warm.eenheid.celsius" = "Celsius";
+"stop.warm.eenheid.fahrenheit" = "Fahrenheit";
+"stop.warm.eenheid.uitleg" = "La température mesurée de la puce figure à côté de la jauge de chaleur dans le panneau. Le filet de sécurité ne réagit pas à ces degrés mais au niveau sur quatre que macOS signale lui-même — un Mac chaud n'est pas un Mac bridé. Si les capteurs sont illisibles, rien ne s'affiche.";

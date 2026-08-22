@@ -30,6 +30,7 @@ enum Prefs {
         static let scheduleLastArmedWindowStart = "scheduleLastArmedWindowStart"
         // Fase 4 — ergonomie.
         static let showCountdownInMenuBar = "showCountdownInMenuBar"
+        static let temperatureUnit = "temperatureUnit"
         static let shortcutKeyCode = "shortcutKeyCode"
         static let shortcutModifiers = "shortcutModifiers"
         // Bijwerken.
@@ -81,6 +82,8 @@ enum Prefs {
             // de hele reden dat dit punt op de roadmap stond. De sneltoets staat er met opzet
             // niet bij — zie `shortcutKeyCode`.
             Key.showCountdownInMenuBar: true,
+            // Volg macOS. Wie het anders wil, zet het om in Instellingen.
+            Key.temperatureUnit: Temperatuur.Eenheid.systeem.rawValue,
             // De updatecontrole staat standaard AAN, en dat is een afweging en geen
             // vanzelfsprekendheid. Uit is netter tegenover het netwerk, maar in de praktijk
             // vindt bijna niemand de schakelaar en hoort dus nooit dat er een versie is —
@@ -294,6 +297,16 @@ enum Prefs {
     // MARK: - Ergonomie (fase 4)
 
     /// Of de resterende tijd naast het icoon in de menubalk staat.
+    /// In welke eenheid de chiptemperatuur op het scherm komt.
+    ///
+    /// Een onbekende waarde valt terug op `.systeem` en niet op een crash: dit staat in
+    /// UserDefaults en daar kan iemand met `defaults write` alles in zetten.
+    static var temperatureUnit: Temperatuur.Eenheid {
+        get { Temperatuur.Eenheid(rawValue: d.string(forKey: Key.temperatureUnit) ?? "")
+              ?? .systeem }
+        set { d.set(newValue.rawValue, forKey: Key.temperatureUnit) }
+    }
+
     static var showCountdownInMenuBar: Bool {
         get { d.bool(forKey: Key.showCountdownInMenuBar) }
         set { d.set(newValue, forKey: Key.showCountdownInMenuBar) }

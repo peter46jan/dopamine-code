@@ -79,12 +79,19 @@ struct MeterTegel<Meter: View>: View {
     let waarde: String
     let grens: String
     var gedempt = false
+    /// Klein en rechts in de kop: een tweede meting die erbij hoort maar niet de hoofdzaak is.
+    ///
+    /// De warmtetegel zet hier de gemeten graden neer. Niet in `waarde`, want daar staat wat
+    /// het vangnet beoordeelt — en dat is bij warmte een stand van vier en geen temperatuur.
+    /// In het Frans zou "légèrement élevée · s'arrête à 4 sur 4" op één regel 170 pt worden in
+    /// een tegel die er 140,5 heeft; dit slot is de enige plek waar het past.
+    var rechts: String?
     @ViewBuilder let meter: Meter
 
     var body: some View {
         Tegel {
             VStack(alignment: .leading, spacing: 0) {
-                TegelKop(symbool: symbool, naam: naam)
+                TegelKop(symbool: symbool, naam: naam, rechts: rechts)
                 Text(waarde)
                     .font(.system(size: 15, weight: .semibold))
                     .monospacedDigit()

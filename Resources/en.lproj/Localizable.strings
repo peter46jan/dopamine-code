@@ -450,3 +450,10 @@
 "storing.was.sec.meer" = "internet was down for %1$d seconds at %2$@";
 "storing.was.min.een" = "internet was down for %1$d minute at %2$@";
 "storing.was.min.meer" = "internet was down for %1$d minutes at %2$@";
+
+/* De eenheid voor de gemeten chiptemperatuur. */
+"stop.warm.eenheid" = "Show temperature in";
+"stop.warm.eenheid.systeem" = "Same as macOS";
+"stop.warm.eenheid.celsius" = "Celsius";
+"stop.warm.eenheid.fahrenheit" = "Fahrenheit";
+"stop.warm.eenheid.uitleg" = "The measured chip temperature sits next to the heat meter in the panel. The safety net does not act on those degrees but on the four-step level macOS reports itself — a hot Mac is not the same as a throttled one. If the sensors cannot be read, nothing is shown.";

@@ -93,6 +93,16 @@ omgekeerd geverifieerd door hem expres te laten falen. Doe dat ook bij nieuwe.
   iemand die jouw taal niet spreekt. `verify.sh --talen` vergelijkt ze.
 - **Guards testen is niet het pad testen.** De eerste echte run van `release.sh` strandde op
   een regel die nooit was uitgevoerd, omdat de wachtposten altijd eerder afsloegen.
+- **"macOS geeft geen graden" was te kort door de bocht.** `ProcessInfo.thermalState` geeft ze
+  niet, en `powermetrics` wil root — maar de sensorenlaag eronder geeft ze wél, zonder root:
+  `IOHIDEventSystemClient`, gemeten 47 sensoren op deze Mac. Zie `Warmtesensor`. Het is een
+  privé-API en hij faalt met opzet stil. Twee dingen die dat kostte om te ontdekken: de client
+  moet blijven leven zolang zijn diensten gebruikt worden (loslaten is een use-after-free en
+  levert een SIGKILL op), en een ronde langs de sensoren kost 45 ms — dus nooit op de
+  hoofddraad, want daar draait de guardian.
+- **Graden zijn geen vangnet.** De warmtebewaking gaat af op `thermalState == .critical` en
+  niet op een temperatuur. Ze staan samen in één tegel omdat 91 °C naast "normal" anders
+  onverklaarbaar is, maar het getal dat handelt is de stand van vier.
 
 ## Toon
 

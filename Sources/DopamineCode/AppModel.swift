@@ -106,6 +106,10 @@ final class AppModel: ObservableObject {
     /// niet in de body uitgelezen: `RestartGuard.timeSinceLastRound()` leest en decodeert een
     /// bestand, en de body draait elke seconde door de kloktik.
     @Published private(set) var wachterSinds: TimeInterval?
+
+    /// De gemeten chiptemperatuur in graden Celsius, of `nil` als de sensoren niet te lezen
+    /// zijn. Bijgewerkt door de guardian-tik, buiten de hoofddraad — zie `Warmtesensor`.
+    @Published private(set) var chipGraden: Double?
     @Published private(set) var busy = false
 
     /// True when the flag is set but the app has no passwordless way to clear it. In that
@@ -381,6 +385,18 @@ final class AppModel: ObservableObject {
     /// Het woord naast de warmtemeter. Uit dezelfde bron als de meter zelf, want anders kan er
     /// "normaal" staan naast drie van de vier blokjes aan.
     var warmteLabel: String { warmteStand.label }
+
+    /// De gemeten temperatuur, klaar voor het scherm — of `nil`.
+    ///
+    /// Dit getal staat naast de vier blokjes en niet in de plaats daarvan, want het vangnet
+    /// gaat af op `thermalState == .critical` en niet op een temperatuur. Ze staan samen in de
+    /// tegel omdat de vraag "mijn Mac is heet, waarom zegt hij normaal?" anders onbeantwoord
+    /// blijft: hij is heet én macOS vindt dat geen reden om in te grijpen.
+    var chipGradenTekst: String? {
+        guard let chipGraden else { return nil }
+        return Temperatuur.tekst(chipGraden, in: Prefs.temperatureUnit,
+                                 systeemGebruiktFahrenheit: Temperatuur.systeemGebruiktFahrenheit)
+    }
 
     var warmteMeter: WarmteMeter {
         switch warmteStand {
@@ -1040,6 +1056,17 @@ final class AppModel: ObservableObject {
 
 
         wachterSinds = RestartGuard.timeSinceLastRound()
+
+        // De chiptemperatuur, buiten de hoofddraad. Een ronde langs de sensoren kost gemeten
+        // 45 ms — vijf keer wat `KeyboardBacklight.canPostEvents` kost, en dát is in dit
+        // project al uit de body gehaald. Hier op de tik en niet in de weergave: de tik loopt
+        // elke twintig seconden en een temperatuur beweegt niet sneller dan dat.
+        //
+        // Faalt hij, dan komt er `nil` terug en tekent het paneel wat het zonder graden ook
+        // tekende. Dit is een privé-API en mag niets kunnen breken.
+        Warmtesensor.shared.meet { [weak self] graden in
+            self?.chipGraden = graden
+        }
 
         // Kijken hoort bij élke tik, ook met een lopende sessie. Handelen niet — dat gebeurt
         // verderop, alleen in de tak waar de vlag aantoonbaar op 0 staat.

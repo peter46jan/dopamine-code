@@ -1277,6 +1277,78 @@ SWIFT
     rm -rf "$dirA"
   fi
 
+  # --- de temperatuur -------------------------------------------------------------
+  #
+  # Het uitlezen zelf staat in Warmtesensor en raakt een privé-API; dat valt hier niet te
+  # testen. Wat hier staat is de omrekening en de eenheidskeuze — het deel dat fout kan zijn
+  # zonder dat je het aan het getal ziet.
+  local srcT="$PROJECT_DIR/Sources/DopamineCode/Temperatuur.swift"
+  if [ ! -f "$srcT" ]; then
+    fail "Temperatuur.swift ontbreekt."
+  else
+    local dirT; dirT="$(mktemp -d)"
+    cat > "$dirT/main.swift" <<'SWIFT'
+import Foundation
+
+var fouten = 0
+func eis(_ voorwaarde: Bool, _ wat: String) {
+    if !voorwaarde { print("FOUT: \(wat)"); fouten += 1 }
+}
+
+// --- de omrekening ---------------------------------------------------------------
+// De ijkpunten van de schaal. Een omgekeerde formule ziet er op het scherm net zo
+// geloofwaardig uit, dus die moet hier stuklopen.
+eis(Temperatuur.naarFahrenheit(0) == 32, "0 °C is 32 °F, werd \(Temperatuur.naarFahrenheit(0))")
+eis(Temperatuur.naarFahrenheit(100) == 212, "100 °C is 212 °F")
+eis(Temperatuur.naarFahrenheit(-40) == -40, "-40 is in beide schalen gelijk")
+eis(Temperatuur.naarFahrenheit(37) == 98.6, "37 °C is 98,6 °F")
+
+// --- welke eenheid geldt ----------------------------------------------------------
+eis(Temperatuur.geldend(voorkeur: .celsius, systeemGebruiktFahrenheit: true) == .celsius,
+    "een expliciete keuze wint van het systeem")
+eis(Temperatuur.geldend(voorkeur: .fahrenheit, systeemGebruiktFahrenheit: false) == .fahrenheit,
+    "ook andersom wint de keuze")
+eis(Temperatuur.geldend(voorkeur: .systeem, systeemGebruiktFahrenheit: true) == .fahrenheit,
+    "systeem volgt het systeem")
+eis(Temperatuur.geldend(voorkeur: .systeem, systeemGebruiktFahrenheit: false) == .celsius,
+    "en andersom ook")
+
+// --- de tekst ----------------------------------------------------------------------
+eis(Temperatuur.tekst(51.8, in: .celsius) == "52 °C",
+    "51,8 wordt 52 °C, werd \(Temperatuur.tekst(51.8, in: .celsius))")
+eis(Temperatuur.tekst(51.4, in: .celsius) == "51 °C", "51,4 rondt naar beneden")
+eis(Temperatuur.tekst(51.8, in: .fahrenheit) == "125 °F",
+    "51,8 °C is 125 °F, werd \(Temperatuur.tekst(51.8, in: .fahrenheit))")
+// `.systeem` zonder Fahrenheit-systeem moet Celsius geven en niet in een gat vallen.
+eis(Temperatuur.tekst(20, in: .systeem, systeemGebruiktFahrenheit: false) == "20 °C",
+    "systeem zonder Fahrenheit geeft Celsius")
+eis(Temperatuur.tekst(20, in: .systeem, systeemGebruiktFahrenheit: true) == "68 °F",
+    "systeem mét Fahrenheit geeft Fahrenheit")
+// Een spatie tussen getal en teken. Dat is de SI-schrijfwijze en het staat in alle vier
+// de talen zo; zonder spatie leest "52°C" als één woord.
+eis(Temperatuur.tekst(52, in: .celsius).contains(" °"), "er staat een spatie voor het teken")
+
+// --- een onbekende voorkeur mag niet omvallen ----------------------------------------
+eis(Temperatuur.Eenheid(rawValue: "kelvin") == nil, "een onbekende eenheid bestaat niet")
+eis(Temperatuur.Eenheid(rawValue: "systeem") == .systeem, "en de bekende wel")
+
+if fouten == 0 { print("OK") }
+SWIFT
+    if ! command -v swiftc >/dev/null 2>&1; then
+      skip "swiftc niet gevonden; de temperatuur is niet getest."
+    elif ! buildT="$(swiftc -O -o "$dirT/probe" "$srcT" "$dirT/main.swift" 2>&1)"; then
+      fail "De temperatuurproef compileert niet: $(printf '%s' "$buildT" | grep error: | head -2 | tr '\n' ' ')"
+    else
+      local uitT; uitT="$("$dirT/probe")"
+      if [ "$uitT" = "OK" ]; then
+        pass "Temperatuur rekent goed om en kiest de juiste eenheid."
+      else
+        fail "De temperatuur deugt niet: $(printf '%s' "$uitT" | tr '\n' ' ')"
+      fi
+    fi
+    rm -rf "$dirT"
+  fi
+
   local src3="$PROJECT_DIR/Sources/DopamineCode/Aandacht.swift"
   if [ ! -f "$src3" ]; then
     fail "Aandacht.swift ontbreekt."

@@ -330,7 +330,8 @@ struct MenuView: View {
                            naam: "tegel.warmte",
                            waarde: model.warmteLabel,
                            grens: L10n.t("tegel.grens.warmte",
-                                         model.warmteMeter.stopBij, model.warmteMeter.aantal)) {
+                                         model.warmteMeter.stopBij, model.warmteMeter.aantal),
+                           rechts: model.chipGradenTekst) {
                     WarmteMeterView(meter: model.warmteMeter)
                 }
             }

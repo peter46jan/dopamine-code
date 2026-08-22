@@ -80,6 +80,7 @@ struct SettingsView: View {
 
     // Ergonomie (fase 4).
     @State private var countdown = Prefs.showCountdownInMenuBar
+    @State private var eenheid = Prefs.temperatureUnit
     /// Loopt er een opname van een sneltoets? Zolang die loopt slikt dit venster elke
     /// toetsaanslag op — daarom hoort er altijd een zichtbaar einde aan te zitten.
     @State private var recording = false
@@ -470,6 +471,16 @@ struct SettingsView: View {
 
             Section("stop.warm.titel") {
                 Text("stop.warm.uitleg")
+                    .font(.caption).foregroundStyle(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
+
+                Picker("stop.warm.eenheid", selection: $eenheid) {
+                    Text("stop.warm.eenheid.systeem").tag(Temperatuur.Eenheid.systeem)
+                    Text("stop.warm.eenheid.celsius").tag(Temperatuur.Eenheid.celsius)
+                    Text("stop.warm.eenheid.fahrenheit").tag(Temperatuur.Eenheid.fahrenheit)
+                }
+                .onChange(of: eenheid) { Prefs.temperatureUnit = $0 }
+                Text("stop.warm.eenheid.uitleg")
                     .font(.caption).foregroundStyle(.secondary)
                     .fixedSize(horizontal: false, vertical: true)
             }

@@ -451,3 +451,10 @@
 "storing.was.sec.meer" = "Internet war %1$d Sekunden weg um %2$@";
 "storing.was.min.een" = "Internet war %1$d Minute weg um %2$@";
 "storing.was.min.meer" = "Internet war %1$d Minuten weg um %2$@";
+
+/* De eenheid voor de gemeten chiptemperatuur. */
+"stop.warm.eenheid" = "Temperatur anzeigen in";
+"stop.warm.eenheid.systeem" = "Wie macOS";
+"stop.warm.eenheid.celsius" = "Celsius";
+"stop.warm.eenheid.fahrenheit" = "Fahrenheit";
+"stop.warm.eenheid.uitleg" = "Die gemessene Chiptemperatur steht im Panel neben der Wärmeanzeige. Die Sicherung greift nicht bei diesen Graden, sondern bei der vierstufigen Stufe, die macOS selbst meldet — ein heißer Mac ist nicht dasselbe wie ein gedrosselter. Sind die Sensoren nicht lesbar, steht dort nichts.";
