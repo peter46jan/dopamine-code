@@ -30,7 +30,9 @@ display, and switching the keyboard backlight. Built as personal tooling for one
 written on that assumption — there is no installer, no automatic update, and it has been
 tested on one machine.
 
-![The menu bar panel during a session: the countdown at the top with the time it ends and the lid state, the session length below it, and the three safety nets as tiles — battery, heat, and the watchdog that keeps looking every 30 seconds.](docs/paneel.png)
+<p align="center">
+  <img src="docs/paneel.png" width="360" alt="The menu bar panel during a session: the countdown at the top with the time it ends and the lid state, the session length below it, and the three safety nets as tiles — battery, heat, and the watchdog that keeps looking every 30 seconds.">
+</p>
 
 Available in **Dutch, English, German and French**. The app follows the macOS language order
 and falls back to Dutch when none of the four is present. Translations live in
@@ -951,7 +953,9 @@ extern scherm, en de toetsenbordverlichting schakelen. Gebouwd als persoonlijk g
 voor één Mac, en met die aanname geschreven — er is geen installer, geen automatische
 update, en getest is er op één machine.
 
-![Het menubalkpaneel tijdens een sessie: bovenaan de aftelling met de eindtijd en de klepstand, daaronder de sessieduur, en de drie vangnetten als tegels — accu, warmte, en de wachter die elke 30 seconden blijft kijken.](docs/paneel.png)
+<p align="center">
+  <img src="docs/paneel.png" width="360" alt="Het menubalkpaneel tijdens een sessie: bovenaan de aftelling met de eindtijd en de klepstand, daaronder de sessieduur, en de drie vangnetten als tegels — accu, warmte, en de wachter die elke 30 seconden blijft kijken.">
+</p>
 
 Beschikbaar in het **Nederlands, Engels, Duits en Frans**. De app volgt de taalvolgorde van
 macOS en valt terug op Nederlands als er geen van de vier bij zit. De vertalingen staan in
