@@ -127,10 +127,6 @@ cd dopamine-code
 ./build.sh --install
 ```
 
-*Was called "Wakker" until 11 August 2026. The sudoers rule and the log moved along with it.
-Coming from an older install with a different bundle ID? The app starts with empty settings;
-move them across with `defaults export <old-id> - | defaults import <new-id> -`.*
-
 Either way you need **macOS 14 or newer** and the Xcode command line tools (`xcode-select --install`).
 No Xcode project, no Apple Developer account. There is no Gatekeeper warning either: a
 locally built app never gets a `com.apple.quarantine` attribute, so the right-click-Open
@@ -943,10 +939,6 @@ brew tap peter46jan/dopamine
 brew install dopamine-code
 ln -sfn "$(brew --prefix)/opt/dopamine-code/Dopamine Code.app" /Applications/
 ```
-
-*Heette tot 11 augustus 2026 "Wakker". Sudoers-regel en logboek zijn meeverhuisd. Kom je van
-een oudere installatie met een ander bundle-ID, dan begint de app met lege instellingen:
-verhuizen kan met `defaults export <oud-id> - | defaults import <nieuw-id> -`.*
 
 Menubalk-app voor macOS. Twee dingen: de Mac actief houden met de klep dicht en zonder
 extern scherm, en de toetsenbordverlichting schakelen. Gebouwd als persoonlijk gereedschap
