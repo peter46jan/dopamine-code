@@ -152,7 +152,8 @@ struct MenuView: View {
                 .monospacedDigit()
                 .foregroundStyle(Palet.inktFel)
                 .lineLimit(1)
-                .minimumScaleFactor(0.7)
+                // Past zonder krimpen: de langste aftelling is "10u30", 88,7 pt in een kolom
+                // van 192. Zie de opmerking in `Maten` over waarom die factor eruit is.
         }
     }
 
@@ -338,7 +339,8 @@ struct MenuView: View {
 
             WachterTegel(zin: model.wachterZin,
                          interval: L10n.t("vangnet.wachter.interval"),
-                         leeft: model.wachterLeeft)
+                         leeft: model.wachterLeeft,
+                         klopt: model.paneelOpen)
 
             if let limiet = model.cpuSpeedLimit, limiet < 100 {
                 Text(L10n.t("vangnet.afgeknepen", limiet))

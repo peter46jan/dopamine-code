@@ -249,6 +249,19 @@ final class AppModel: ObservableObject {
     private var gebufferdIcoon: (staat: AppIcon.State, aftelling: String?,
                                  ruimte: Bool, beeld: NSImage)?
 
+    /// Het beeld voor de menubalk, als opgeslagen waarde.
+    ///
+    /// Dit stónd hier als berekende eigenschap die zijn eigen buffer bijwerkte — dus een
+    /// schrijfactie op het model tijdens het tekenen van de weergave. SwiftUI plant daarop een
+    /// nieuwe ronde, die weer leest, die weer schrijft. Gemeten gevolg: zodra het paneel één
+    /// keer open was geweest bleef `NSHostingView.layout()` bij elke beeldwissel draaien, goed
+    /// voor 9% van een kern — dag en nacht, ook met het paneel dicht en zonder één venster op
+    /// het scherm. Een kaal MenuBarExtra ter vergelijking: 0,07%.
+    ///
+    /// Nu wordt het beeld gezet door `herteken()` en leest de weergave alleen. Lezen mag; het
+    /// schrijven gebeurt op de tik en bij de gebeurtenissen die er iets aan veranderen.
+    @Published private(set) var menuBarBeeld: NSImage = AppIcon.menuBar(.off)
+
     /// Staat het paneel open? Alleen het menubalkitem doet hier iets mee.
     ///
     /// Het paneel hangt aan het statusitem, dus als dat item breder wordt schuift het paneel
@@ -260,10 +273,23 @@ final class AppModel: ObservableObject {
     /// MenuBarExtra-paneel betrouwbaar vuren bij elk openen en sluiten.
     @Published private(set) var paneelOpen = false
 
-    func paneelGeopend() { paneelOpen = true }
-    func paneelGesloten() { paneelOpen = false }
+    func paneelGeopend() {
+        paneelOpen = true
+        // Eerst de klok gelijkzetten en dán pas laten lopen. Stond hij stil, dan is `now`
+        // minuten oud en zou het paneel een tel lang een verkeerde aftelling tonen.
+        now = Date()
+        herstelTik()
+        hertekenMenubalk()
+    }
 
-    var menuBarLabel: NSImage {
+    func paneelGesloten() {
+        paneelOpen = false
+        herstelTik()
+        hertekenMenubalk()
+    }
+
+    /// Werk het menubalkbeeld bij als er iets aan veranderd is. Nooit vanuit een weergave.
+    func hertekenMenubalk() {
         let staat = iconState
         let aftelling = menuBarCountdown
         // De ruimte blijft gereserveerd zolang het paneel openstaat, ook als er nu niets af te
@@ -273,11 +299,11 @@ final class AppModel: ObservableObject {
         // plek naast het merk.
         let ruimte = Prefs.showCountdownInMenuBar && paneelOpen
         if let g = gebufferdIcoon, g.staat == staat, g.aftelling == aftelling, g.ruimte == ruimte {
-            return g.beeld
+            return
         }
         let beeld = AppIcon.menuBar(staat, countdown: aftelling, ruimteVoorAftelling: ruimte)
         gebufferdIcoon = (staat, aftelling, ruimte, beeld)
-        return beeld
+        menuBarBeeld = beeld
     }
 
     /// De resterende tijd voor in de menubalk, als "3:15", of `nil`.
@@ -883,13 +909,48 @@ final class AppModel: ObservableObject {
         }
     }
 
-    private func startTicking() {
-        let timer = Timer(timeInterval: 1, repeats: true) { [weak self] _ in
-            Task { @MainActor in self?.now = Date() }
+    /// Hoe vaak de klok mag tikken, gegeven wie er kijkt.
+    ///
+    /// Elke tik zet `now`, en dat is `@Published`: de hele weergave wordt erdoor opnieuw
+    /// berekend. Eén tik per seconde, altijd, was daarom duurder dan het lijkt. Gemeten op een
+    /// vers gestarte app: 0,1% processor met het paneel nooit geopend, en 8% zodra het één keer
+    /// open was geweest — en dat zakte niet meer, want de tik bleef lopen en de weergave bleef
+    /// zichzelf herberekenen voor niemand.
+    ///
+    /// `now` is uitsluitend weergave: de menubalkaftelling, de kaart, de armingregel. De
+    /// vangnetten hangen er niet aan — die draaien op de guardian-tik van 20 seconden en lezen
+    /// `Date()` rechtstreeks. Deze klok mag dus stil vallen zonder dat er iets onbewaakt blijft.
+    private var tikInterval: TimeInterval {
+        // Een aftelling die iemand zíet moet ook lopen.
+        if paneelOpen { return 1 }
+        // De menubalk telt in hele minuten. Tien seconden is ruim genoeg om die op tijd te
+        // laten verspringen, en scheelt negen op de tien berekeningen.
+        if intendedOn { return 10 }
+        // Er loopt niets en er kijkt niemand. Dan hoeft er ook niets te tikken.
+        return 0
+    }
+
+    private var lopendeTikInterval: TimeInterval = -1
+
+    /// Zet de klok op de juiste snelheid. Idempotent: verandert er niets, dan gebeurt er niets.
+    private func herstelTik() {
+        let gewenst = tikInterval
+        guard gewenst != lopendeTikInterval else { return }
+        lopendeTikInterval = gewenst
+        tickTimer?.invalidate()
+        tickTimer = nil
+        guard gewenst > 0 else { return }
+        let timer = Timer(timeInterval: gewenst, repeats: true) { [weak self] _ in
+            Task { @MainActor in
+                self?.now = Date()
+                self?.hertekenMenubalk()
+            }
         }
         RunLoop.main.add(timer, forMode: .common)
         tickTimer = timer
     }
+
+    private func startTicking() { herstelTik() }
 
     /// `applicationWillTerminate` does not run for a SIGTERM, which is what a logout,
     /// a restart or `killall` sends. Leaving the flag set because the app was told to
@@ -1056,6 +1117,10 @@ final class AppModel: ObservableObject {
 
 
         wachterSinds = RestartGuard.timeSinceLastRound()
+
+        // Begon of eindigde er een sessie, dan hoort de klok van snelheid te veranderen.
+        herstelTik()
+        hertekenMenubalk()
 
         // De chiptemperatuur, buiten de hoofddraad. Een ronde langs de sensoren kost gemeten
         // 45 ms — vijf keer wat `KeyboardBacklight.canPostEvents` kost, en dát is in dit

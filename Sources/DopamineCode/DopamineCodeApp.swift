@@ -33,7 +33,7 @@ struct DopamineCodeApp: App {
             // menu bar vibrancy and light/dark inversion an SF Symbol would get.
             // Het beeld bevat ook de aftelling; het model buffert het, want deze scene wordt
             // door de kloktik elke seconde opnieuw geëvalueerd.
-            Image(nsImage: model.menuBarLabel)
+            Image(nsImage: model.menuBarBeeld)
         }
         // Not .menu: menu style drops non-text views and does not re-render on open,
         // which rules out a live countdown.

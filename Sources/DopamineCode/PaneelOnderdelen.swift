@@ -1,5 +1,29 @@
 import SwiftUI
 
+/// De maten van het paneel, als vaste getallen.
+///
+/// Ze stónden niet vast: de meters gebruikten een `GeometryReader` en de teksten een
+/// `minimumScaleFactor`, allebei manieren om SwiftUI zelf te laten uitrekenen wat er past.
+/// Los kwam elk blok daarmee tot rust, maar samen niet — dan bleef AppKit het venster bij elke
+/// beeldwissel opnieuw indelen. Gemeten na het openen en sluiten van het paneel: elk blok
+/// apart 0,3 tot 0,8% van een kern, alle blokken samen 9,8%, en dat bleef dag en nacht doorgaan
+/// met het paneel dicht.
+///
+/// De getallen waren toch al bekend — ze staan sinds het tegelontwerp in de commit-berichten,
+/// nagemeten met `NSAttributedString` in vier talen. Ze hier neerzetten scheelt SwiftUI het
+/// werk om ze elke keer opnieuw af te leiden.
+enum Maten {
+    /// De breedte van het paneel. Zie `MenuView`.
+    static let paneel: CGFloat = 360
+    static let buitenrand: CGFloat = 13
+    /// 360 − 2 × 13.
+    static let inhoud = paneel - 2 * buitenrand          // 334
+    static let kier: CGFloat = 9
+    static let tegelrand: CGFloat = 11
+    /// De binnenmaat van een halve tegel: (334 − 9) / 2 − 2 × 11.
+    static let halveTegelInhoud = (inhoud - kier) / 2 - 2 * tegelrand   // 140,5
+}
+
 // MARK: - De tegel zelf
 
 /// Eén tegel: glas op de eigen achtergrond, met de inhoud erin.
@@ -97,9 +121,10 @@ struct MeterTegel<Meter: View>: View {
                     .monospacedDigit()
                     .foregroundStyle(gedempt ? Palet.inktZacht : Palet.inktFel)
                     .lineLimit(1)
-                    // Krimpen en niet afbreken: "légèrement élevée" houdt 9 pt over, en een
-                    // langere vertaling mag de tegel niet hoger maken dan zijn buurman.
-                    .minimumScaleFactor(0.75)
+                    // Geen `minimumScaleFactor`: die laat SwiftUI de tekst bij elke indeling
+                    // op meerdere schalen opmeten, en dat was mede waarom de indeling niet tot
+                    // rust kwam. Het past ook zo — de langste is het Franse "légèrement
+                    // élevée", 131,4 pt in een tegel van 140,5.
                     .padding(.top, 5)
                 meter
                     .padding(.top, 7)
@@ -108,7 +133,7 @@ struct MeterTegel<Meter: View>: View {
                     .monospacedDigit()
                     .foregroundStyle(Palet.inktFlauw)
                     .lineLimit(1)
-                    .minimumScaleFactor(0.8)
+                    // Past: de langste is het Duitse "stoppt bei 4 von 4", 88,0 van 140,5 pt.
                     .padding(.top, 6)
             }
         }
@@ -123,6 +148,8 @@ struct WachterTegel: View {
     let zin: String
     let interval: String
     let leeft: Bool
+    /// Zie `WachterStip.klopt`.
+    var klopt = true
 
     var body: some View {
         Tegel {
@@ -131,12 +158,13 @@ struct WachterTegel: View {
                 // 11 en niet 8: de hartslag van de stip zwelt tot 2,6 keer zijn maat en raakte
                 // bij 8 de eerste letter van de zin.
                 HStack(spacing: 11) {
-                    WachterStip(leeft: leeft)
+                    WachterStip(leeft: leeft, klopt: klopt)
                     Text(zin)
                         .font(.system(size: 11))
                         .foregroundStyle(leeft ? Palet.inktZacht : Palet.alarm)
                         .lineLimit(1)
-                        .minimumScaleFactor(0.8)
+                        // Past: de langste is het Duitse "hat noch nicht nachgesehen",
+                        // 148,1 pt in een brede tegel van 298.
                     Spacer(minLength: 0)
                 }
             }
@@ -155,24 +183,28 @@ struct WachterTegel: View {
 /// `!battery.onAC` — en een scherpe kleur zou iets beloven wat niet gebeurt.
 struct AccuMeterView: View {
     let meter: AccuMeter
+    /// De breedte waarop gerekend wordt. Een vast getal en geen `GeometryReader`.
+    ///
+    /// Die reader was een van de dingen die de indeling niet lieten uitconvergeren: hij meet de
+    /// ruimte die hij krijgt, en zijn inhoud bepaalt mede hoeveel ruimte dat is. In een tegel
+    /// naast andere tegels blijft dat rondzingen. De maat ligt toch vast — zie `Maten`.
+    var breedte: CGFloat = Maten.halveTegelInhoud
 
     var body: some View {
-        GeometryReader { geo in
-            ZStack(alignment: .leading) {
-                Capsule().fill(Palet.baan)
-                Capsule()
-                    .fill(meter.sluimert ? Palet.inktFlauw : Palet.accent)
-                    .frame(width: geo.size.width * meter.vulling)
-                Capsule()
-                    .fill(Palet.alarm.opacity(meter.sluimert ? 0.20 : 0.42))
-                    .frame(width: geo.size.width * meter.zone)
-                Rectangle()
-                    .fill(Palet.inktFel)
-                    .frame(width: 1.5, height: 9)
-                    .offset(x: max(0, geo.size.width * meter.vulling - 0.75))
-            }
+        ZStack(alignment: .leading) {
+            Capsule().fill(Palet.baan)
+            Capsule()
+                .fill(meter.sluimert ? Palet.inktFlauw : Palet.accent)
+                .frame(width: breedte * meter.vulling)
+            Capsule()
+                .fill(Palet.alarm.opacity(meter.sluimert ? 0.20 : 0.42))
+                .frame(width: breedte * meter.zone)
+            Rectangle()
+                .fill(Palet.inktFel)
+                .frame(width: 1.5, height: 9)
+                .offset(x: max(0, breedte * meter.vulling - 0.75))
         }
-        .frame(height: 4)
+        .frame(width: breedte, height: 4)
     }
 }
 
@@ -217,6 +249,18 @@ struct WachterStip: View {
     /// indicator, zeker voor het enige vangnet dat een `SIGKILL` van de app overleeft.
     var leeft = true
 
+    /// Staat het paneel open? Zo niet, dan klopt er niets.
+    ///
+    /// `repeatForever` neemt dat woord letterlijk. Een MenuBarExtra-paneel wordt bij het sluiten
+    /// niet afgebroken, dus de animatie bleef lopen voor een paneel dat niemand ziet — en elke
+    /// beeldwissel deelde AppKit het venster opnieuw in. Gemeten in een monster van 10 seconden
+    /// met het paneel dícht: 765 van de 8366 metingen op de hoofddraad zaten in de
+    /// CoreAnimation-tekencyclus, oftewel 9% van een kern, de hele dag door.
+    ///
+    /// Het stoppen gebeurt door de animatie wég te laten en niet door de waarde terug te zetten:
+    /// een lopende `repeatForever` gaat niet uit van een nieuwe waarde erin schrijven.
+    var klopt = true
+
     @Environment(\.accessibilityReduceMotion) private var minderBeweging
     @State private var groot = false
 
@@ -230,15 +274,26 @@ struct WachterStip: View {
                     .scaleEffect(groot ? 2.6 : 1)
                     .opacity(leeft ? 1 : 0)
             )
-            .onAppear {
-                // Alleen kloppen als er werkelijk iets klopt. Een hartslag naast een dode
-                // wachter is precies de geruststelling die hier niet mag staan.
-                guard leeft, !minderBeweging else { return }
-                withAnimation(.easeOut(duration: 2.4).repeatForever(autoreverses: false)) {
-                    groot = true
-                }
-            }
+            .onAppear { stelIn() }
+            .onChange(of: klopt) { _, _ in stelIn() }
             .accessibilityHidden(true)
+    }
+
+    /// Start of stop de hartslag.
+    ///
+    /// Alleen kloppen als er werkelijk iets klopt: een hartslag naast een dode wachter is
+    /// precies de geruststelling die hier niet mag staan.
+    private func stelIn() {
+        if klopt, leeft, !minderBeweging {
+            withAnimation(.easeOut(duration: 2.4).repeatForever(autoreverses: false)) {
+                groot = true
+            }
+        } else {
+            // Zonder animatie terugzetten, anders blijft de lopende herhaling eraan hangen.
+            var zonder = Transaction()
+            zonder.disablesAnimations = true
+            withTransaction(zonder) { groot = false }
+        }
     }
 }
 

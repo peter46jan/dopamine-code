@@ -53,7 +53,12 @@ struct SettingsView: View {
     @State private var networkSound = Prefs.soundOnNetworkLoss
     @State private var notifications = Prefs.notifications
     @State private var blink = Prefs.blinkBacklightOnToggle
-    @State private var launchAtLogin = LaunchAtLogin.isEnabled
+    // Niet hier uitlezen maar in `onAppear`. `Settings { SettingsView(model:) }` staat in de
+    // scene-body, dus SwiftUI construeert dit scherm opnieuw bij élke publicatie van het model
+    // — ook als het venster dicht is. En `isEnabled` vraagt het aan `SMAppService`, wat een
+    // XPC-aanroep is. Gemeten in het monster: 54 metingen onder `DopamineCodeApp.body.getter`,
+    // voor een venster dat niemand open had staan.
+    @State private var launchAtLogin = false
     @State private var syncingLaunchAtLogin = false
     @State private var diagnostics = Diagnostics()
     @State private var updateCheckEnabled = Prefs.updateCheckEnabled
