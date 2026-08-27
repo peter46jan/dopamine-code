@@ -57,7 +57,14 @@ enum AppIcon {
             let opmaak: [NSAttributedString.Key: Any] = [.font: font, .foregroundColor: NSColor.black]
             let tekst = (countdown ?? "") as NSString
             let afmeting = tekst.size(withAttributes: opmaak)
-            let vak = ceil(("00:00" as NSString).size(withAttributes: opmaak).width)
+            // Het vak van vijf cijferposities is er om te réserveren, en dat hoeft alleen
+            // zolang het paneel openstaat — anders schuift het paneel opzij terwijl je erin
+            // klikt. Buiten dat: precies zo breed als wat er staat. Anders kreeg een
+            // vakantiesessie, die maar één teken toont, alsnog de ruimte voor "00:00"
+            // toebedeeld, en dan gaapt er een gat naast het merk.
+            let vak = ruimteVoorAftelling
+                ? ceil(("00:00" as NSString).size(withAttributes: opmaak).width)
+                : ceil(afmeting.width)
             let tussenruimte = pointSize * 0.18
             let breedte = pointSize + tussenruimte + vak
             image = NSImage(size: NSSize(width: breedte, height: pointSize), flipped: false) { rect in

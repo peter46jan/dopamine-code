@@ -1349,6 +1349,70 @@ SWIFT
     rm -rf "$dirT"
   fi
 
+  # --- het menubalkitem ------------------------------------------------------------
+  #
+  # Twee eisen die elkaar tegenspreken, en allebei uit een klacht ontstaan.
+  #
+  # Zolang het paneel openstaat moet het item even breed blijven, wat er ook in staat: het
+  # paneel hangt eraan en schoof anders opzij terwijl je erin klikte.
+  #
+  # Staat het paneel dicht, dan moet het item zo smal zijn als wat erin staat. Het vak van vijf
+  # cijferposities werd eerst altijd gereserveerd, en dan gaapte er een gat naast het merk bij
+  # een vakantiesessie die maar één teken toont.
+  local srcI="$PROJECT_DIR/Sources/DopamineCode/AppIcon.swift"
+  if [ ! -f "$srcI" ]; then
+    fail "AppIcon.swift ontbreekt."
+  else
+    local dirI; dirI="$(mktemp -d)"
+    cat > "$dirI/main.swift" <<'SWIFT'
+import AppKit
+
+var fouten = 0
+func eis(_ voorwaarde: Bool, _ wat: String) {
+    if !voorwaarde { print("FOUT: \(wat)"); fouten += 1 }
+}
+func breed(_ staat: AppIcon.State, _ tekst: String?, ruimte: Bool) -> CGFloat {
+    AppIcon.menuBar(staat, countdown: tekst, ruimteVoorAftelling: ruimte).size.width
+}
+
+// --- paneel open: één breedte, wat er ook in staat --------------------------------
+let ijk = breed(.off, nil, ruimte: true)
+for tekst in ["8:00", "0:05", "10:30", "24:00", "∞", "3d", "14d"] {
+    let w = breed(.on, tekst, ruimte: true)
+    eis(abs(w - ijk) < 0.01,
+        "met het paneel open is \(tekst) \(w) pt breed en niets \(ijk) — dat verspringt")
+}
+eis(abs(breed(.error, "3:00", ruimte: true) - ijk) < 0.01, "ook een foutstand blijft even breed")
+
+// --- paneel dicht: zo smal als wat er staat ----------------------------------------
+let alleenMerk = breed(.off, nil, ruimte: false)
+let oneindig = breed(.on, "∞", ruimte: false)
+let dagen = breed(.on, "3d", ruimte: false)
+let klok = breed(.on, "8:00", ruimte: false)
+eis(oneindig > alleenMerk, "∞ hoort breder dan alleen het merk, werd \(oneindig) tegen \(alleenMerk)")
+eis(oneindig < klok, "∞ hoort smaller dan 8:00, werd \(oneindig) tegen \(klok)")
+eis(dagen < klok, "3d hoort smaller dan 8:00, werd \(dagen) tegen \(klok)")
+eis(klok < ijk, "zonder reservering is 8:00 smaller dan het gereserveerde vak")
+eis(abs(breed(.on, nil, ruimte: false) - alleenMerk) < 0.01,
+    "niets af te tellen en niets gereserveerd is precies het merk")
+
+if fouten == 0 { print("OK") }
+SWIFT
+    if ! command -v swiftc >/dev/null 2>&1; then
+      skip "swiftc niet gevonden; het menubalkitem is niet getest."
+    elif ! buildI="$(swiftc -O -o "$dirI/probe" "$srcI" "$dirI/main.swift" 2>&1)"; then
+      fail "De menubalkproef compileert niet: $(printf '%s' "$buildI" | grep error: | head -2 | tr '\n' ' ')"
+    else
+      local uitI; uitI="$("$dirI/probe")"
+      if [ "$uitI" = "OK" ]; then
+        pass "Het menubalkitem blijft even breed met het paneel open, en is smal als het dicht is."
+      else
+        fail "Het menubalkitem deugt niet: $(printf '%s' "$uitI" | tr '\n' ' ')"
+      fi
+    fi
+    rm -rf "$dirI"
+  fi
+
   local src3="$PROJECT_DIR/Sources/DopamineCode/Aandacht.swift"
   if [ ! -f "$src3" ]; then
     fail "Aandacht.swift ontbreekt."
