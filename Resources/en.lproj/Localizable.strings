@@ -411,6 +411,7 @@
 
 /* --- Compact duration for the segmented picker: 30m, 2h, 10h30 --- */
 "duur.kort.uur" = "h";
+"duur.kort.dag" = "d";
 "duur.kort.min" = "m";
 "vangnet.wachter.gelezen" = "flag read, %@";
 "aandacht.kop" = "Needs attention";

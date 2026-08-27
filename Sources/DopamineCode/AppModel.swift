@@ -349,8 +349,23 @@ final class AppModel: ObservableObject {
     /// `reconcile` vermijdt door `status` op `fout.zondersessie` te zetten. Er staat dan alleen
     /// het bliksem-icoon.
     var menuBarCountdown: String? {
-        guard Prefs.showCountdownInMenuBar, intendedOn, let deadline else { return nil }
+        guard Prefs.showCountdownInMenuBar, intendedOn else { return nil }
+        guard let deadline else {
+            // Vakantiestand zonder eindtijd. Er valt niets af te tellen, maar dát er iets
+            // loopt hoort zichtbaar te zijn: zonder dit stond er alleen het merk, en dat is
+            // niet te onderscheiden van een gewone sessie met de aftelling uitgezet.
+            return vakantieLoopt ? "∞" : nil
+        }
         let minuten = Aftelling.minutenTot(deadline, vanaf: now)
+        // Boven de dag in dagen. "72:00" is geen aftelling meer maar een raadsel, en het past
+        // ook niet in de ruimte die voor "00:00" gereserveerd is.
+        if minuten >= 24 * 60 {
+            // Naar het dichtstbijzijnde en niet naar boven. `Aftelling.minutenTot` rondt de
+            // minuten al naar boven, en daar nog eens overheen afronden maakte van een sessie
+            // van drie dagen "4d" — 72 u 1 min werd 3,0007 dagen werd 4.
+            let dagen = max(1, Int((Double(minuten) / (24 * 60)).rounded()))
+            return "\(dagen)" + L10n.t("duur.kort.dag")
+        }
         return "\(minuten / 60):" + String(format: "%02d", minuten % 60)
     }
 
@@ -1913,6 +1928,9 @@ final class AppModel: ObservableObject {
         sessionStart = nil
         sessionVakantieDagen = nil
         vakantieLoopt = false
+        // Ook hier meteen: anders blijft de ∞ of de aftelling nog een tik in de balk staan
+        // voor een sessie die net afgelopen is.
+        hertekenMenubalk()
         // Alle drie de sessie-instellingen weg, niet alleen de eindtijd: anders lekt een
         // sessie zijn duur, zijn bovengrens of zijn proceskoppeling de volgende in — en dan
         // stopt een sessie die niemand koppelde alsnog op een proces van een uur geleden.
@@ -2356,8 +2374,14 @@ final class AppModel: ObservableObject {
         // De aanhef "Wakker houden AAN." staat vast: `verify.sh` zoekt hierop om het venster
         // van een sessie te bepalen. Er mag alleen achteraan iets bij.
         var startRegel = String(
-            format: "Wakker houden AAN. Stopt vanzelf na %@, accugrens %d%%, temperatuur %@.",
-            Self.durationText(effectiveLimitMinutes), Prefs.batteryFloor, thermal.label
+            // De lengte die er écht staat en niet de ingestelde duur. Bij een vakantiesessie
+            // van drie dagen meldde deze regel "Stopt vanzelf na 10 hours" — dat is wat er in
+            // de instellingen stond, niet wat er ging gebeuren. En zonder eindtijd stopt hij
+            // helemaal niet vanzelf; dat hoort het logboek te zeggen.
+            format: "Wakker houden AAN. Stopt %@, accugrens %d%%, temperatuur %@.",
+            deadline.map { "vanzelf na \(Self.durationText(Int(($0.timeIntervalSince(start) / 60).rounded())))" }
+                ?? "niet vanzelf (vakantiestand)",
+            Prefs.batteryFloor, thermal.label
         )
         startRegel += " Gestart via \(request.trigger.metLidwoord)."
         if let deadline { startRegel += " Loopt tot \(Self.momentText(deadline))." }
@@ -2409,6 +2433,10 @@ final class AppModel: ObservableObject {
         // drie dagen meldde zo "(10 uur)", want dat stond er in de instellingen.
         let echteMinuten = deadline.map { Int(($0.timeIntervalSince(start) / 60).rounded()) }
             ?? effectiveLimitMinutes
+        // Meteen hertekenen en niet wachten op de volgende tik. Die loopt met een sessie op
+        // tien seconden, en zo lang stond er na het aanzetten van de vakantiestand nog het
+        // kale merk in de menubalk — precies de vraag "hoe zie ik dat het aanstaat?".
+        hertekenMenubalk()
         return .gestart(deadline: deadline, minuten: echteMinuten)
     }
 

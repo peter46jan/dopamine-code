@@ -416,6 +416,7 @@
 
 /* --- Compacte duur voor de segmentkiezer: 30m, 2u, 10u30 --- */
 "duur.kort.uur" = "u";
+"duur.kort.dag" = "d";
 "duur.kort.min" = "m";
 "vangnet.wachter.gelezen" = "vlag gelezen, %@";
 "aandacht.kop" = "Vraagt aandacht";
