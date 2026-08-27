@@ -457,3 +457,15 @@
 "stop.warm.eenheid.celsius" = "Celsius";
 "stop.warm.eenheid.fahrenheit" = "Fahrenheit";
 "stop.warm.eenheid.uitleg" = "The measured chip temperature sits next to the heat meter in the panel. The safety net does not act on those degrees but on the four-step level macOS reports itself — a hot Mac is not the same as a throttled one. If the sensors cannot be read, nothing is shown.";
+
+/* De vakantiestand: een sessie zonder tijdslimiet, of met een limiet in dagen.
+   Alleen de tijdslimiet gaat eraf; de accugrens en de warmtebewaking blijven. */
+"menu.vakantie" = "Vacation mode";
+"menu.vakantie.dagen" = "%d days";
+"menu.vakantie.onbeperkt" = "until I switch it off";
+"menu.vakantie.uitleg.dagen" = "The session keeps running until those days are up. The battery floor and the thermal watch still apply.";
+"menu.vakantie.uitleg.onbeperkt" = "No time limit: the session runs until you switch it off. The battery floor and the thermal watch still step in, and the watchdog clears the flag if the app falls over.";
+"kaart.vakantie" = "Staying awake";
+"reden.vakantie" = "vacation mode was switched off";
+"reden.vakantie.dagen" = "the %d-day vacation session was up";
+"melding.tot.app.vakantie" = "The Mac stays awake until %@ has finished, with no end time.";

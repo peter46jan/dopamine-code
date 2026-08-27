@@ -50,6 +50,15 @@ struct MenuView: View {
     /// op de hoofddraad, en dat is de draad die de guardian aandrijft. Eén keer per opening.
     @State private var kanToetsenbord = false
 
+    /// De vakantiestand en zijn lengte. Lokaal, en bij het openen uit `Prefs` gehaald — net als
+    /// de andere voorkeuren hier, want de body draait vaker dan je hem opent.
+    ///
+    /// De schuifregelaar loopt van 1 tot 15 en niet van 0 tot 14: helemaal rechts hoort "het
+    /// langst" te betekenen, en dat is "tot ik hem uitzet". Vijftien staat voor onbeperkt en
+    /// wordt als 0 bewaard.
+    @State private var vakantie = false
+    @State private var vakantieStand: Double = 7
+
     var body: some View {
         VStack(alignment: .leading, spacing: 13) {
             heldentegel
@@ -81,6 +90,8 @@ struct MenuView: View {
             synchroniseerEindtijd()
             untilExplanation = nil
             kanToetsenbord = KeyboardBacklight.canPostEvents
+            vakantie = Prefs.vacationMode
+            vakantieStand = Prefs.vacationDays == 0 ? 15 : Double(Prefs.vacationDays)
             model.paneelGeopend()
         }
         // Zodat het menubalkitem zijn breedte vasthoudt zolang je erin klikt. Zie
@@ -147,6 +158,11 @@ struct MenuView: View {
         case .gearmd:
             Text("kaart.gearmd").font(.headline).foregroundStyle(Palet.inktFel)
         case .aan:
+            // Zonder eindtijd valt er niets af te tellen. Een streepje op de plek van het
+            // grote getal leest als "onbekend"; hier is het juist een keuze.
+            if model.kaartAftelling == nil {
+                Text("kaart.vakantie").font(.headline).foregroundStyle(Palet.inktFel)
+            } else {
             Text(model.kaartAftelling ?? "—")
                 .font(.system(size: 32, weight: .light))
                 .monospacedDigit()
@@ -154,6 +170,7 @@ struct MenuView: View {
                 .lineLimit(1)
                 // Past zonder krimpen: de langste aftelling is "10u30", 88,7 pt in een kolom
                 // van 192. Zie de opmerking in `Maten` over waarom die factor eruit is.
+            }
         }
     }
 
@@ -209,6 +226,59 @@ struct MenuView: View {
     // MARK: - De duur
 
     private var duurkiezer: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            vakantieRegel
+            if vakantie { vakantieSchuif } else { gewoneDuur }
+        }
+    }
+
+    /// De schakelaar voor de vakantiestand.
+    private var vakantieRegel: some View {
+        HStack(spacing: 8) {
+            Image(systemName: "beach.umbrella")
+                .font(.system(size: 10)).frame(width: 13)
+                .foregroundStyle(vakantie ? Palet.accent : Palet.inktFlauw)
+            Text("menu.vakantie").font(.caption)
+                .foregroundStyle(vakantie ? Palet.inkt : Palet.inktZacht)
+            Spacer(minLength: 6)
+            Toggle("", isOn: $vakantie)
+                .toggleStyle(.switch).labelsHidden().controlSize(.mini)
+                .onChange(of: vakantie) { _, aan in
+                    Prefs.vacationMode = aan
+                    // Meteen laten gelden voor een lopende sessie: anders zet je de stand aan
+                    // en loopt de klok van de vorige keuze gewoon door.
+                    model.herzieVakantie()
+                }
+        }
+    }
+
+    /// Hoe lang de vakantiestand loopt. Helemaal rechts: tot je hem zelf uitzet.
+    private var vakantieSchuif: some View {
+        VStack(alignment: .leading, spacing: 4) {
+            HStack(spacing: 9) {
+                Slider(value: $vakantieStand, in: 1...15, step: 1)
+                    .controlSize(.small)
+                    .onChange(of: vakantieStand) { _, nieuw in
+                        Prefs.vacationDays = nieuw >= 15 ? 0 : Int(nieuw)
+                        model.herzieVakantie()
+                    }
+                Text(vakantieTekst)
+                    .font(.caption).monospacedDigit()
+                    .foregroundStyle(Palet.inkt)
+                    .lineLimit(1).fixedSize()
+            }
+            Text(vakantieStand >= 15 ? "menu.vakantie.uitleg.onbeperkt" : "menu.vakantie.uitleg.dagen")
+                .font(.caption2).foregroundStyle(Palet.inktZacht)
+                .fixedSize(horizontal: false, vertical: true)
+        }
+    }
+
+    private var vakantieTekst: String {
+        vakantieStand >= 15 ? L10n.t("menu.vakantie.onbeperkt")
+                            : L10n.t("menu.vakantie.dagen", Int(vakantieStand))
+    }
+
+    private var gewoneDuur: some View {
         VStack(alignment: .leading, spacing: 8) {
             Picker("", selection: Binding(get: { model.autoOffMinutes },
                                           set: { model.setAutoOff(minutes: $0) })) {

@@ -464,3 +464,15 @@
 "stop.warm.eenheid.celsius" = "Celsius";
 "stop.warm.eenheid.fahrenheit" = "Fahrenheit";
 "stop.warm.eenheid.uitleg" = "De gemeten chiptemperatuur staat naast de warmtemeter in het paneel. Het vangnet gaat niet af op die graden maar op de stand van vier die macOS zelf meldt — een hete Mac is niet hetzelfde als een Mac die afgeknepen wordt. Zijn de sensoren niet te lezen, dan staat er niets.";
+
+/* De vakantiestand: een sessie zonder tijdslimiet, of met een limiet in dagen.
+   Alleen de tijdslimiet gaat eraf; de accugrens en de warmtebewaking blijven. */
+"menu.vakantie" = "Vakantiestand";
+"menu.vakantie.dagen" = "%d dagen";
+"menu.vakantie.onbeperkt" = "tot ik hem uitzet";
+"menu.vakantie.uitleg.dagen" = "De sessie loopt door tot die dagen om zijn. De accugrens en de warmtebewaking blijven gewoon gelden.";
+"menu.vakantie.uitleg.onbeperkt" = "Geen tijdslimiet: de sessie loopt tot je hem zelf uitzet. De accugrens en de warmtebewaking grijpen nog steeds in, en de wachter ruimt de vlag op als de app omvalt.";
+"kaart.vakantie" = "Blijft wakker";
+"reden.vakantie" = "de vakantiestand werd uitgezet";
+"reden.vakantie.dagen" = "de vakantiestand van %d dagen was om";
+"melding.tot.app.vakantie" = "De Mac blijft wakker tot %@ klaar is, zonder eindtijd.";

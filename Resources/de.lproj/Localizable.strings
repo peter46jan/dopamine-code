@@ -458,3 +458,15 @@
 "stop.warm.eenheid.celsius" = "Celsius";
 "stop.warm.eenheid.fahrenheit" = "Fahrenheit";
 "stop.warm.eenheid.uitleg" = "Die gemessene Chiptemperatur steht im Panel neben der Wärmeanzeige. Die Sicherung greift nicht bei diesen Graden, sondern bei der vierstufigen Stufe, die macOS selbst meldet — ein heißer Mac ist nicht dasselbe wie ein gedrosselter. Sind die Sensoren nicht lesbar, steht dort nichts.";
+
+/* De vakantiestand: een sessie zonder tijdslimiet, of met een limiet in dagen.
+   Alleen de tijdslimiet gaat eraf; de accugrens en de warmtebewaking blijven. */
+"menu.vakantie" = "Urlaubsmodus";
+"menu.vakantie.dagen" = "%d Tage";
+"menu.vakantie.onbeperkt" = "bis ich ihn ausschalte";
+"menu.vakantie.uitleg.dagen" = "Die Sitzung läuft, bis diese Tage um sind. Die Akkugrenze und die Wärmeüberwachung gelten weiterhin.";
+"menu.vakantie.uitleg.onbeperkt" = "Kein Zeitlimit: die Sitzung läuft, bis du sie ausschaltest. Die Akkugrenze und die Wärmeüberwachung greifen weiterhin ein, und der Wächter räumt das Flag auf, wenn die App abstürzt.";
+"kaart.vakantie" = "Bleibt wach";
+"reden.vakantie" = "der Urlaubsmodus wurde ausgeschaltet";
+"reden.vakantie.dagen" = "die Urlaubssitzung von %d Tagen war um";
+"melding.tot.app.vakantie" = "Der Mac bleibt wach, bis %@ fertig ist, ohne Endzeit.";

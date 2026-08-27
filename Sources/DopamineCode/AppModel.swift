@@ -20,13 +20,23 @@ struct SessionRequest {
     /// `nil` = de neutrale zin. Fase 3 vult hem met "het schema liep tot 18:00", want
     /// "de sessie liep tot 18:00" laat in het logboek in het midden wíe dat besloot.
     var notLaterThanReason: String? = nil
+    /// Vakantiestand: `nil` = gewone sessie, `0` = geen eindtijd, `n` = n dagen.
+    ///
+    /// `nil` en `0` zijn met opzet twee verschillende dingen. Een sessie zonder eindtijd is
+    /// normaal gesproken een fóut — `releaseReason()` beëindigt hem daarom meteen — en die
+    /// bescherming moet blijven staan voor het geval de eindtijd per ongeluk wegvalt. Alleen
+    /// een sessie die uitdrukkelijk als vakantie begon mag zonder klok lopen.
+    var vakantieDagen: Int? = nil
 }
 
 /// Wat er van een verzoek terechtkwam. De weigerzin moet woordelijk doorgegeven kunnen
 /// worden aan de opdrachtregel, en een script moet kunnen zien wat het écht kreeg in plaats
 /// van te denken dat het meer kreeg.
 enum SessionStartResult {
-    case gestart(deadline: Date, minuten: Int)
+    /// `deadline` is `nil` bij een vakantiesessie zonder eindtijd. Niet `Date.distantFuture`
+    /// of de starttijd: een script hoort te kunnen zien dát er geen klok loopt, en niet een
+    /// getal te krijgen dat er wel een suggereert.
+    case gestart(deadline: Date?, minuten: Int)
     case liepAl(deadline: Date?)
     case geweigerd(reden: String)
     /// Er was net iets anders bezig met de vlag. Geen fout: probeer het zo weer.
@@ -152,6 +162,15 @@ final class AppModel: ObservableObject {
     /// `--for 2h` de opgeslagen instelling niet mag overschrijven — dan zou het paneel na
     /// afloop iets anders zeggen dan de gebruiker er ooit in gezet heeft.
     private var sessionLimitMinutes: Int?
+
+    /// Loopt deze sessie in de vakantiestand, en zo ja met hoeveel dagen? `0` = geen eindtijd.
+    ///
+    /// Alleen te zetten bij het starten. Zie `SessionRequest.vakantieDagen` voor waarom `nil`
+    /// en `0` uit elkaar gehouden worden.
+    private var sessionVakantieDagen: Int?
+
+    /// Voor het paneel: loopt er een vakantiesessie, en heeft die een eindtijd?
+    @Published private(set) var vakantieLoopt = false
     /// Een harde bovengrens voor déze sessie (`--until`, en straks een schemavenster). De
     /// tijdslimiet gaat er altijd overheen: wat het eerst komt wint.
     private var sessionNotLaterThan: Date?
@@ -272,6 +291,18 @@ final class AppModel: ObservableObject {
     /// Dus alleen zolang je kijkt. Gemeten dat `onAppear` en `onDisappear` van een
     /// MenuBarExtra-paneel betrouwbaar vuren bij elk openen en sluiten.
     @Published private(set) var paneelOpen = false
+
+    /// De vakantiestand is veranderd terwijl er een sessie loopt: reken de eindtijd opnieuw.
+    ///
+    /// Zonder dit zet je de stand aan en loopt de klok van de vorige keuze gewoon door — het
+    /// paneel zou dan iets anders zeggen dan er gebeurt, en dat is precies wat deze app niet
+    /// mag doen.
+    func herzieVakantie() {
+        guard intendedOn, let start = sessionStart else { return }
+        sessionVakantieDagen = Prefs.vacationMode ? Prefs.vacationDays : nil
+        applyDeadline(start: start)
+        hertekenMenubalk()
+    }
 
     func paneelGeopend() {
         paneelOpen = true
@@ -614,10 +645,53 @@ final class AppModel: ObservableObject {
     }
 
     private func applyDeadline(start: Date) {
+        // De vakantiestand rekent in dagen en niet in minuten, want `clampedMinutes` klemt op
+        // 24 uur — dat is de bovengrens van de gewone tijdslimiet en die blijft daar staan.
+        if let dagen = sessionVakantieDagen {
+            if dagen <= 0 {
+                // Geen eindtijd. De accugrens, de warmtebewaking en de wachter blijven wél
+                // gelden; alleen de klok is eraf. Zie `releaseReason()`.
+                deadline = nil
+                deadlineReason = L10n.t("reden.vakantie")
+            } else {
+                // Een bovengrens van buiten — een schemavenster, een gevraagde eindtijd — wint
+                // nog steeds. Anders zou de vakantiestand die stilletjes oprekken.
+                let doorDagen = start.addingTimeInterval(Double(dagen) * 24 * 3600)
+                if let cap = sessionNotLaterThan, cap < doorDagen {
+                    deadline = cap
+                    deadlineReason = sessionCapReason ?? L10n.t("reden.liepot", Self.clockText(cap))
+                } else {
+                    deadline = doorDagen
+                    deadlineReason = L10n.t("reden.vakantie.dagen", dagen)
+                }
+            }
+            vakantieLoopt = true
+            return
+        }
+        vakantieLoopt = false
         let planned = computeDeadline(start: start, limitMinutes: sessionLimitMinutes,
                                       notLaterThan: sessionNotLaterThan, capReason: sessionCapReason)
         deadline = planned.date
         deadlineReason = planned.reason
+    }
+
+    /// Een tijdstip zoals je het aan iemand zou noemen: `08:49` vandaag, `zo 30 aug 08:49`
+    /// als het verder weg ligt.
+    ///
+    /// De vakantiestand maakte dit nodig. "De Mac blijft wakker tot 08:49" is bij een sessie van
+    /// drie dagen niet fout maar wel onbruikbaar — er staan er drie tussen.
+    static func momentText(_ date: Date) -> String {
+        if Calendar.current.isDateInToday(date) { return clockText(date) }
+        let f = DateFormatter()
+        // De taal van de app en niet die van het systeem: het paneel kan op Frans staan
+        // terwijl macOS Nederlands is. `Taal.systeem` heeft geen eigen code, dan wint de
+        // volgorde die de bundel zelf aanhoudt.
+        if let code = Taal.gekozen == .systeem ? Bundle.main.preferredLocalizations.first
+                                               : Taal.gekozen.rawValue {
+            f.locale = Locale(identifier: code)
+        }
+        f.setLocalizedDateFormatFromTemplate("EEEddMMMHHmm")
+        return f.string(from: date)
     }
 
     static func clockText(_ date: Date) -> String {
@@ -1463,8 +1537,11 @@ final class AppModel: ObservableObject {
     private func startTrigger(_ request: SessionRequest, aanleiding: String) async -> TriggerUitkomst {
         switch await startSession(request) {
         case .gestart(let eind, let minuten):
-            let zin = "Vanzelf aangezet omdat \(aanleiding). De Mac blijft wakker tot "
-                + "\(Self.clockText(eind)) (\(Self.durationText(minuten)))."
+            // Geen eindtijd is sinds de vakantiestand een geldige uitkomst. Het logboek hoort
+            // dat te zeggen en geen tijdstip te verzinnen dat er niet is.
+            let tot = eind.map { "tot \(Self.momentText($0)) (\(Self.durationText(minuten)))" }
+                ?? "zonder eindtijd (vakantiestand)"
+            let zin = "Vanzelf aangezet omdat \(aanleiding). De Mac blijft wakker " + tot + "."
             EventLog.shared.info(zin)
             lastMessage = zin
             return .gestart
@@ -1472,7 +1549,7 @@ final class AppModel: ObservableObject {
         case .liepAl(let eind):
             EventLog.shared.info("\(aanleiding.prefix(1).uppercased() + aanleiding.dropFirst()), "
                                  + "maar er liep al een sessie"
-                                 + (eind.map { " tot \(Self.clockText($0))" } ?? "") + ".")
+                                 + (eind.map { " tot \(Self.momentText($0))" } ?? "") + ".")
             return .nietGestart
 
         case .geweigerd(let reden):
@@ -1674,9 +1751,13 @@ final class AppModel: ObservableObject {
     private func releaseReason() -> String? {
         if let deadline {
             if Date() >= deadline { return deadlineReason }
-        } else if intendedOn {
+        } else if intendedOn, sessionVakantieDagen == nil {
             // A running session with no deadline has no timer at all. Rather than let it
             // run forever, treat the missing deadline as the fault it is.
+            //
+            // Behalve in de vakantiestand: daar is het ontbreken van een klok de bedoeling en
+            // geen fout. De voorwaarde staat op `sessionVakantieDagen` en niet op `deadline ==
+            // nil`, zodat een eindtijd die per ongeluk wegvalt nog steeds meteen ingrijpt.
             return L10n.t("reden.geeneindtijd")
         }
         if let battery, !battery.onAC, battery.percent <= Prefs.batteryFloor {
@@ -1830,6 +1911,8 @@ final class AppModel: ObservableObject {
         online = true
         deadline = nil
         sessionStart = nil
+        sessionVakantieDagen = nil
+        vakantieLoopt = false
         // Alle drie de sessie-instellingen weg, niet alleen de eindtijd: anders lekt een
         // sessie zijn duur, zijn bovengrens of zijn proceskoppeling de volgende in — en dan
         // stopt een sessie die niemand koppelde alsnog op een proces van een uur geleden.
@@ -2218,6 +2301,16 @@ final class AppModel: ObservableObject {
         sessionLimitMinutes = request.limitMinutes
         sessionNotLaterThan = request.notLaterThan
         sessionCapReason = request.notLaterThanReason
+        // De vakantiestand geldt voor elke sessie die begint terwijl hij aanstaat — met de
+        // schakelaar, via een schema, of vanaf de opdrachtregel. Behalve als het verzoek zelf
+        // een duur meebrengt: `dopamine on --for 2h` vraagt om twee uur en hoort die te krijgen.
+        if let gevraagd = request.vakantieDagen {
+            sessionVakantieDagen = gevraagd
+        } else if Prefs.vacationMode, request.limitMinutes == nil {
+            sessionVakantieDagen = Prefs.vacationDays
+        } else {
+            sessionVakantieDagen = nil
+        }
         applyDeadline(start: start)
         // Onvoorwaardelijk wissen, niet alleen overschrijven als er een nieuwe koppeling is.
         // Elk ander sessieveld hierboven wordt hoe dan ook gezet; `binding` stond achter de
@@ -2267,7 +2360,7 @@ final class AppModel: ObservableObject {
             Self.durationText(effectiveLimitMinutes), Prefs.batteryFloor, thermal.label
         )
         startRegel += " Gestart via \(request.trigger.metLidwoord)."
-        if let deadline { startRegel += " Loopt tot \(Self.clockText(deadline))." }
+        if let deadline { startRegel += " Loopt tot \(Self.momentText(deadline))." }
         if let binding { startRegel += " Stopt ook als \(binding.identity.label) klaar is." }
         EventLog.shared.info(startRegel)
 
@@ -2310,7 +2403,13 @@ final class AppModel: ObservableObject {
 
         // De eindtijd die er écht staat, niet de gevraagde: een script hoort te zien wat het
         // gekregen heeft in plaats van te denken dat het meer kreeg.
-        return .gestart(deadline: deadline ?? start, minuten: effectiveLimitMinutes)
+        // De eindtijd die er écht staat, en de lengte die daarbij hoort. Niet
+        // `effectiveLimitMinutes`: dat is de gevráágde duur, en die klopt niet meer zodra een
+        // schemavenster hem inkort of de vakantiestand hem in dagen rekent. Een sessie van
+        // drie dagen meldde zo "(10 uur)", want dat stond er in de instellingen.
+        let echteMinuten = deadline.map { Int(($0.timeIntervalSince(start) / 60).rounded()) }
+            ?? effectiveLimitMinutes
+        return .gestart(deadline: deadline, minuten: echteMinuten)
     }
 
     /// Whether the machine has already been secured for the lid close currently in effect.
@@ -2745,9 +2844,13 @@ final class AppModel: ObservableObject {
             )
             switch await startSession(request) {
             case .gestart(let eind, let minuten):
-                var zin = "De Mac blijft wakker tot \(Self.clockText(eind)) (\(Self.durationText(minuten)))."
+                // Een script hoort te kunnen zien dát er geen klok loopt, in plaats van een
+                // tijdstip te krijgen dat er niet is.
+                var zin = eind.map {
+                    "De Mac blijft wakker tot \(Self.momentText($0)) (\(Self.durationText(minuten)))."
+                } ?? "De Mac blijft wakker zonder eindtijd (vakantiestand)."
                 if let binding { zin += " Stopt eerder als \(binding.identity.label) klaar is." }
-                if let cap = verzoek.nietLaterDan, cap > eind {
+                if let eind, let cap = verzoek.nietLaterDan, cap > eind {
                     // Eerlijk zeggen dat de tijdslimiet vóór het gevraagde tijdstip ligt,
                     // in plaats van een eindtijd te beloven die niet gehaald wordt.
                     zin += " Je vroeg tot \(Self.clockText(cap)), maar de tijdslimiet van "
@@ -2757,7 +2860,7 @@ final class AppModel: ObservableObject {
 
             case .liepAl(let eind):
                 var zin = "Er liep al een sessie; er is geen tweede gestart."
-                if let eind { zin += " Die loopt tot \(Self.clockText(eind))." }
+                if let eind { zin += " Die loopt tot \(Self.momentText(eind))." }
                 if let binding { zin += " Hij stopt ook als \(binding.identity.label) klaar is." }
                 return controlResponse(gelukt: true, zin: zin, code: 0)
 
@@ -2796,7 +2899,7 @@ final class AppModel: ObservableObject {
     private func controlStatusSentence() -> String {
         if intendedOn {
             var zin = "De Mac wordt wakker gehouden"
-            if let deadline { zin += " tot \(Self.clockText(deadline))" }
+            if let deadline { zin += " tot \(Self.momentText(deadline))" }
             if let remainingText { zin += " (\(remainingText))" }
             if let binding { zin += ", en stopt zodra \(binding.identity.label) klaar is" }
             if let sessionTrigger { zin += " — \(sessionTrigger.zin)" }
@@ -2844,7 +2947,9 @@ final class AppModel: ObservableObject {
         Task {
             switch await startSession(SessionRequest(trigger: .schakelaar, bindToPID: item.pid)) {
             case .gestart(let eind, _):
-                lastMessage = L10n.t("melding.tot.app.eneind", item.naam, Self.clockText(eind))
+                lastMessage = eind.map {
+                    L10n.t("melding.tot.app.eneind", item.naam, Self.momentText($0))
+                } ?? L10n.t("melding.tot.app.vakantie", item.naam)
             case .liepAl:
                 lastMessage = L10n.t("melding.sessie.ookapp", item.naam)
             case .geweigerd(let reden):

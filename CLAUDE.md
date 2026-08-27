@@ -30,11 +30,22 @@ Voor bouwen zonder git (Homebrew krijgt een tarball zonder `.git`): `DOPAMINE_VE
 
 ## Wat je nooit stuk moet maken
 
-**De drie vangnetten zijn niet optioneel en niet uit te zetten.** `SleepDisabled` schakelt óók
-de lege-accu- en oververhittingsnoodslaap van de kernel uit, via `userDisabledAllSleep` →
-`checkSystemSleepAllowed()`. De tijdslimiet (7 u), de accugrens (15%) en de temperatuurbewaking
-(`thermalState == .critical`) vervángen die. Een wijziging die er één van omzeilbaar maakt,
-maakt de app gevaarlijk.
+**Twee van de drie vangnetten zijn niet optioneel en niet uit te zetten.** `SleepDisabled`
+schakelt óók de lege-accu- en oververhittingsnoodslaap van de kernel uit, via
+`userDisabledAllSleep` → `checkSystemSleepAllowed()`. De accugrens (15%) en de
+temperatuurbewaking (`thermalState == .critical`) vervángen precies die twee. Een wijziging die
+er één van omzeilbaar maakt, maakt de app gevaarlijk.
+
+**De tijdslimiet is de derde, en die is sinds de vakantiestand wél opzij te zetten.** Hij is de
+enige van de drie die géén kernelgedrag vervangt: hij staat er tegen vergeten. In de
+vakantiestand (`Prefs.vacationMode`) loopt een sessie een aantal dagen, of tot je hem zelf
+uitzet. Twee dingen daarbij zijn niet onderhandelbaar:
+
+- De accugrens, de warmtebewaking en de wachter blijven onaangeroerd gelden.
+- De bescherming tegen een **per ongeluk** ontbrekende eindtijd blijft staan. `releaseReason()`
+  beëindigt een sessie zonder klok nog steeds meteen; de uitzondering hangt aan
+  `sessionVakantieDagen != nil` en niet aan `deadline == nil`. Valt een eindtijd stilletjes weg,
+  dan grijpt hij dus nog steeds in.
 
 **Vangnetten kijken naar de kernelvlag, niet naar de status van de app.** Eén guardian leest
 elke 20 seconden `SleepDisabled` en beslist daarop. Elke controle op `status == .on` stopt met

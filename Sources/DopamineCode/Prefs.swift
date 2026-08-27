@@ -31,6 +31,8 @@ enum Prefs {
         // Fase 4 — ergonomie.
         static let showCountdownInMenuBar = "showCountdownInMenuBar"
         static let temperatureUnit = "temperatureUnit"
+        static let vacationMode = "vacationMode"
+        static let vacationDays = "vacationDays"
         static let shortcutKeyCode = "shortcutKeyCode"
         static let shortcutModifiers = "shortcutModifiers"
         // Bijwerken.
@@ -84,6 +86,10 @@ enum Prefs {
             Key.showCountdownInMenuBar: true,
             // Volg macOS. Wie het anders wil, zet het om in Instellingen.
             Key.temperatureUnit: Temperatuur.Eenheid.systeem.rawValue,
+            // De vakantiestand staat uit tot je hem zelf aanzet. Zeven dagen als hij aangaat:
+            // een week is de gewone lengte van weggaan, en het is geen onbeperkte sessie.
+            Key.vacationMode: false,
+            Key.vacationDays: 7,
             // De updatecontrole staat standaard AAN, en dat is een afweging en geen
             // vanzelfsprekendheid. Uit is netter tegenover het netwerk, maar in de praktijk
             // vindt bijna niemand de schakelaar en hoort dus nooit dat er een versie is —
@@ -301,6 +307,28 @@ enum Prefs {
     ///
     /// Een onbekende waarde valt terug op `.systeem` en niet op een crash: dit staat in
     /// UserDefaults en daar kan iemand met `defaults write` alles in zetten.
+    /// De vakantiestand: een sessie die blijft lopen tot je hem zelf uitzet.
+    ///
+    /// Dit haalt de tijdslimiet weg, en dat is één van de drie vangnetten. Verdedigbaar omdat
+    /// het de enige van de drie is die géén kernelgedrag vervangt: de accugrens staat er voor
+    /// de noodslaap bij een lege accu, de warmtebewaking voor die bij oververhitting, en die
+    /// twee blijven gewoon gelden. De tijdslimiet is er tegen vergeten — en vergeten is nou
+    /// net wat je in deze stand met opzet doet.
+    static var vacationMode: Bool {
+        get { d.bool(forKey: Key.vacationMode) }
+        set { d.set(newValue, forKey: Key.vacationMode) }
+    }
+
+    /// Hoeveel dagen een vakantiesessie loopt. `0` betekent: tot je hem zelf uitzet.
+    ///
+    /// Geklemd op 0…14. Veertien is geen technische grens maar een keuze: langer dan twee weken
+    /// weg en de schuifregelaar helemaal naar rechts (`0`) is eerlijker dan een getal dat
+    /// precisie suggereert.
+    static var vacationDays: Int {
+        get { min(max(d.integer(forKey: Key.vacationDays), 0), 14) }
+        set { d.set(min(max(newValue, 0), 14), forKey: Key.vacationDays) }
+    }
+
     static var temperatureUnit: Temperatuur.Eenheid {
         get { Temperatuur.Eenheid(rawValue: d.string(forKey: Key.temperatureUnit) ?? "")
               ?? .systeem }

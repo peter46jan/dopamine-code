@@ -458,3 +458,15 @@
 "stop.warm.eenheid.celsius" = "Celsius";
 "stop.warm.eenheid.fahrenheit" = "Fahrenheit";
 "stop.warm.eenheid.uitleg" = "La température mesurée de la puce figure à côté de la jauge de chaleur dans le panneau. Le filet de sécurité ne réagit pas à ces degrés mais au niveau sur quatre que macOS signale lui-même — un Mac chaud n'est pas un Mac bridé. Si les capteurs sont illisibles, rien ne s'affiche.";
+
+/* De vakantiestand: een sessie zonder tijdslimiet, of met een limiet in dagen.
+   Alleen de tijdslimiet gaat eraf; de accugrens en de warmtebewaking blijven. */
+"menu.vakantie" = "Mode vacances";
+"menu.vakantie.dagen" = "%d jours";
+"menu.vakantie.onbeperkt" = "jusqu'à ce que je l'arrête";
+"menu.vakantie.uitleg.dagen" = "La session continue jusqu'à la fin de ces jours. Le seuil de batterie et la surveillance thermique restent actifs.";
+"menu.vakantie.uitleg.onbeperkt" = "Aucune limite de temps : la session dure jusqu'à ce que vous l'arrêtiez. Le seuil de batterie et la surveillance thermique interviennent toujours, et le gardien efface le drapeau si l'app tombe.";
+"kaart.vakantie" = "Reste éveillé";
+"reden.vakantie" = "le mode vacances a été désactivé";
+"reden.vakantie.dagen" = "la session vacances de %d jours était terminée";
+"melding.tot.app.vakantie" = "Le Mac reste éveillé jusqu'à ce que %@ ait terminé, sans heure de fin.";
