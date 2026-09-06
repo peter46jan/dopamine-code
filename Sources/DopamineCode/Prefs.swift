@@ -13,6 +13,7 @@ enum Prefs {
         static let lockMoment = "lockMoment"
         static let displayOffMoment = "displayOffMoment"
         static let keepDisplayAwake = "keepDisplayAwake"
+        static let keepNetworkAwake = "keepNetworkAwake"
         static let mouseNudge = "mouseNudge"
         static let mouseNudgeMinutes = "mouseNudgeMinutes"
         static let mouseNudgeVisible = "mouseNudgeVisible"
@@ -70,6 +71,9 @@ enum Prefs {
             Key.displayOffMoment: ActionMoment.lidClose.rawValue,
             // Uit. Een scherm dat dag en nacht aanblijft is een keuze, geen standaard.
             Key.keepDisplayAwake: false,
+            // Aan. Dit is geen nieuwe belofte maar het waarmaken van de bestaande: een sessie
+            // die doorloopt terwijl je hem niet kunt bereiken, doet niet waar hij voor is.
+            Key.keepNetworkAwake: true,
             Key.mouseNudge: false,
             // Drie minuten. Teams zet je na vijf op afwezig, dus dit zit er ruim onder zonder
             // elke minuut aan je cursor te trekken.
@@ -237,6 +241,12 @@ enum Prefs {
     static var mouseNudgeMinutes: Int {
         get { min(max(d.integer(forKey: Key.mouseNudgeMinutes), 1), 15) }
         set { d.set(min(max(newValue, 1), 15), forKey: Key.mouseNudgeMinutes) }
+    }
+
+    /// Houd het netwerk bereikbaar zolang er een sessie loopt. Zie `NetwerkWakker`.
+    static var keepNetworkAwake: Bool {
+        get { d.bool(forKey: Key.keepNetworkAwake) }
+        set { d.set(newValue, forKey: Key.keepNetworkAwake) }
     }
 
     static var keepDisplayAwake: Bool {

@@ -484,3 +484,5 @@
 "menu.muispor.geenrecht" = "Funktioniert nicht: Bedienungshilfen freigeben und die App neu starten.";
 "alg.muispor.zichtbaar" = "Sichtbarer Sprung";
 "alg.muispor.zichtbaar.uitleg" = "Der Zeiger macht einen Bogen von 120 Punkten hin und zurück statt einen. Damit du siehst, dass es funktioniert. Er endet, wo er begann, und da nur nach Minuten der Stille angestoßen wird, kann er deiner Hand nie in die Quere kommen.";
+"alg.netwerkaan" = "Netzwerk während einer Sitzung erreichbar halten";
+"alg.netwerkaan.uitleg" = "Das Kernel-Flag hält das System wach, sagt aber nichts über das Funkmodul: macOS darf das WLAN in einen Sparmodus versetzen, während der Mac weiterarbeitet. Dies hält ihn erreichbar, auch bei geschlossenem Deckel. Sichtbar in pmset -g assertions. Es beseitigt eine Ursache für Verbindungsabbrüche; einen neu startenden Router rettet es nicht.";

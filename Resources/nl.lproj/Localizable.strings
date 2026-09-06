@@ -490,3 +490,5 @@
 "menu.muispor.geenrecht" = "Werkt niet: geef Toegankelijkheid en herstart de app.";
 "alg.muispor.zichtbaar" = "Zichtbare sprong";
 "alg.muispor.zichtbaar.uitleg" = "De cursor maakt een boog van 120 punten heen en weer terug in plaats van één punt. Om te zien dát het werkt. Hij eindigt waar hij begon, en omdat er alleen gepord wordt als het al minuten stil is, kan hij nooit met je hand in de weg zitten.";
+"alg.netwerkaan" = "Netwerk bereikbaar houden tijdens een sessie";
+"alg.netwerkaan.uitleg" = "De kernelvlag houdt het systeem wakker maar zegt niets over de radio: macOS mag de wifi in een spaarstand zetten terwijl de Mac gewoon doorwerkt. Dit houdt hem bereikbaar, ook met de klep dicht. Zichtbaar in pmset -g assertions. Het haalt één oorzaak weg van wegvallende verbindingen; een router die herstart valt hier niet mee te redden.";

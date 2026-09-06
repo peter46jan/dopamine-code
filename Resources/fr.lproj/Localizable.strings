@@ -484,3 +484,5 @@
 "menu.muispor.geenrecht" = "Ne fonctionne pas : accordez l'Accessibilité et relancez l'app.";
 "alg.muispor.zichtbaar" = "Saut visible";
 "alg.muispor.zichtbaar.uitleg" = "Le curseur décrit un arc de 120 points aller-retour au lieu d'un seul. Pour voir que ça marche. Il finit là où il a commencé, et comme il ne bouge qu'après des minutes de silence, il ne peut jamais gêner votre main.";
+"alg.netwerkaan" = "Garder le réseau joignable pendant une session";
+"alg.netwerkaan.uitleg" = "Le drapeau du noyau garde le système éveillé mais ne dit rien de la radio : macOS peut mettre le Wi-Fi en veille pendant que le Mac continue de travailler. Ceci le garde joignable, écran rabattu compris. Visible dans pmset -g assertions. Cela supprime une cause de coupures ; un routeur qui redémarre lui échappe.";

@@ -50,6 +50,7 @@ struct SettingsView: View {
     @State private var lockMoment = Prefs.lockMoment
     @State private var displayOffMoment = Prefs.displayOffMoment
     @State private var schermAan = Prefs.keepDisplayAwake
+    @State private var netwerkAan = Prefs.keepNetworkAwake
     @State private var muisPor = Prefs.mouseNudge
     @State private var muisMinuten = Double(Prefs.mouseNudgeMinutes)
     @State private var muisZichtbaar = Prefs.mouseNudgeVisible
@@ -158,6 +159,15 @@ struct SettingsView: View {
                         model.herzieSchermWakker()
                     }
                 Text("alg.schermaan.uitleg")
+                    .font(.caption).foregroundStyle(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
+
+                Toggle("alg.netwerkaan", isOn: $netwerkAan)
+                    .onChange(of: netwerkAan) {
+                        Prefs.keepNetworkAwake = $0
+                        model.herzieNetwerkWakker()
+                    }
+                Text("alg.netwerkaan.uitleg")
                     .font(.caption).foregroundStyle(.secondary)
                     .fixedSize(horizontal: false, vertical: true)
 

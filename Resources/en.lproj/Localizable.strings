@@ -483,3 +483,5 @@
 "menu.muispor.geenrecht" = "Not working: grant Accessibility, then restart the app.";
 "alg.muispor.zichtbaar" = "Visible jump";
 "alg.muispor.zichtbaar.uitleg" = "The cursor arcs 120 points out and back instead of one. So you can see that it works. It ends where it started, and since it only nudges after minutes of silence, it can never get in the way of your hand.";
+"alg.netwerkaan" = "Keep the network reachable during a session";
+"alg.netwerkaan.uitleg" = "The kernel flag keeps the system awake but says nothing about the radio: macOS may put Wi-Fi into a low-power state while the Mac carries on working. This keeps it reachable, lid closed as well. Visible in pmset -g assertions. It removes one cause of dropped connections; a router that reboots is beyond its reach.";

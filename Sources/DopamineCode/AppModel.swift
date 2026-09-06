@@ -336,6 +336,14 @@ final class AppModel: ObservableObject {
         SchermWakker.shared.stel(aan: Prefs.keepDisplayAwake && intendedOn && erIsEenScherm)
     }
 
+    /// Houd het netwerk bereikbaar, of laat het los.
+    ///
+    /// Anders dan bij het scherm speelt de klep hier geen rol — juist met de klep dicht moet je
+    /// hem kunnen bereiken. Dat is de hele reden dat deze app bestaat.
+    func herzieNetwerkWakker() {
+        NetwerkWakker.shared.stel(aan: Prefs.keepNetworkAwake && intendedOn)
+    }
+
     func herzieVakantie() {
         guard intendedOn, let start = sessionStart else { return }
         sessionVakantieDagen = Prefs.vacationMode ? Prefs.vacationDays : nil
@@ -1250,6 +1258,7 @@ final class AppModel: ObservableObject {
         herstelTik()
         hertekenMenubalk()
         herzieSchermWakker()
+        herzieNetwerkWakker()
         herzieMuisPor()
 
         // De chiptemperatuur, buiten de hoofddraad. Een ronde langs de sensoren kost gemeten
@@ -1973,6 +1982,7 @@ final class AppModel: ObservableObject {
         // voor een sessie die net afgelopen is.
         hertekenMenubalk()
         herzieSchermWakker()
+        herzieNetwerkWakker()
         heeftGepord = false
         // Alle drie de sessie-instellingen weg, niet alleen de eindtijd: anders lekt een
         // sessie zijn duur, zijn bovengrens of zijn proceskoppeling de volgende in — en dan
@@ -2481,6 +2491,7 @@ final class AppModel: ObservableObject {
         // kale merk in de menubalk — precies de vraag "hoe zie ik dat het aanstaat?".
         hertekenMenubalk()
         herzieSchermWakker()
+        herzieNetwerkWakker()
         return .gestart(deadline: deadline, minuten: echteMinuten)
     }
 
