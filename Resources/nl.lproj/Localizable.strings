@@ -485,5 +485,8 @@
 /* De muispor. Zie MuisPor voor wat er gemeten is. */
 "alg.muispor" = "Muis onzichtbaar bewegen bij stilte";
 "alg.muispor.na" = "na %d min";
-"alg.muispor.geenrecht" = "Werkt nog niet: de app mag geen invoer versturen. Geef Toegankelijkheid en probeer opnieuw.";
+"alg.muispor.geenrecht" = "Werkt nog niet: de app mag geen invoer versturen. Geef Toegankelijkheid en start de app daarna opnieuw — macOS onthoudt het antwoord zolang hij draait.";
 "alg.muispor.uitleg" = "Beweegt de cursor één punt heen en meteen terug, zodat hij blijft staan waar hij stond. Alleen als het werkelijk stil is, dus hij vecht nooit met je hand. Bedoeld voor apps die je op afwezig zetten. Gemeten: dit houdt de schermbeveiliging van macOS níet tegen — die telt alleen echte invoer. Zet daarvoor de optie hierboven aan.";
+"menu.muispor.geenrecht" = "Werkt niet: geef Toegankelijkheid en herstart de app.";
+"alg.muispor.zichtbaar" = "Zichtbare sprong";
+"alg.muispor.zichtbaar.uitleg" = "De cursor maakt een boog van 120 punten heen en weer terug in plaats van één punt. Om te zien dát het werkt. Hij eindigt waar hij begon, en omdat er alleen gepord wordt als het al minuten stil is, kan hij nooit met je hand in de weg zitten.";

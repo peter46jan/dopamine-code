@@ -59,6 +59,10 @@ struct MenuView: View {
     @State private var vakantie = false
     @State private var vakantieStand: Double = 7
 
+    /// De muispor, ook vanuit het paneel te bedienen. Het interval blijft in Instellingen: dat
+    /// stel je één keer in, de schakelaar zet je per sessie om.
+    @State private var muisPor = false
+
     var body: some View {
         VStack(alignment: .leading, spacing: 13) {
             heldentegel
@@ -92,6 +96,7 @@ struct MenuView: View {
             kanToetsenbord = KeyboardBacklight.canPostEvents
             vakantie = Prefs.vacationMode
             vakantieStand = Prefs.vacationDays == 0 ? 15 : Double(Prefs.vacationDays)
+            muisPor = Prefs.mouseNudge
             model.paneelGeopend()
         }
         // Zodat het menubalkitem zijn breedte vasthoudt zolang je erin klikt. Zie
@@ -229,6 +234,44 @@ struct MenuView: View {
         VStack(alignment: .leading, spacing: 8) {
             vakantieRegel
             if vakantie { vakantieSchuif } else { gewoneDuur }
+            muisRegel
+        }
+    }
+
+    /// De muispor: aan of uit, met het ingestelde interval ernaast.
+    ///
+    /// Zonder Toegankelijkheid doet hij niets, en dat hoort er meteen bij te staan — anders zet
+    /// je hem aan en denk je dat het werkt. De uitleg en de knop naar Systeeminstellingen staan
+    /// in Instellingen; hier past alleen de melding zelf.
+    @ViewBuilder private var muisRegel: some View {
+        HStack(spacing: 8) {
+            Image(systemName: "computermouse")
+                .font(.system(size: 10)).frame(width: 13)
+                .foregroundStyle(muisPor ? Palet.accent : Palet.inktFlauw)
+            Text("alg.muispor").font(.caption)
+                .foregroundStyle(muisPor ? Palet.inkt : Palet.inktZacht)
+                .lineLimit(1)
+            Spacer(minLength: 6)
+            if muisPor {
+                Text(L10n.t("alg.muispor.na", Prefs.mouseNudgeMinutes))
+                    .font(.caption2).monospacedDigit()
+                    .foregroundStyle(Palet.inktFlauw).fixedSize()
+            }
+            Toggle("", isOn: $muisPor)
+                .toggleStyle(.switch).labelsHidden().controlSize(.mini)
+                .onChange(of: muisPor) { _, aan in
+                    Prefs.mouseNudge = aan
+                    // Meteen vragen in plaats van alleen klagen. Zonder dit blijft het
+                    // onthouden antwoord staan en zie je "werkt niet" ook nadat je het gegeven
+                    // hebt.
+                    if aan { MuisPor.vraagToestemming() }
+                }
+        }
+        if muisPor && !MuisPor.magPosten {
+            Text("menu.muispor.geenrecht")
+                .font(.caption2).foregroundStyle(Palet.let_op)
+                .fixedSize(horizontal: false, vertical: true)
+                .padding(.leading, 21)
         }
     }
 

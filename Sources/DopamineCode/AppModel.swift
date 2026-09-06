@@ -309,7 +309,7 @@ final class AppModel: ObservableObject {
     private func herzieMuisPor() {
         guard Prefs.mouseNudge, intendedOn else { return }
         let na = Double(Prefs.mouseNudgeMinutes) * 60
-        if MuisPor.porAlsHetStilIs(naSeconden: na) {
+        if MuisPor.porAlsHetStilIs(naSeconden: na, zichtbaar: Prefs.mouseNudgeVisible) {
             // Eén regel per por is te veel — dat zijn er twintig per uur. Alleen de eerste na
             // het starten van een sessie, zodat je in het logboek terugziet dát hij werkt.
             if !heeftGepord {

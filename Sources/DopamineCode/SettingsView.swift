@@ -52,6 +52,7 @@ struct SettingsView: View {
     @State private var schermAan = Prefs.keepDisplayAwake
     @State private var muisPor = Prefs.mouseNudge
     @State private var muisMinuten = Double(Prefs.mouseNudgeMinutes)
+    @State private var muisZichtbaar = Prefs.mouseNudgeVisible
     @State private var sound = Prefs.soundFeedback
     @State private var networkSound = Prefs.soundOnNetworkLoss
     @State private var notifications = Prefs.notifications
@@ -161,7 +162,10 @@ struct SettingsView: View {
                     .fixedSize(horizontal: false, vertical: true)
 
                 Toggle("alg.muispor", isOn: $muisPor)
-                    .onChange(of: muisPor) { Prefs.mouseNudge = $0 }
+                    .onChange(of: muisPor) {
+                        Prefs.mouseNudge = $0
+                        if $0 { MuisPor.vraagToestemming() }
+                    }
                 if muisPor {
                     HStack {
                         Slider(value: $muisMinuten, in: 1...15, step: 1)
@@ -169,6 +173,11 @@ struct SettingsView: View {
                         Text(L10n.t("alg.muispor.na", Int(muisMinuten)))
                             .font(.caption).monospacedDigit().fixedSize()
                     }
+                    Toggle("alg.muispor.zichtbaar", isOn: $muisZichtbaar)
+                        .onChange(of: muisZichtbaar) { Prefs.mouseNudgeVisible = $0 }
+                    Text("alg.muispor.zichtbaar.uitleg")
+                        .font(.caption).foregroundStyle(.secondary)
+                        .fixedSize(horizontal: false, vertical: true)
                     if !MuisPor.magPosten {
                         // Zonder Toegankelijkheid doet een por niets. Dat hoort hier te staan
                         // en niet stil te blijven, want dan denk je dat het aanstaat.

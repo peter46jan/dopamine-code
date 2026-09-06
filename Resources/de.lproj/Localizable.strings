@@ -479,5 +479,8 @@
 /* De muispor. Zie MuisPor voor wat er gemeten is. */
 "alg.muispor" = "Maus bei Stille unsichtbar bewegen";
 "alg.muispor.na" = "nach %d Min.";
-"alg.muispor.geenrecht" = "Funktioniert noch nicht: die App darf keine Eingaben senden. Gib Bedienungshilfen frei und versuch es erneut.";
+"alg.muispor.geenrecht" = "Funktioniert noch nicht: die App darf keine Eingaben senden. Gib Bedienungshilfen frei und starte die App danach neu — macOS merkt sich die Antwort, solange sie läuft.";
 "alg.muispor.uitleg" = "Bewegt den Zeiger einen Punkt hin und sofort zurück, sodass er stehen bleibt, wo er war. Nur wenn es wirklich still ist, damit er nie mit deiner Hand streitet. Gedacht für Apps, die dich auf abwesend setzen. Gemessen: den Bildschirmschoner von macOS hält das nicht auf — der zählt nur echte Eingaben. Dafür ist die Option darüber da.";
+"menu.muispor.geenrecht" = "Funktioniert nicht: Bedienungshilfen freigeben und die App neu starten.";
+"alg.muispor.zichtbaar" = "Sichtbarer Sprung";
+"alg.muispor.zichtbaar.uitleg" = "Der Zeiger macht einen Bogen von 120 Punkten hin und zurück statt einen. Damit du siehst, dass es funktioniert. Er endet, wo er begann, und da nur nach Minuten der Stille angestoßen wird, kann er deiner Hand nie in die Quere kommen.";

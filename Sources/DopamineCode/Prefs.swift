@@ -15,6 +15,7 @@ enum Prefs {
         static let keepDisplayAwake = "keepDisplayAwake"
         static let mouseNudge = "mouseNudge"
         static let mouseNudgeMinutes = "mouseNudgeMinutes"
+        static let mouseNudgeVisible = "mouseNudgeVisible"
         static let soundFeedback = "soundFeedback"
         static let soundOnNetworkLoss = "soundOnNetworkLoss"
         static let notifications = "notifications"
@@ -73,6 +74,8 @@ enum Prefs {
             // Drie minuten. Teams zet je na vijf op afwezig, dus dit zit er ruim onder zonder
             // elke minuut aan je cursor te trekken.
             Key.mouseNudgeMinutes: 3,
+            // Uit: normaal hoort hij onzichtbaar te zijn. Aan om te zien dát hij werkt.
+            Key.mouseNudgeVisible: false,
             Key.soundFeedback: true,
             Key.soundOnNetworkLoss: true,
             Key.notifications: true,
@@ -219,6 +222,15 @@ enum Prefs {
     static var mouseNudge: Bool {
         get { d.bool(forKey: Key.mouseNudge) }
         set { d.set(newValue, forKey: Key.mouseNudge) }
+    }
+
+    /// Laat de cursor een zichtbare sprong maken in plaats van één punt.
+    ///
+    /// Om te zíen dat het werkt. Ongevaarlijk, want er wordt alleen gepord als het al minuten
+    /// stil is — hij kan dus niet met je hand in de weg zitten.
+    static var mouseNudgeVisible: Bool {
+        get { d.bool(forKey: Key.mouseNudgeVisible) }
+        set { d.set(newValue, forKey: Key.mouseNudgeVisible) }
     }
 
     /// Na hoeveel minuten stilte er gepord wordt. Geklemd op 1…15.

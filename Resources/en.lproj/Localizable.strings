@@ -478,5 +478,8 @@
 /* De muispor. Zie MuisPor voor wat er gemeten is. */
 "alg.muispor" = "Nudge the mouse when it goes quiet";
 "alg.muispor.na" = "after %d min";
-"alg.muispor.geenrecht" = "Not working yet: the app may not send input. Grant Accessibility and try again.";
+"alg.muispor.geenrecht" = "Not working yet: the app may not send input. Grant Accessibility, then restart the app — macOS remembers the answer for as long as it runs.";
 "alg.muispor.uitleg" = "Moves the cursor one point across and straight back, so it stays where it was. Only when it is genuinely quiet, so it never fights your hand. Meant for apps that mark you away. Measured: this does not hold off macOS's own screen saver — that counts real input only. Use the option above for that.";
+"menu.muispor.geenrecht" = "Not working: grant Accessibility, then restart the app.";
+"alg.muispor.zichtbaar" = "Visible jump";
+"alg.muispor.zichtbaar.uitleg" = "The cursor arcs 120 points out and back instead of one. So you can see that it works. It ends where it started, and since it only nudges after minutes of silence, it can never get in the way of your hand.";

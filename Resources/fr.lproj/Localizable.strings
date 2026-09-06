@@ -479,5 +479,8 @@
 /* De muispor. Zie MuisPor voor wat er gemeten is. */
 "alg.muispor" = "Bouger la souris en silence";
 "alg.muispor.na" = "après %d min";
-"alg.muispor.geenrecht" = "Ne fonctionne pas encore : l'app n'a pas le droit d'envoyer des entrées. Accordez l'Accessibilité et réessayez.";
+"alg.muispor.geenrecht" = "Ne fonctionne pas encore : l'app n'a pas le droit d'envoyer des entrées. Accordez l'Accessibilité, puis relancez l'app — macOS retient la réponse tant qu'elle tourne.";
 "alg.muispor.uitleg" = "Déplace le curseur d'un point et le ramène aussitôt, donc il reste où il était. Uniquement quand c'est vraiment calme, il ne lutte donc jamais avec votre main. Prévu pour les apps qui vous marquent absent. Mesuré : cela n'empêche pas l'économiseur d'écran de macOS — celui-ci ne compte que les vraies entrées. Utilisez l'option ci-dessus pour cela.";
+"menu.muispor.geenrecht" = "Ne fonctionne pas : accordez l'Accessibilité et relancez l'app.";
+"alg.muispor.zichtbaar" = "Saut visible";
+"alg.muispor.zichtbaar.uitleg" = "Le curseur décrit un arc de 120 points aller-retour au lieu d'un seul. Pour voir que ça marche. Il finit là où il a commencé, et comme il ne bouge qu'après des minutes de silence, il ne peut jamais gêner votre main.";
