@@ -477,3 +477,13 @@
 "reden.vakantie" = "de vakantiestand werd uitgezet";
 "reden.vakantie.dagen" = "de vakantiestand van %d dagen was om";
 "melding.tot.app.vakantie" = "De Mac blijft wakker tot %@ klaar is, zonder eindtijd.";
+
+/* Het scherm aanhouden: een IOPMAssertion, iets anders dan de kernelvlag. */
+"alg.schermaan" = "Scherm aan houden tijdens een sessie";
+"alg.schermaan.uitleg" = "Houdt macOS tegen als die het scherm wil dimmen of uitzetten, zolang de klep open is. Daarmee blijft ook de vergrendeling uit, want die volgt op het uitgaan van het scherm. De twee keuzes hierboven gaan alleen over wat de app zelf doet; deze houdt het systeem tegen. Met de klep dicht laat hij los en nemen die keuzes het over.";
+
+/* De muispor. Zie MuisPor voor wat er gemeten is. */
+"alg.muispor" = "Muis onzichtbaar bewegen bij stilte";
+"alg.muispor.na" = "na %d min";
+"alg.muispor.geenrecht" = "Werkt nog niet: de app mag geen invoer versturen. Geef Toegankelijkheid en probeer opnieuw.";
+"alg.muispor.uitleg" = "Beweegt de cursor één punt heen en meteen terug, zodat hij blijft staan waar hij stond. Alleen als het werkelijk stil is, dus hij vecht nooit met je hand. Bedoeld voor apps die je op afwezig zetten. Gemeten: dit houdt de schermbeveiliging van macOS níet tegen — die telt alleen echte invoer. Zet daarvoor de optie hierboven aan.";

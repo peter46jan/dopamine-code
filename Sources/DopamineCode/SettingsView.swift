@@ -49,6 +49,9 @@ struct SettingsView: View {
     @State private var batteryFloor = Prefs.batteryFloor
     @State private var lockMoment = Prefs.lockMoment
     @State private var displayOffMoment = Prefs.displayOffMoment
+    @State private var schermAan = Prefs.keepDisplayAwake
+    @State private var muisPor = Prefs.mouseNudge
+    @State private var muisMinuten = Double(Prefs.mouseNudgeMinutes)
     @State private var sound = Prefs.soundFeedback
     @State private var networkSound = Prefs.soundOnNetworkLoss
     @State private var notifications = Prefs.notifications
@@ -145,6 +148,40 @@ struct SettingsView: View {
                 }
                 .onChange(of: displayOffMoment) { Prefs.displayOffMoment = $0 }
                 Text("alg.schermuit.uitleg")
+                    .font(.caption).foregroundStyle(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
+
+                Toggle("alg.schermaan", isOn: $schermAan)
+                    .onChange(of: schermAan) {
+                        Prefs.keepDisplayAwake = $0
+                        model.herzieSchermWakker()
+                    }
+                Text("alg.schermaan.uitleg")
+                    .font(.caption).foregroundStyle(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
+
+                Toggle("alg.muispor", isOn: $muisPor)
+                    .onChange(of: muisPor) { Prefs.mouseNudge = $0 }
+                if muisPor {
+                    HStack {
+                        Slider(value: $muisMinuten, in: 1...15, step: 1)
+                            .onChange(of: muisMinuten) { Prefs.mouseNudgeMinutes = Int($0) }
+                        Text(L10n.t("alg.muispor.na", Int(muisMinuten)))
+                            .font(.caption).monospacedDigit().fixedSize()
+                    }
+                    if !MuisPor.magPosten {
+                        // Zonder Toegankelijkheid doet een por niets. Dat hoort hier te staan
+                        // en niet stil te blijven, want dan denk je dat het aanstaat.
+                        Text("alg.muispor.geenrecht")
+                            .font(.caption).foregroundStyle(.orange)
+                            .fixedSize(horizontal: false, vertical: true)
+                        Button("menu.verlichting.instellingen") {
+                            KeyboardBacklight.openAccessibilitySettings()
+                        }
+                        .controlSize(.small)
+                    }
+                }
+                Text("alg.muispor.uitleg")
                     .font(.caption).foregroundStyle(.secondary)
                     .fixedSize(horizontal: false, vertical: true)
             }

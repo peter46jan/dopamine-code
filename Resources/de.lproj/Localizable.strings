@@ -471,3 +471,13 @@
 "reden.vakantie" = "der Urlaubsmodus wurde ausgeschaltet";
 "reden.vakantie.dagen" = "die Urlaubssitzung von %d Tagen war um";
 "melding.tot.app.vakantie" = "Der Mac bleibt wach, bis %@ fertig ist, ohne Endzeit.";
+
+/* Het scherm aanhouden: een IOPMAssertion, iets anders dan de kernelvlag. */
+"alg.schermaan" = "Bildschirm während einer Sitzung anlassen";
+"alg.schermaan.uitleg" = "Hält macOS davon ab, den Bildschirm zu dimmen oder auszuschalten, solange der Deckel offen ist. Damit bleibt auch die Sperre aus, denn die folgt auf das Ausgehen des Bildschirms. Die beiden Auswahlen oben betreffen nur, was die App selbst tut; diese hält das System zurück. Bei geschlossenem Deckel lässt sie los und jene Auswahlen übernehmen.";
+
+/* De muispor. Zie MuisPor voor wat er gemeten is. */
+"alg.muispor" = "Maus bei Stille unsichtbar bewegen";
+"alg.muispor.na" = "nach %d Min.";
+"alg.muispor.geenrecht" = "Funktioniert noch nicht: die App darf keine Eingaben senden. Gib Bedienungshilfen frei und versuch es erneut.";
+"alg.muispor.uitleg" = "Bewegt den Zeiger einen Punkt hin und sofort zurück, sodass er stehen bleibt, wo er war. Nur wenn es wirklich still ist, damit er nie mit deiner Hand streitet. Gedacht für Apps, die dich auf abwesend setzen. Gemessen: den Bildschirmschoner von macOS hält das nicht auf — der zählt nur echte Eingaben. Dafür ist die Option darüber da.";

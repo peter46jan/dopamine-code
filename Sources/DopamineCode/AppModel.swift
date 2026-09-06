@@ -297,6 +297,45 @@ final class AppModel: ObservableObject {
     /// Zonder dit zet je de stand aan en loopt de klok van de vorige keuze gewoon door — het
     /// paneel zou dan iets anders zeggen dan er gebeurt, en dat is precies wat deze app niet
     /// mag doen.
+    /// Houd het scherm aan, of laat het los. Eén plek die de voorwaarde kent.
+    ///
+    /// Alleen met de klep open: met de klep dicht is er geen intern scherm om aan te houden, en
+    /// dan hoort de bestaande klep-logica (vergrendelen, scherm uit) het over te nemen. Anders
+    /// zou deze verklaring die tegenwerken.
+    /// Por de muis als dat gevraagd is en het lang genoeg stil is.
+    ///
+    /// Op de guardian-tik, dus elke twintig seconden gekeken. Fijner hoeft niet: het interval
+    /// staat in minuten, en `MuisPor` beslist zelf of er werkelijk iets moet gebeuren.
+    private func herzieMuisPor() {
+        guard Prefs.mouseNudge, intendedOn else { return }
+        let na = Double(Prefs.mouseNudgeMinutes) * 60
+        if MuisPor.porAlsHetStilIs(naSeconden: na) {
+            // Eén regel per por is te veel — dat zijn er twintig per uur. Alleen de eerste na
+            // het starten van een sessie, zodat je in het logboek terugziet dát hij werkt.
+            if !heeftGepord {
+                heeftGepord = true
+                EventLog.shared.info("Muis geport na \(Prefs.mouseNudgeMinutes) min stilte; "
+                                     + "dat blijft gebeuren zolang deze sessie loopt.")
+            }
+        }
+    }
+
+    private var heeftGepord = false
+
+    /// Houd het scherm aan, of laat het los. Eén plek die de voorwaarde kent.
+    ///
+    /// Er moet wél een scherm zijn om aan te houden. Met de klep dicht en niets erbij is er
+    /// niets, en dan hoort de bestaande klep-logica — vergrendelen, scherm uit — het alleen te
+    /// doen. Maar met een extern scherm erbij is klep-dicht juist de normale werkstand van deze
+    /// app, en daar hoort de verklaring dus wél te gelden.
+    ///
+    /// De eerste versie keek alleen naar de klep, en viel meteen door de mand: op de Mac waar
+    /// dit voor gemaakt is stond de klep dicht, dus de verklaring kwam er nooit.
+    func herzieSchermWakker() {
+        let erIsEenScherm = !lidClosed || DisplayControl.externalDisplayActive
+        SchermWakker.shared.stel(aan: Prefs.keepDisplayAwake && intendedOn && erIsEenScherm)
+    }
+
     func herzieVakantie() {
         guard intendedOn, let start = sessionStart else { return }
         sessionVakantieDagen = Prefs.vacationMode ? Prefs.vacationDays : nil
@@ -1210,6 +1249,8 @@ final class AppModel: ObservableObject {
         // Begon of eindigde er een sessie, dan hoort de klok van snelheid te veranderen.
         herstelTik()
         hertekenMenubalk()
+        herzieSchermWakker()
+        herzieMuisPor()
 
         // De chiptemperatuur, buiten de hoofddraad. Een ronde langs de sensoren kost gemeten
         // 45 ms — vijf keer wat `KeyboardBacklight.canPostEvents` kost, en dát is in dit
@@ -1931,6 +1972,8 @@ final class AppModel: ObservableObject {
         // Ook hier meteen: anders blijft de ∞ of de aftelling nog een tik in de balk staan
         // voor een sessie die net afgelopen is.
         hertekenMenubalk()
+        herzieSchermWakker()
+        heeftGepord = false
         // Alle drie de sessie-instellingen weg, niet alleen de eindtijd: anders lekt een
         // sessie zijn duur, zijn bovengrens of zijn proceskoppeling de volgende in — en dan
         // stopt een sessie die niemand koppelde alsnog op een proces van een uur geleden.
@@ -2437,6 +2480,7 @@ final class AppModel: ObservableObject {
         // tien seconden, en zo lang stond er na het aanzetten van de vakantiestand nog het
         // kale merk in de menubalk — precies de vraag "hoe zie ik dat het aanstaat?".
         hertekenMenubalk()
+        herzieSchermWakker()
         return .gestart(deadline: deadline, minuten: echteMinuten)
     }
 
@@ -2465,6 +2509,9 @@ final class AppModel: ObservableObject {
     ///
     /// So: read the lid live, read the displays live, and latch only the action.
     private func evaluateLidSecurity() {
+        // De klep is net bewogen, of de tik komt langs. Allebei redenen om opnieuw te bepalen
+        // of het scherm aangehouden moet worden — die verklaring geldt alleen met de klep open.
+        herzieSchermWakker()
         // Not gated on `intendedOn`: a flag stuck at 1 with no session is precisely when an
         // unattended, unlocked Mac matters. What decides is whether the machine will sleep,
         // and that is the kernel's answer, not ours.

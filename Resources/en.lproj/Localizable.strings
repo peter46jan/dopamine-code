@@ -470,3 +470,13 @@
 "reden.vakantie" = "vacation mode was switched off";
 "reden.vakantie.dagen" = "the %d-day vacation session was up";
 "melding.tot.app.vakantie" = "The Mac stays awake until %@ has finished, with no end time.";
+
+/* Het scherm aanhouden: een IOPMAssertion, iets anders dan de kernelvlag. */
+"alg.schermaan" = "Keep the screen on during a session";
+"alg.schermaan.uitleg" = "Stops macOS from dimming or switching off the screen while the lid is open. That also keeps the lock away, since locking follows the screen going off. The two choices above only govern what the app itself does; this one holds the system back. With the lid closed it lets go and those choices take over.";
+
+/* De muispor. Zie MuisPor voor wat er gemeten is. */
+"alg.muispor" = "Nudge the mouse when it goes quiet";
+"alg.muispor.na" = "after %d min";
+"alg.muispor.geenrecht" = "Not working yet: the app may not send input. Grant Accessibility and try again.";
+"alg.muispor.uitleg" = "Moves the cursor one point across and straight back, so it stays where it was. Only when it is genuinely quiet, so it never fights your hand. Meant for apps that mark you away. Measured: this does not hold off macOS's own screen saver — that counts real input only. Use the option above for that.";

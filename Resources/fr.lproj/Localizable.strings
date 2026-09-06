@@ -471,3 +471,13 @@
 "reden.vakantie" = "le mode vacances a été désactivé";
 "reden.vakantie.dagen" = "la session vacances de %d jours était terminée";
 "melding.tot.app.vakantie" = "Le Mac reste éveillé jusqu'à ce que %@ ait terminé, sans heure de fin.";
+
+/* Het scherm aanhouden: een IOPMAssertion, iets anders dan de kernelvlag. */
+"alg.schermaan" = "Garder l'écran allumé pendant une session";
+"alg.schermaan.uitleg" = "Empêche macOS de baisser ou d'éteindre l'écran tant que l'écran est ouvert. Le verrouillage reste donc absent, puisqu'il suit l'extinction de l'écran. Les deux choix ci-dessus ne concernent que ce que fait l'app elle-même ; celui-ci retient le système. Écran rabattu, il relâche et ces choix reprennent la main.";
+
+/* De muispor. Zie MuisPor voor wat er gemeten is. */
+"alg.muispor" = "Bouger la souris en silence";
+"alg.muispor.na" = "après %d min";
+"alg.muispor.geenrecht" = "Ne fonctionne pas encore : l'app n'a pas le droit d'envoyer des entrées. Accordez l'Accessibilité et réessayez.";
+"alg.muispor.uitleg" = "Déplace le curseur d'un point et le ramène aussitôt, donc il reste où il était. Uniquement quand c'est vraiment calme, il ne lutte donc jamais avec votre main. Prévu pour les apps qui vous marquent absent. Mesuré : cela n'empêche pas l'économiseur d'écran de macOS — celui-ci ne compte que les vraies entrées. Utilisez l'option ci-dessus pour cela.";

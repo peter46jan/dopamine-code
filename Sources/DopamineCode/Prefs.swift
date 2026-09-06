@@ -12,6 +12,9 @@ enum Prefs {
         static let lockOnActivate = "lockOnActivate"               // legacy Bool
         static let lockMoment = "lockMoment"
         static let displayOffMoment = "displayOffMoment"
+        static let keepDisplayAwake = "keepDisplayAwake"
+        static let mouseNudge = "mouseNudge"
+        static let mouseNudgeMinutes = "mouseNudgeMinutes"
         static let soundFeedback = "soundFeedback"
         static let soundOnNetworkLoss = "soundOnNetworkLoss"
         static let notifications = "notifications"
@@ -64,6 +67,12 @@ enum Prefs {
             Key.batteryFloor: 15,
             Key.lockMoment: ActionMoment.lidClose.rawValue,
             Key.displayOffMoment: ActionMoment.lidClose.rawValue,
+            // Uit. Een scherm dat dag en nacht aanblijft is een keuze, geen standaard.
+            Key.keepDisplayAwake: false,
+            Key.mouseNudge: false,
+            // Drie minuten. Teams zet je na vijf op afwezig, dus dit zit er ruim onder zonder
+            // elke minuut aan je cursor te trekken.
+            Key.mouseNudgeMinutes: 3,
             Key.soundFeedback: true,
             Key.soundOnNetworkLoss: true,
             Key.notifications: true,
@@ -197,6 +206,30 @@ enum Prefs {
             case .never: return L10n.t("moment.nooit")
             }
         }
+    }
+
+    /// Houd het scherm aan zolang er een sessie loopt en de klep open is.
+    ///
+    /// Los van `displayOffMoment`: die zegt wanneer de app het scherm zélf uitzet, deze houdt
+    /// macOS tegen als díe het wil doen. Op "nooit" zetten was niet genoeg — zie `SchermWakker`.
+    /// Beweeg de muis onzichtbaar zolang er een sessie loopt en het stil is.
+    ///
+    /// Voor apps die je op "afwezig" zetten. Houdt de schermbeveiliging níet tegen — zie
+    /// `MuisPor` voor wat er gemeten is.
+    static var mouseNudge: Bool {
+        get { d.bool(forKey: Key.mouseNudge) }
+        set { d.set(newValue, forKey: Key.mouseNudge) }
+    }
+
+    /// Na hoeveel minuten stilte er gepord wordt. Geklemd op 1…15.
+    static var mouseNudgeMinutes: Int {
+        get { min(max(d.integer(forKey: Key.mouseNudgeMinutes), 1), 15) }
+        set { d.set(min(max(newValue, 1), 15), forKey: Key.mouseNudgeMinutes) }
+    }
+
+    static var keepDisplayAwake: Bool {
+        get { d.bool(forKey: Key.keepDisplayAwake) }
+        set { d.set(newValue, forKey: Key.keepDisplayAwake) }
     }
 
     static var lockMoment: ActionMoment {
