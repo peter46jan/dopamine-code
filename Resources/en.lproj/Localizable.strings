@@ -565,3 +565,10 @@
 "trigger.zondereindtijd" = "with no end time (holiday mode)";
 "trigger.aangezet" = "Switched on by itself because %1$@. The Mac stays awake %2$@.";
 "melding.trigger.geweigerd.klok" = "At %1$@ Dopamine Code wanted to switch on by itself (%2$@), but could not: %3$@";
+
+/* --- Arming on the lid, and the watchdog that has gone quiet. --- */
+"arming.klepaldicht" = "The lid is already closed. This is about the next time you close it — open it first. To switch on right now, use the switch.";
+"arming.staatklaar" = "Standing by: keeping awake switches on as soon as you close the lid. Lapses on its own at %@.";
+"wachter.hoelang.minuten" = "for %d minutes now";
+"wachter.hoelang.nooit" = "never yet";
+"wachter.stil" = "The watchdog has not looked %@. While that lasts, the Mac stays awake if Dopamine Code is killed outright. Check under System Settings → General → Login Items & Extensions whether Dopamine Code may run in the background, or use 'Restore watchdog' under Settings → Diagnostics.";

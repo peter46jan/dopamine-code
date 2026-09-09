@@ -566,3 +566,10 @@
 "trigger.zondereindtijd" = "sans heure de fin (mode vacances)";
 "trigger.aangezet" = "Activé automatiquement parce que %1$@. Le Mac reste éveillé %2$@.";
 "melding.trigger.geweigerd.klok" = "À %1$@ Dopamine Code voulait s'activer automatiquement (%2$@), sans y parvenir : %3$@";
+
+/* --- Mise en attente sur l'écran, et le garde-fou devenu silencieux. --- */
+"arming.klepaldicht" = "L'écran est déjà rabattu. Ceci concerne la prochaine fermeture — relevez-le d'abord. Pour activer tout de suite, utilisez l'interrupteur.";
+"arming.staatklaar" = "En attente : le maintien en éveil s'activera dès que vous rabattrez l'écran. Expire de lui-même à %@.";
+"wachter.hoelang.minuten" = "depuis %d minutes";
+"wachter.hoelang.nooit" = "encore jamais";
+"wachter.stil" = "Le garde-fou n'a pas vérifié %@. Tant que cela dure, le Mac reste éveillé si Dopamine Code est tué brutalement. Vérifiez dans Réglages Système → Général → Ouverture et extensions si Dopamine Code peut tourner en arrière-plan, ou utilisez « Restaurer le garde-fou » dans Réglages → Diagnostic.";

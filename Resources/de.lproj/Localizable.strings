@@ -566,3 +566,10 @@
 "trigger.zondereindtijd" = "ohne Endzeit (Urlaubsmodus)";
 "trigger.aangezet" = "Von selbst eingeschaltet, weil %1$@. Der Mac bleibt %2$@ wach.";
 "melding.trigger.geweigerd.klok" = "Um %1$@ wollte Dopamine Code von selbst einschalten (%2$@), konnte aber nicht: %3$@";
+
+/* --- Bereitstellung am Deckel, und der Wächter, der still geworden ist. --- */
+"arming.klepaldicht" = "Der Deckel ist schon zu. Das gilt für das nächste Zuklappen — klapp ihn erst auf. Zum sofortigen Einschalten nimm den Schalter.";
+"arming.staatklaar" = "Bereit: das Wachhalten schaltet ein, sobald du den Deckel zuklappst. Verfällt von selbst um %@.";
+"wachter.hoelang.minuten" = "schon %d Minuten";
+"wachter.hoelang.nooit" = "noch nie";
+"wachter.stil" = "Der Wächter hat %@ nachgesehen. Solange das so bleibt, bleibt der Mac wach, wenn Dopamine Code hart abgeschossen wird. Sieh unter Systemeinstellungen → Allgemein → Anmeldeobjekte & Erweiterungen nach, ob Dopamine Code im Hintergrund laufen darf, oder nutze 'Wächter wiederherstellen' unter Einstellungen → Diagnose.";

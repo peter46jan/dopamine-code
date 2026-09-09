@@ -1663,19 +1663,18 @@ final class AppModel: ObservableObject {
         // Het gebaar gaat over de vólgende keer dichtklappen. Wapenen met de klep al dicht zou
         // betekenen dat hij meteen afgaat, en dat is iets anders dan waar de knop om vraagt.
         if SleepFlag.clamshellClosed() ?? lidClosed {
-            let zin = "De klep is al dicht. Dit gaat over de vólgende keer dat je hem dichtdoet — "
-                + "doe hem eerst open. Wil je nu aanzetten, gebruik dan de schakelaar."
-            lastMessage = zin
+            // Alleen naar het scherm: de logregel hieronder is zijn eigen Nederlandse zin en
+            // interpoleert deze niet.
+            lastMessage = L10n.t("arming.klepaldicht")
             EventLog.shared.info("Klaarzetten geweigerd: de klep is al dicht.")
             Feedback.failed()
             return
         }
         let arm = LidArm()
         lidArm = arm
-        let zin = "Staat klaar: het wakker houden gaat aan zodra je de klep dichtdoet. "
-            + "Vervalt vanzelf om \(Self.clockText(arm.verlooptOp))."
-        lastMessage = zin
-        EventLog.shared.info(zin)
+        let verlooptOp = Self.clockText(arm.verlooptOp)
+        lastMessage = L10n.t("arming.staatklaar", verlooptOp)
+        EventLog.shared.info(L10n.nl("arming.staatklaar", verlooptOp))
     }
 
     func cancelArming() {
@@ -1807,18 +1806,17 @@ final class AppModel: ObservableObject {
         let leeftijd = RestartGuard.timeSinceLastRound()
         guard leeftijd.map({ $0 > 300 }) ?? true else { return }
         warnedAboutStaleGuard = true
-        let hoelang = leeftijd.map { "al \(Int($0 / 60)) minuten" } ?? "nog nooit"
-        let zin = "De wachter heeft \(hoelang) gekeken. Zolang dat zo blijft, blijft de Mac "
-            + "wakker als Dopamine Code hard afgeschoten wordt. Kijk bij Systeeminstellingen → "
-            + "Algemeen → Inloggen en extensies of Dopamine Code op de achtergrond mag draaien, "
-            + "of gebruik 'Wachter herstellen' bij Instellingen → Diagnose."
-        EventLog.shared.warn(zin)
+        let hoelang = leeftijd.map { L10n.t("wachter.hoelang.minuten", Int($0 / 60)) }
+            ?? L10n.t("wachter.hoelang.nooit")
+        let hoelangNL = leeftijd.map { L10n.nl("wachter.hoelang.minuten", Int($0 / 60)) }
+            ?? L10n.nl("wachter.hoelang.nooit")
+        EventLog.shared.warn(L10n.nl("wachter.stil", hoelangNL))
         // Ook in het paneel, niet alleen in het logboek. Dit gaat over een vangnet dat er stil
         // niet meer is — precies het geval waarin niemand uit zichzelf het logboek opslaat, en
         // waarvoor lichtere gebeurtenissen (een geweigerde trigger) wél een regel krijgen.
         // Géén melding: die zou aankomen terwijl er niets aan de hand lijkt, en de vier
         // gebeurtenissen die 's nachts echt tellen laten verwateren.
-        lastMessage = zin
+        lastMessage = L10n.t("wachter.stil", hoelang)
     }
 
     /// Whether any safety net says the flag should come off right now.
