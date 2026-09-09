@@ -553,3 +553,16 @@
 "vangnet.staart.opgeruimd" = "Le blocage de veille a été levé ; le Mac peut à nouveau dormir.";
 "vangnet.staart.nogaan" = "Le blocage de veille est toujours actif — le Mac ne peut pas dormir pour l'instant.";
 "vangnet.terug.klok" = "Relancé par le garde-fou à %1$@. %2$@";
+
+/* --- La cause en proposition, pour « Activé automatiquement parce que … ». --- */
+"omdat.schakelaar" = "vous avez basculé l'interrupteur";
+"omdat.cli" = "la ligne de commande l'a demandé";
+"omdat.klep" = "vous avez demandé l'activation dès la fermeture de l'écran";
+"omdat.app" = "%@ s'est mis à tourner";
+"omdat.schema" = "la fenêtre de planning %@ s'est ouverte";
+"omdat.sneltoets" = "vous avez appuyé sur le raccourci";
+"arming.vervallen" = "La mise en attente a expiré : vous n'avez pas rabattu l'écran dans les %d minutes. Le maintien en éveil est désactivé.";
+"trigger.tot" = "jusqu'à %1$@ (%2$@)";
+"trigger.zondereindtijd" = "sans heure de fin (mode vacances)";
+"trigger.aangezet" = "Activé automatiquement parce que %1$@. Le Mac reste éveillé %2$@.";
+"melding.trigger.geweigerd.klok" = "À %1$@ Dopamine Code voulait s'activer automatiquement (%2$@), sans y parvenir : %3$@";

@@ -552,3 +552,16 @@
 "vangnet.staart.opgeruimd" = "The sleep block has been cleared; the Mac may sleep again.";
 "vangnet.staart.nogaan" = "The sleep block is still on — the Mac cannot sleep right now.";
 "vangnet.terug.klok" = "Brought back by the watchdog at %1$@. %2$@";
+
+/* --- The cause as a clause, for "Switched on by itself because …". --- */
+"omdat.schakelaar" = "you flipped the switch";
+"omdat.cli" = "the command line asked for it";
+"omdat.klep" = "you had asked it to switch on as soon as the lid closed";
+"omdat.app" = "%@ started running";
+"omdat.schema" = "the schedule window %@ opened";
+"omdat.sneltoets" = "you pressed the shortcut";
+"arming.vervallen" = "The standby has lapsed: you did not close the lid within %d minutes. Keeping awake is off.";
+"trigger.tot" = "until %1$@ (%2$@)";
+"trigger.zondereindtijd" = "with no end time (holiday mode)";
+"trigger.aangezet" = "Switched on by itself because %1$@. The Mac stays awake %2$@.";
+"melding.trigger.geweigerd.klok" = "At %1$@ Dopamine Code wanted to switch on by itself (%2$@), but could not: %3$@";

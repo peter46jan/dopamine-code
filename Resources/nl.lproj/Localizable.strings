@@ -574,3 +574,20 @@
 "vangnet.staart.opgeruimd" = "De slaapblokkade is opgeruimd; de Mac mag weer slapen.";
 "vangnet.staart.nogaan" = "De slaapblokkade staat nog aan — de Mac kan nu niet slapen.";
 "vangnet.terug.klok" = "Om %1$@ teruggehaald door het vangnet. %2$@";
+
+/* --- De aanleiding als clausule, voor "Vanzelf aangezet omdat …". Derde vorm naast
+   trigger.* (hele mededeling) en aanleiding.* (kaal zelfstandig naamwoord); die twee
+   passen niet achter "omdat". Zie SessionTrigger.omdat.
+
+   Deze zin komt op het scherm EN in het logboek; het logboek leest hem via L10n.nl. --- */
+"omdat.schakelaar" = "je de schakelaar omzette";
+"omdat.cli" = "de opdrachtregel erom vroeg";
+"omdat.klep" = "je had gevraagd om aan te gaan zodra de klep dichtging";
+"omdat.app" = "%@ ging draaien";
+"omdat.schema" = "het schema-venster %@ ging open";
+"omdat.sneltoets" = "je de sneltoets indrukte";
+"arming.vervallen" = "Het klaarzetten is vervallen: je hebt de klep binnen %d minuten niet dichtgedaan. Het wakker houden staat uit.";
+"trigger.tot" = "tot %1$@ (%2$@)";
+"trigger.zondereindtijd" = "zonder eindtijd (vakantiestand)";
+"trigger.aangezet" = "Vanzelf aangezet omdat %1$@. De Mac blijft wakker %2$@.";
+"melding.trigger.geweigerd.klok" = "Om %1$@ wilde Dopamine Code vanzelf aanzetten (%2$@), maar dat kon niet: %3$@";

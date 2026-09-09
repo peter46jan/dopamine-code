@@ -1457,10 +1457,7 @@ final class AppModel: ObservableObject {
         //    mislukte start geen arming achterlaat die twintig seconden later weer afgaat.
         if let arm = lidArm, !arm.isVerlopen(op: Date()),
            SleepFlag.clamshellClosed() ?? lidClosed {
-            let uitkomst = await startTrigger(
-                SessionRequest(trigger: .klepArming),
-                aanleiding: "je had gevraagd om aan te gaan zodra de klep dichtging"
-            )
+            let uitkomst = await startTrigger(SessionRequest(trigger: .klepArming))
             if uitkomst != .probeerStraksOpnieuw { lidArm = nil }
             gestart = uitkomst == .gestart
         }
@@ -1479,10 +1476,9 @@ final class AppModel: ObservableObject {
     private func verlopenArmingOpruimen() {
         guard let arm = lidArm, arm.isVerlopen(op: Date()) else { return }
         lidArm = nil
-        let zin = "Het klaarzetten is vervallen: je hebt de klep binnen "
-            + "\(Int(LidArm.geldigheid / 60)) minuten niet dichtgedaan. Het wakker houden staat uit."
-        EventLog.shared.info(zin)
-        lastMessage = zin
+        let minuten = Int(LidArm.geldigheid / 60)
+        EventLog.shared.info(L10n.nl("arming.vervallen", minuten))
+        lastMessage = L10n.t("arming.vervallen", minuten)
     }
 
     private func evaluateAppTriggers(alGestart: Bool) async -> Bool {
@@ -1513,8 +1509,7 @@ final class AppModel: ObservableObject {
 
         let uitkomst = await startTrigger(
             SessionRequest(trigger: .app(bundleID: bundleID, naam: info.naam),
-                           bindToPID: info.pid),
-            aanleiding: "\(info.naam) ging draaien"
+                           bindToPID: info.pid)
         )
         // Alleen bij "even bezig" blijft de flank staan; alles anders is een beslissing.
         if uitkomst == .probeerStraksOpnieuw { appsDieDraaiden.remove(bundleID) }
@@ -1561,7 +1556,6 @@ final class AppModel: ObservableObject {
             SessionRequest(trigger: .schema(omschrijving: venster.omschrijving),
                            notLaterThan: einde,
                            notLaterThanReason: "het schema liep tot \(Self.clockText(einde))"),
-            aanleiding: "het schema-venster \(venster.omschrijving) ging open"
         )
         switch uitkomst {
         case .gestart:
@@ -1606,33 +1600,45 @@ final class AppModel: ObservableObject {
     /// logboek mét de naam van de trigger, plus een melding die blijft staan tot je hem leest.
     /// Een gelukte start krijgt geen melding: die zou elke werkdag om 09:00 komen en de vijf
     /// meldingen die er wél toe doen laten verwateren.
-    private func startTrigger(_ request: SessionRequest, aanleiding: String) async -> TriggerUitkomst {
+    /// De aanleiding komt uit `request.trigger` en niet uit een losse parameter. Die stond er
+    /// eerst wel, met de zin voluit bij elke aanroeper — en dat was een tweede plek die wist
+    /// hoe een sessie begonnen was, naast het waardetype dat daarvoor bestaat.
+    private func startTrigger(_ request: SessionRequest) async -> TriggerUitkomst {
+        let aanleiding = request.trigger
         switch await startSession(request) {
         case .gestart(let eind, let minuten):
             // Geen eindtijd is sinds de vakantiestand een geldige uitkomst. Het logboek hoort
             // dat te zeggen en geen tijdstip te verzinnen dat er niet is.
-            let tot = eind.map { "tot \(Self.momentText($0)) (\(Self.durationText(minuten)))" }
-                ?? "zonder eindtijd (vakantiestand)"
-            let zin = "Vanzelf aangezet omdat \(aanleiding). De Mac blijft wakker " + tot + "."
-            EventLog.shared.info(zin)
-            lastMessage = zin
+            //
+            // Twee keer dezelfde zin: het logboek blijft Nederlands, `lastMessage` volgt de
+            // taal van de gebruiker. Zie `L10n.nl`.
+            let tot = eind.map {
+                L10n.t("trigger.tot", Self.momentText($0), Self.durationText(minuten))
+            } ?? L10n.t("trigger.zondereindtijd")
+            let totNL = eind.map {
+                L10n.nl("trigger.tot", Self.momentText($0), Self.durationText(minuten))
+            } ?? L10n.nl("trigger.zondereindtijd")
+            EventLog.shared.info(L10n.nl("trigger.aangezet", aanleiding.omdatNL, totNL))
+            lastMessage = L10n.t("trigger.aangezet", aanleiding.omdat, tot)
             return .gestart
 
         case .liepAl(let eind):
-            EventLog.shared.info("\(aanleiding.prefix(1).uppercased() + aanleiding.dropFirst()), "
+            // Alleen logboek, dus alleen Nederlands.
+            let aanhef = aanleiding.omdatNL
+            EventLog.shared.info("\(aanhef.prefix(1).uppercased() + aanhef.dropFirst()), "
                                  + "maar er liep al een sessie"
                                  + (eind.map { " tot \(Self.momentText($0))" } ?? "") + ".")
             return .nietGestart
 
         case .geweigerd(let reden):
             EventLog.shared.warn("Vanzelf aanzetten geweigerd (\(request.trigger.logNaam)): \(reden)")
-            lastMessage = L10n.t("melding.trigger.mislukt", aanleiding, reden)
+            lastMessage = L10n.t("melding.trigger.mislukt", aanleiding.omdat, reden)
             if request.trigger.isAutomatisch {
                 let klok = DateFormatter()
                 klok.dateFormat = "HH:mm"
                 Notify.post(.triggerRefused,
-                            "Om \(klok.string(from: Date())) wilde Dopamine Code vanzelf aanzetten "
-                            + "(\(aanleiding)), maar dat kon niet: \(reden)")
+                            L10n.t("melding.trigger.geweigerd.klok",
+                                   klok.string(from: Date()), aanleiding.omdat, reden))
             }
             return .nietGestart
 

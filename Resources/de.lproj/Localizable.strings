@@ -553,3 +553,16 @@
 "vangnet.staart.opgeruimd" = "Die Schlafsperre ist aufgeräumt; der Mac darf wieder schlafen.";
 "vangnet.staart.nogaan" = "Die Schlafsperre ist noch an — der Mac kann jetzt nicht schlafen.";
 "vangnet.terug.klok" = "Um %1$@ vom Sicherheitsnetz zurückgeholt. %2$@";
+
+/* --- Der Anlass als Teilsatz, für "Von selbst eingeschaltet, weil …". --- */
+"omdat.schakelaar" = "du den Schalter umgelegt hast";
+"omdat.cli" = "die Kommandozeile darum bat";
+"omdat.klep" = "du verlangt hattest, dass es einschaltet, sobald der Deckel zugeht";
+"omdat.app" = "%@ anfing zu laufen";
+"omdat.schema" = "das Zeitplanfenster %@ aufging";
+"omdat.sneltoets" = "du das Tastenkürzel gedrückt hast";
+"arming.vervallen" = "Die Bereitstellung ist verfallen: du hast den Deckel nicht innerhalb von %d Minuten geschlossen. Das Wachhalten ist aus.";
+"trigger.tot" = "bis %1$@ (%2$@)";
+"trigger.zondereindtijd" = "ohne Endzeit (Urlaubsmodus)";
+"trigger.aangezet" = "Von selbst eingeschaltet, weil %1$@. Der Mac bleibt %2$@ wach.";
+"melding.trigger.geweigerd.klok" = "Um %1$@ wollte Dopamine Code von selbst einschalten (%2$@), konnte aber nicht: %3$@";
