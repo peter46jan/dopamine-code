@@ -512,3 +512,17 @@
 "duur.sessie.stopt" = "Cette session s'arrête à %1$@ — %2$@ après l'activation.";
 "duur.staart" = "La durée est maintenant de %1$@. Activez le maintien en éveil tout de suite et il s'arrête à %2$@ ; activez-le plus tard et la fin se décale d'autant.";
 "duur.tot" = "Jusqu'à %1$@. %2$@";
+
+/* --- Refus : pourquoi l'activation ou la modification n'a pas abouti. --- */
+"weiger.pid.weg.sessieloopt" = "Le processus %d n'existe pas (plus). La session continue normalement.";
+"weiger.sessie.zondereindtijd" = "Une session sans heure de fin est en cours ; elle sera arrêtée d'elle-même. Réessayez dans un instant.";
+"weiger.nietverlengen" = "Une session en cours n'est jamais prolongée — arrêtez-la d'abord. Elle court actuellement jusqu'à %@.";
+"weiger.accu" = "Batterie %1$d%%, sous votre seuil de %2$d%%. Branchez le chargeur, ou abaissez le seuil.";
+"weiger.temperatuur" = "Le Mac est trop chaud. Attendez qu'il ait refroidi et réessayez.";
+"weiger.pid.weg.nietsgestart" = "Le processus %d n'existe pas (plus) ; rien n'a été lancé.";
+"weiger.grant.ontbreekt" = "%@. Sans cette règle, la limite de temps, le seuil de batterie et la surveillance thermique ne peuvent pas rendormir le Mac sans intervention. Installez-la dans Réglages → Diagnostic.";
+"weiger.geentoestemming" = "Pas d'autorisation pour activer le blocage de veille. Installez la dispense de mot de passe dans Réglages → Diagnostic.";
+"weiger.geannuleerd" = "Annulé lors de la demande d'autorisation.";
+"weiger.vlag.anders" = "La commande n'a signalé aucune erreur, mais le blocage de veille vaut %@ au lieu de 1.";
+"weiger.nietgelukt" = "Le maintien en éveil a échoué : %@";
+"weiger.albeeindigd" = "La session était déjà terminée avant d'avoir vraiment commencé.";

@@ -511,3 +511,17 @@
 "duur.sessie.stopt" = "This session stops at %1$@ — %2$@ after it was switched on.";
 "duur.staart" = "The duration is now %1$@. Switch keeping awake on right now and it stops at %2$@; switch it on later and the end moves with it.";
 "duur.tot" = "Until %1$@. %2$@";
+
+/* --- Refusals: why switching on or adjusting did not go through. --- */
+"weiger.pid.weg.sessieloopt" = "Process %d does not exist (any more). The session simply carries on.";
+"weiger.sessie.zondereindtijd" = "A session without an end time is running; it will be stopped on its own. Try again shortly.";
+"weiger.nietverlengen" = "A running session is never extended — stop the session first. It currently runs until %@.";
+"weiger.accu" = "Battery %1$d%%, below your floor of %2$d%%. Plug in the charger, or lower the battery floor.";
+"weiger.temperatuur" = "The Mac is too hot. Wait until it has cooled down and try again.";
+"weiger.pid.weg.nietsgestart" = "Process %d does not exist (any more); nothing was started.";
+"weiger.grant.ontbreekt" = "%@. Without that rule the time limit, the battery floor and the heat watch cannot let the Mac sleep again unattended. Install it under Settings → Diagnostics.";
+"weiger.geentoestemming" = "No permission to switch the sleep block on. Install the passwordless grant under Settings → Diagnostics.";
+"weiger.geannuleerd" = "Cancelled while asking for permission.";
+"weiger.vlag.anders" = "The command reported no error, but the sleep block reads %@ instead of 1.";
+"weiger.nietgelukt" = "Keeping awake did not work: %@";
+"weiger.albeeindigd" = "The session had already ended before it was properly running.";

@@ -2142,7 +2142,7 @@ final class AppModel: ObservableObject {
             guard let identity = ProcessWatch.identify(pid) else {
                 EventLog.shared.warn("Koppelen van de lopende sessie aan pid \(pid) geweigerd: "
                                      + "dat proces bestaat niet (meer).")
-                return .geweigerd(reden: "Proces \(pid) bestaat niet (meer). De sessie loopt gewoon door.")
+                return .geweigerd(reden: L10n.t("weiger.pid.weg.sessieloopt", pid))
             }
             nieuweKoppeling = identity
         }
@@ -2150,8 +2150,7 @@ final class AppModel: ObservableObject {
         var nieuweEindtijd: (date: Date, reason: String)?
         if request.limitMinutes != nil || request.notLaterThan != nil {
             guard let start = sessionStart, let huidige = deadline else {
-                return .geweigerd(reden: "Er loopt een sessie zonder eindtijd; die wordt vanzelf gestopt. "
-                                  + "Probeer het zo opnieuw.")
+                return .geweigerd(reden: L10n.t("weiger.sessie.zondereindtijd"))
             }
             let gevraagd = computeDeadline(start: start,
                                            limitMinutes: request.limitMinutes ?? sessionLimitMinutes,
@@ -2159,8 +2158,7 @@ final class AppModel: ObservableObject {
                                            capReason: request.notLaterThan != nil
                                                ? request.notLaterThanReason : sessionCapReason)
             guard gevraagd.date <= huidige else {
-                return .geweigerd(reden: "Een lopende sessie wordt niet verlengd — stop de sessie eerst. "
-                                  + "Hij loopt nu tot \(Self.clockText(huidige)).")
+                return .geweigerd(reden: L10n.t("weiger.nietverlengen", Self.clockText(huidige)))
             }
             nieuweEindtijd = gevraagd
         }
@@ -2241,8 +2239,7 @@ final class AppModel: ObservableObject {
             lastMessage = L10n.t("melding.lader")
             Feedback.failed()
             EventLog.shared.warn("Activeren geweigerd: batterij \(battery.percent)%.")
-            return .geweigerd(reden: "Accu \(battery.percent)%, onder je grens van \(Prefs.batteryFloor)%. "
-                              + "Sluit de lader aan, of verlaag de accugrens.")
+            return .geweigerd(reden: L10n.t("weiger.accu", battery.percent, Prefs.batteryFloor))
         }
         // Read the live state, not the cached one: `thermal` is only fed by ThermalWatch,
         // which is started inside a session and reset to .nominal when one ends — so the
@@ -2253,7 +2250,7 @@ final class AppModel: ObservableObject {
             lastMessage = L10n.t("melding.afkoelen")
             Feedback.failed()
             EventLog.shared.warn("Activeren geweigerd: temperatuur kritiek.")
-            return .geweigerd(reden: "De Mac is te warm. Wacht tot hij is afgekoeld en probeer het opnieuw.")
+            return .geweigerd(reden: L10n.t("weiger.temperatuur"))
         }
 
         // Bestaat het proces waaraan gekoppeld moet worden? Vóór de schrijfactie, want een
@@ -2267,7 +2264,7 @@ final class AppModel: ObservableObject {
                 lastMessage = L10n.t("melding.procesweg", pid)
                 Feedback.failed()
                 EventLog.shared.warn("Activeren geweigerd: pid \(pid) bestaat niet (meer).")
-                return .geweigerd(reden: "Proces \(pid) bestaat niet (meer); er is niets gestart.")
+                return .geweigerd(reden: L10n.t("weiger.pid.weg.nietsgestart", pid))
             }
             koppeling = identity
         }
@@ -2290,9 +2287,7 @@ final class AppModel: ObservableObject {
             lastMessage = L10n.t("melding.grant.eerst", grantText)
             Feedback.failed()
             EventLog.shared.warn("Activeren geweigerd: \(grantText).")
-            return .geweigerd(reden: "\(grantText). Zonder die regel kunnen de tijdslimiet, de "
-                              + "accugrens en de temperatuurbewaking de Mac later niet vanzelf weer "
-                              + "laten slapen. Installeer hem bij Instellingen → Diagnose.")
+            return .geweigerd(reden: L10n.t("weiger.grant.ontbreekt", grantText))
         }
 
         // De enige `write(true, ...)` in de hele codebase. Elke ingang komt hier langs, dus
@@ -2306,8 +2301,7 @@ final class AppModel: ObservableObject {
             lastMessage = L10n.t("melding.grant.installeer")
             await refreshGrantAsync()
             Feedback.failed()
-            return .geweigerd(reden: "Geen toestemming om de slaapblokkade aan te zetten. "
-                              + "Installeer de wachtwoordvrijstelling bij Instellingen → Diagnose.")
+            return .geweigerd(reden: L10n.t("weiger.geentoestemming"))
         case .cancelled:
             // Never claim "off" on the strength of a dialog the user dismissed. The write
             // may already have gone through before the sheet was cancelled, and the sheet
@@ -2324,19 +2318,20 @@ final class AppModel: ObservableObject {
                 status = .off
                 lastMessage = L10n.t("melding.geannuleerd")
             }
-            return .geweigerd(reden: "Geannuleerd bij het vragen om toestemming.")
+            return .geweigerd(reden: L10n.t("weiger.geannuleerd"))
         case .commandSucceededButFlagWrong(let actual):
             status = .error(L10n.t("fout.onverwacht"))
             lastMessage = L10n.t("melding.vlag.anders",
                                  actual.map { $0 ? "1" : "0" } ?? L10n.t("melding.onleesbaar"))
             Feedback.failed()
-            return .geweigerd(reden: "Het commando gaf geen fout, maar de slaapblokkade staat op "
-                              + "\(actual.map { $0 ? "1" : "0" } ?? "onleesbaar") in plaats van op 1.")
+            return .geweigerd(reden: L10n.t(
+                "weiger.vlag.anders",
+                actual.map { $0 ? "1" : "0" } ?? L10n.t("melding.onleesbaar")))
         case .failed(let message):
             status = .error(L10n.t("fout.nietgelukt"))
             lastMessage = message
             Feedback.failed()
-            return .geweigerd(reden: "Wakker houden is niet gelukt: \(message)")
+            return .geweigerd(reden: L10n.t("weiger.nietgelukt", message))
         }
 
         intendedOn = true
@@ -2450,7 +2445,7 @@ final class AppModel: ObservableObject {
         // the user has already ended is exactly the surprise this app must never produce.
         guard intendedOn, sessionStart == start else {
             EventLog.shared.info("Activering afgebroken: de sessie was al beëindigd.")
-            return .geweigerd(reden: "De sessie was alweer beëindigd voordat hij goed en wel liep.")
+            return .geweigerd(reden: L10n.t("weiger.albeeindigd"))
         }
 
         if grantStatus != .granted {

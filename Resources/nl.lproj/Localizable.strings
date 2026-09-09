@@ -521,3 +521,23 @@
 "duur.sessie.stopt" = "Deze sessie stopt om %1$@ — %2$@ na het aanzetten.";
 "duur.staart" = "De duur staat nu op %1$@. Zet je het wakker houden nú aan, dan stopt het om %2$@; zet je het later aan, dan schuift het einde mee.";
 "duur.tot" = "Tot %1$@. %2$@";
+
+/* --- Weigeringen: waarom aanzetten of aanpassen niet doorging. Deze zinnen komen
+   terug bij de opdrachtregel, de sneltoets en de zelf-aanzet-triggers. Stonden vast in
+   het Nederlands in AppModel.
+
+   Het logboek houdt zijn eigen Nederlandse regels; alleen daar waar een weigering in een
+   logregel geïnterpoleerd wordt, staat er nu een vertaalde staart achter. Geen enkele
+   controle in verify.sh of de audit leest die regels woordelijk terug. --- */
+"weiger.pid.weg.sessieloopt" = "Proces %d bestaat niet (meer). De sessie loopt gewoon door.";
+"weiger.sessie.zondereindtijd" = "Er loopt een sessie zonder eindtijd; die wordt vanzelf gestopt. Probeer het zo opnieuw.";
+"weiger.nietverlengen" = "Een lopende sessie wordt niet verlengd — stop de sessie eerst. Hij loopt nu tot %@.";
+"weiger.accu" = "Accu %1$d%%, onder je grens van %2$d%%. Sluit de lader aan, of verlaag de accugrens.";
+"weiger.temperatuur" = "De Mac is te warm. Wacht tot hij is afgekoeld en probeer het opnieuw.";
+"weiger.pid.weg.nietsgestart" = "Proces %d bestaat niet (meer); er is niets gestart.";
+"weiger.grant.ontbreekt" = "%@. Zonder die regel kunnen de tijdslimiet, de accugrens en de temperatuurbewaking de Mac later niet vanzelf weer laten slapen. Installeer hem bij Instellingen → Diagnose.";
+"weiger.geentoestemming" = "Geen toestemming om de slaapblokkade aan te zetten. Installeer de wachtwoordvrijstelling bij Instellingen → Diagnose.";
+"weiger.geannuleerd" = "Geannuleerd bij het vragen om toestemming.";
+"weiger.vlag.anders" = "Het commando gaf geen fout, maar de slaapblokkade staat op %@ in plaats van op 1.";
+"weiger.nietgelukt" = "Wakker houden is niet gelukt: %@";
+"weiger.albeeindigd" = "De sessie was alweer beëindigd voordat hij goed en wel liep.";

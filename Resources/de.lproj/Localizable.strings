@@ -512,3 +512,17 @@
 "duur.sessie.stopt" = "Diese Sitzung endet um %1$@ — %2$@ nach dem Einschalten.";
 "duur.staart" = "Die Dauer steht jetzt auf %1$@. Schaltest du das Wachhalten jetzt ein, endet es um %2$@; schaltest du es später ein, verschiebt sich das Ende mit.";
 "duur.tot" = "Bis %1$@. %2$@";
+
+/* --- Ablehnungen: warum das Einschalten oder Anpassen nicht durchging. --- */
+"weiger.pid.weg.sessieloopt" = "Prozess %d existiert nicht (mehr). Die Sitzung läuft einfach weiter.";
+"weiger.sessie.zondereindtijd" = "Es läuft eine Sitzung ohne Endzeit; sie wird von selbst beendet. Versuche es gleich erneut.";
+"weiger.nietverlengen" = "Eine laufende Sitzung wird nicht verlängert — beende die Sitzung zuerst. Sie läuft jetzt bis %@.";
+"weiger.accu" = "Akku %1$d%%, unter deiner Grenze von %2$d%%. Schließe das Ladegerät an, oder senke die Akkugrenze.";
+"weiger.temperatuur" = "Der Mac ist zu warm. Warte, bis er abgekühlt ist, und versuche es erneut.";
+"weiger.pid.weg.nietsgestart" = "Prozess %d existiert nicht (mehr); es wurde nichts gestartet.";
+"weiger.grant.ontbreekt" = "%@. Ohne diese Regel können das Zeitlimit, die Akkugrenze und die Wärmeüberwachung den Mac später nicht von selbst wieder schlafen lassen. Installiere sie unter Einstellungen → Diagnose.";
+"weiger.geentoestemming" = "Keine Berechtigung, die Schlafsperre einzuschalten. Installiere die Passwortfreigabe unter Einstellungen → Diagnose.";
+"weiger.geannuleerd" = "Beim Nachfragen der Berechtigung abgebrochen.";
+"weiger.vlag.anders" = "Der Befehl meldete keinen Fehler, aber die Schlafsperre steht auf %@ statt auf 1.";
+"weiger.nietgelukt" = "Das Wachhalten hat nicht funktioniert: %@";
+"weiger.albeeindigd" = "Die Sitzung war schon beendet, bevor sie richtig lief.";
