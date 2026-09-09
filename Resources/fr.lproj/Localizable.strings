@@ -633,3 +633,14 @@
 "geschiedenis.logboekweg" = "Le journal ne se trouve pas à %@.";
 "geschiedenis.leesfout" = "%1$@ n'a pas pu être lu : %2$@";
 "reden.appafgesloten" = "l'app a été quittée";
+
+/* --- Les dernières phrases isolées : connexion au canal, lancement d'un sous-processus, le décompte de la mise en attente, et le refus de l'ouverture à la session. --- */
+"kanaal.padtelang" = "Le chemin vers le canal de commande est trop long (%1$d sur %2$d caractères) : %3$@";
+"kanaal.verbindenmislukt" = "La connexion à %1$@ a échoué : %2$@";
+"shell.nietgestart" = "impossible de lancer %1$@ : %2$@";
+"shell.timeout" = "%1$@ n'a pas répondu en %2$ds";
+"vlag.pmsetfout" = "pmset a signalé une erreur";
+"arming.verlopen" = "expiré";
+"arming.nogseconden" = "%d s restantes";
+"arming.nogminuten" = "%d min restantes";
+"login.doorgebruikergeweigerd" = "Vous avez désactivé Dopamine Code dans Réglages Système → Général → Ouverture. Réactivez-le là.";

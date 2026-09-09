@@ -73,7 +73,7 @@ enum LaunchAtLogin {
                 EventLog.shared.warn("Start bij inloggen is door de gebruiker geweigerd in Systeeminstellingen.")
                 return .failure(NSError(domain: "Dopamine Code", code: ns.code, userInfo: [
                     NSLocalizedDescriptionKey:
-                        "Je hebt Dopamine Code uitgezet bij Systeeminstellingen → Algemeen → Inloggen. Zet hem daar weer aan."
+                        L10n.t("login.doorgebruikergeweigerd")
                 ]))
             case SMError.invalidSignature:
                 EventLog.shared.warn("SMAppService weigert de handtekening; val terug op LaunchAgent.")

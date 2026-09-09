@@ -665,3 +665,16 @@
 "geschiedenis.logboekweg" = "Het logboek staat niet op %@.";
 "geschiedenis.leesfout" = "%1$@ kon niet gelezen worden: %2$@";
 "reden.appafgesloten" = "de app werd afgesloten";
+
+/* --- De laatste losse zinnen: het verbinden met het kanaal (uit de opdrachtregel),
+   het starten van een subproces, de aftelling van het klaarzetten, en de weigering van
+   start-bij-inloggen. Alle alleen naar het scherm. --- */
+"kanaal.padtelang" = "Het pad naar het besturingskanaal is te lang (%1$d van %2$d tekens): %3$@";
+"kanaal.verbindenmislukt" = "Verbinden met %1$@ mislukte: %2$@";
+"shell.nietgestart" = "kon %1$@ niet starten: %2$@";
+"shell.timeout" = "%1$@ reageerde niet binnen %2$ds";
+"vlag.pmsetfout" = "pmset meldde een fout";
+"arming.verlopen" = "verlopen";
+"arming.nogseconden" = "nog %d s";
+"arming.nogminuten" = "nog %d min";
+"login.doorgebruikergeweigerd" = "Je hebt Dopamine Code uitgezet bij Systeeminstellingen → Algemeen → Inloggen. Zet hem daar weer aan.";

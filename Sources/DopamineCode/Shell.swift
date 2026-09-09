@@ -45,7 +45,8 @@ enum Shell {
         do {
             try proc.run()
         } catch {
-            return ShellResult(status: -1, stdout: "", stderr: "kon \(path) niet starten: \(error.localizedDescription)")
+            return ShellResult(status: -1, stdout: "",
+                               stderr: L10n.t("shell.nietgestart", path, error.localizedDescription))
         }
 
         // Drain both pipes concurrently. Reading them serially deadlocks as soon as one
@@ -63,7 +64,8 @@ enum Shell {
         if exited.wait(timeout: .now() + timeout) == .timedOut {
             proc.terminate()
             _ = group.wait(timeout: .now() + 2)
-            return ShellResult(status: -2, stdout: "", stderr: "\(path) reageerde niet binnen \(Int(timeout))s")
+            return ShellResult(status: -2, stdout: "",
+                               stderr: L10n.t("shell.timeout", path, Int(timeout)))
         }
         proc.waitUntilExit()   // returns at once; makes terminationStatus definitively valid
         _ = group.wait(timeout: .now() + 5)

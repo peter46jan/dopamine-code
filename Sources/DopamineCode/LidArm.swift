@@ -38,8 +38,8 @@ struct LidArm: Equatable {
     /// "nog 0 minuten" terwijl er nog veertig seconden staan leest als "te laat".
     func resterendeTekst(op nu: Date) -> String {
         let seconden = Int(verlooptOp.timeIntervalSince(nu).rounded(.up))
-        if seconden <= 0 { return "verlopen" }
-        if seconden < 60 { return "nog \(seconden) s" }
-        return "nog \((seconden + 59) / 60) min"
+        if seconden <= 0 { return L10n.t("arming.verlopen") }
+        if seconden < 60 { return L10n.t("arming.nogseconden", seconden) }
+        return L10n.t("arming.nogminuten", (seconden + 59) / 60)
     }
 }

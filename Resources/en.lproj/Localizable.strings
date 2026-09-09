@@ -632,3 +632,14 @@
 "geschiedenis.logboekweg" = "The log is not at %@.";
 "geschiedenis.leesfout" = "%1$@ could not be read: %2$@";
 "reden.appafgesloten" = "the app was quit";
+
+/* --- The last loose sentences: connecting to the channel, starting a subprocess, the arming countdown, and the login-item refusal. --- */
+"kanaal.padtelang" = "The path to the control channel is too long (%1$d of %2$d characters): %3$@";
+"kanaal.verbindenmislukt" = "Connecting to %1$@ failed: %2$@";
+"shell.nietgestart" = "could not start %1$@: %2$@";
+"shell.timeout" = "%1$@ did not respond within %2$ds";
+"vlag.pmsetfout" = "pmset reported an error";
+"arming.verlopen" = "lapsed";
+"arming.nogseconden" = "%d s left";
+"arming.nogminuten" = "%d min left";
+"login.doorgebruikergeweigerd" = "You switched Dopamine Code off under System Settings → General → Login Items. Switch it back on there.";

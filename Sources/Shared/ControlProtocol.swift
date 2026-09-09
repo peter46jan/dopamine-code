@@ -158,7 +158,7 @@ enum ControlChannel {
     static func connect(timeoutSeconds: Int = 90) -> ConnectResult {
         let path = socketPath
         guard let addr = address(for: path) else {
-            return .fout("Het pad naar het besturingskanaal is te lang (\(path.utf8.count) van \(maxPathLength) tekens): \(path)")
+            return .fout(L10n.t("kanaal.padtelang", path.utf8.count, maxPathLength, path))
         }
         let fd = socket(AF_UNIX, SOCK_STREAM, 0)
         guard fd >= 0 else { return .fout("socket() mislukte: \(errnoText())") }
@@ -175,7 +175,7 @@ enum ControlChannel {
             let saved = errno
             close(fd)
             if saved == ENOENT || saved == ECONNREFUSED { return .appDraaitNiet }
-            return .fout("Verbinden met \(path) mislukte: \(errnoText(saved))")
+            return .fout(L10n.t("kanaal.verbindenmislukt", path, errnoText(saved)))
         }
         return .verbonden(fd)
     }
