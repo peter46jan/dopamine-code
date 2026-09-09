@@ -678,3 +678,28 @@
 "arming.nogseconden" = "nog %d s";
 "arming.nogminuten" = "nog %d min";
 "login.doorgebruikergeweigerd" = "Je hebt Dopamine Code uitgezet bij Systeeminstellingen → Algemeen → Inloggen. Zet hem daar weer aan.";
+
+/* --- De wachter: wat een ronde concludeerde, en of hij ingesteld staat. De meldingen
+   worden door het wachter-proces als sleutel weggeschreven en hier pas vertaald — zie
+   RestartGuard.Melding. --- */
+"wachter.melding.onafgemaakt" = "onafgemaakte ronde";
+"wachter.melding.vlaguit" = "de slaapblokkade stond uit";
+"wachter.melding.appdraait" = "de app draait";
+"wachter.melding.nietvanons" = "blokkade aan, maar niet van ons";
+"wachter.melding.respijt" = "respijt na bewust afsluiten (%d×)";
+"wachter.melding.zonderapp" = "blokkade aan zonder app (%d×)";
+"wachter.melding.bundelonleesbaar" = "kan de bundel niet lezen";
+"wachter.melding.bouwmap" = "kopie uit de bouwmap, niets gestart";
+"wachter.melding.wachten" = "wachten tot de volgende poging mag";
+"wachter.melding.bundelnietinorde" = "bundel niet in orde";
+"wachter.melding.rechtstreeks" = "rechtstreeks gestart";
+"wachter.melding.rechtstreeksmislukt" = "rechtstreeks starten mislukte";
+"wachter.melding.teruggehaald" = "app teruggehaald (poging %d)";
+"wachter.melding.terughalenmislukt" = "terughalen mislukte";
+"wachter.vorigeafsluiting" = "Vorige afsluiting om %1$@ (%2$@); de slaapblokkade stond toen %3$@";
+"wachter.stondtoen.aan" = "nog aan.";
+"wachter.stondtoen.uit" = "uit.";
+"wachter.nietingesteld.geenexecutable" = "niet ingesteld — de bundel mist CFBundleExecutable";
+"wachter.nietingesteld.bouwmap" = "niet ingesteld voor een kopie uit de bouwmap";
+"wachter.nietingesteld.fout" = "niet ingesteld — %@";
+"wachter.nietgeladen.launchctl" = "NIET geladen — launchctl weigerde: %@";

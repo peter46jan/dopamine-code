@@ -644,3 +644,26 @@
 "arming.nogseconden" = "%d s restantes";
 "arming.nogminuten" = "%d min restantes";
 "login.doorgebruikergeweigerd" = "Vous avez désactivé Dopamine Code dans Réglages Système → Général → Ouverture. Réactivez-le là.";
+
+/* --- Le garde-fou : ce qu'un tour a conclu, et s'il est en place. --- */
+"wachter.melding.onafgemaakt" = "tour inachevé";
+"wachter.melding.vlaguit" = "le blocage de veille était inactif";
+"wachter.melding.appdraait" = "l'app tourne";
+"wachter.melding.nietvanons" = "blocage actif, mais pas le nôtre";
+"wachter.melding.respijt" = "délai après une fermeture volontaire (%d×)";
+"wachter.melding.zonderapp" = "blocage actif sans app (%d×)";
+"wachter.melding.bundelonleesbaar" = "impossible de lire le bundle";
+"wachter.melding.bouwmap" = "copie du dossier de build, rien lancé";
+"wachter.melding.wachten" = "en attente de la prochaine tentative autorisée";
+"wachter.melding.bundelnietinorde" = "bundle incorrect";
+"wachter.melding.rechtstreeks" = "lancé directement";
+"wachter.melding.rechtstreeksmislukt" = "le lancement direct a échoué";
+"wachter.melding.teruggehaald" = "app relancée (tentative %d)";
+"wachter.melding.terughalenmislukt" = "la relance a échoué";
+"wachter.vorigeafsluiting" = "Dernière fermeture à %1$@ (%2$@) ; le blocage de veille était alors %3$@";
+"wachter.stondtoen.aan" = "encore actif.";
+"wachter.stondtoen.uit" = "inactif.";
+"wachter.nietingesteld.geenexecutable" = "non installé — le bundle n'a pas de CFBundleExecutable";
+"wachter.nietingesteld.bouwmap" = "non installé pour une copie du dossier de build";
+"wachter.nietingesteld.fout" = "non installé — %@";
+"wachter.nietgeladen.launchctl" = "NON chargé — launchctl a refusé : %@";

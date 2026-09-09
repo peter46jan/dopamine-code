@@ -643,3 +643,26 @@
 "arming.nogseconden" = "%d s left";
 "arming.nogminuten" = "%d min left";
 "login.doorgebruikergeweigerd" = "You switched Dopamine Code off under System Settings → General → Login Items. Switch it back on there.";
+
+/* --- The watchdog: what a round concluded, and whether it is installed. --- */
+"wachter.melding.onafgemaakt" = "unfinished round";
+"wachter.melding.vlaguit" = "the sleep block was off";
+"wachter.melding.appdraait" = "the app is running";
+"wachter.melding.nietvanons" = "block on, but not ours";
+"wachter.melding.respijt" = "grace after a deliberate quit (%d×)";
+"wachter.melding.zonderapp" = "block on with no app (%d×)";
+"wachter.melding.bundelonleesbaar" = "cannot read the bundle";
+"wachter.melding.bouwmap" = "copy from the build directory, nothing started";
+"wachter.melding.wachten" = "waiting until the next attempt is allowed";
+"wachter.melding.bundelnietinorde" = "bundle not in order";
+"wachter.melding.rechtstreeks" = "started directly";
+"wachter.melding.rechtstreeksmislukt" = "starting directly failed";
+"wachter.melding.teruggehaald" = "app brought back (attempt %d)";
+"wachter.melding.terughalenmislukt" = "bringing it back failed";
+"wachter.vorigeafsluiting" = "Previous quit at %1$@ (%2$@); the sleep block was %3$@ then";
+"wachter.stondtoen.aan" = "still on.";
+"wachter.stondtoen.uit" = "off.";
+"wachter.nietingesteld.geenexecutable" = "not installed — the bundle has no CFBundleExecutable";
+"wachter.nietingesteld.bouwmap" = "not installed for a copy from the build directory";
+"wachter.nietingesteld.fout" = "not installed — %@";
+"wachter.nietgeladen.launchctl" = "NOT loaded — launchctl refused: %@";

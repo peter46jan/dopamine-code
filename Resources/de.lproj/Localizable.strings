@@ -644,3 +644,26 @@
 "arming.nogseconden" = "noch %d s";
 "arming.nogminuten" = "noch %d min";
 "login.doorgebruikergeweigerd" = "Du hast Dopamine Code unter Systemeinstellungen → Allgemein → Anmeldeobjekte ausgeschaltet. Schalte es dort wieder ein.";
+
+/* --- Der Wächter: was eine Runde ergab, und ob er eingerichtet ist. --- */
+"wachter.melding.onafgemaakt" = "unvollendete Runde";
+"wachter.melding.vlaguit" = "die Schlafsperre war aus";
+"wachter.melding.appdraait" = "die App läuft";
+"wachter.melding.nietvanons" = "Sperre an, aber nicht von uns";
+"wachter.melding.respijt" = "Aufschub nach bewusstem Beenden (%d×)";
+"wachter.melding.zonderapp" = "Sperre an ohne App (%d×)";
+"wachter.melding.bundelonleesbaar" = "kann das Bundle nicht lesen";
+"wachter.melding.bouwmap" = "Kopie aus dem Build-Ordner, nichts gestartet";
+"wachter.melding.wachten" = "warten, bis der nächste Versuch erlaubt ist";
+"wachter.melding.bundelnietinorde" = "Bundle nicht in Ordnung";
+"wachter.melding.rechtstreeks" = "direkt gestartet";
+"wachter.melding.rechtstreeksmislukt" = "der direkte Start schlug fehl";
+"wachter.melding.teruggehaald" = "App zurückgeholt (Versuch %d)";
+"wachter.melding.terughalenmislukt" = "das Zurückholen schlug fehl";
+"wachter.vorigeafsluiting" = "Letztes Beenden um %1$@ (%2$@); die Schlafsperre war damals %3$@";
+"wachter.stondtoen.aan" = "noch an.";
+"wachter.stondtoen.uit" = "aus.";
+"wachter.nietingesteld.geenexecutable" = "nicht eingerichtet — dem Bundle fehlt CFBundleExecutable";
+"wachter.nietingesteld.bouwmap" = "nicht eingerichtet für eine Kopie aus dem Build-Ordner";
+"wachter.nietingesteld.fout" = "nicht eingerichtet — %@";
+"wachter.nietgeladen.launchctl" = "NICHT geladen — launchctl hat abgelehnt: %@";
