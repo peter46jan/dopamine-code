@@ -51,7 +51,7 @@
 /* --- Menu: toetsenbordverlichting --- */
 "menu.verlichting.titel" = "Toetsenbordverlichting";
 "menu.verlichting.schermuit" = "Het toetsenbord blijft nu donker omdat het scherm uit staat. Wat je hier instelt zie je pas als het scherm weer aan gaat.";
-"menu.verlichting.geendirect" = "Deze Mac laat de verlichting niet rechtstreeks instellen. Dopamine Code kan hem alleen schakelen door de helderheidstoetsen na te bootsen, en daarvoor is toestemming nodig bij Privacy → Toegankelijkheid.";
+"menu.verlichting.geendirect" = "Deze Mac laat de verlichting niet rechtstreeks instellen. Dopamine Code kan hem alleen schakelen door de helderheidstoetsen na te bootsen, en daarvoor is toestemming nodig bij Privacy en beveiliging → Toegankelijkheid.";
 "menu.verlichting.instellingen" = "Systeeminstellingen openen";
 
 /* --- Menu: bijwerken --- */
@@ -236,7 +236,7 @@
 
 /* --- Instellingen · Zelf aanzetten: klep en vangnetten --- */
 "aan.klep.titel" = "Zodra je de klep dichtdoet";
-"aan.klep.uitleg" = "Dit staat in het menubalk-paneel en niet hier, want het geldt één keer: je klikt \"Aanzetten zodra ik de klep dichtdoe\", je klapt dicht, en het wakker houden gaat aan. Doe je het niet, dan vervalt het na vijf minuten vanzelf en zegt de app dat ook. Het overleeft met opzet geen herstart: iets dat klaarstaat en pas uren later afgaat verwacht niemand nog.";
+"aan.klep.uitleg" = "Dit staat in het menubalk-paneel en niet hier, want het geldt één keer: je klikt \"Wakker houden zodra ik de klep sluit\", je klapt dicht, en het wakker houden gaat aan. Doe je het niet, dan vervalt het na vijf minuten vanzelf en zegt de app dat ook. Het overleeft met opzet geen herstart: iets dat klaarstaat en pas uren later afgaat verwacht niemand nog.";
 "aan.omheen.titel" = "Wat er hoe dan ook omheen blijft zitten";
 "aan.omheen.uitleg" = "Alles wat hier vanzelf aangaat loopt langs precies dezelfde weg als de schakelaar: dezelfde tijdslimiet, dezelfde accugrens en dezelfde temperatuurbewaking. Kan er op dat moment niet veilig aangezet worden — de accu is te leeg, de Mac is te warm, of de wachtwoordvrijstelling is weg — dan gebeurt er niets, en krijg je daar een melding van. Een schema loopt nooit langer dan de tijdslimiet: staat die op 4 uur en het venster tot 18:00, dan stopt het om 13:00 en niet om 18:00. En binnen één venster gaat het schema hooguit één keer aan, ook als er iets tussendoor stopte — anders zou het schema terugzetten wat een vangnet net had laten vallen.";
 
@@ -356,7 +356,7 @@
 "melding.tot.app.eneind" = "De Mac blijft wakker tot %1$@ klaar is, en hoe dan ook niet langer dan tot %2$@.";
 "melding.sessie.ookapp" = "De lopende sessie stopt nu ook zodra %@ klaar is.";
 "melding.bezig" = "Even bezig met de slaapblokkade; probeer het zo opnieuw.";
-"melding.toegankelijkheid" = "Dopamine Code heeft toestemming nodig bij Systeeminstellingen → Privacy → Toegankelijkheid om de helderheidstoetsen na te bootsen.";
+"melding.toegankelijkheid" = "Dopamine Code heeft toestemming nodig bij Systeeminstellingen → Privacy en beveiliging → Toegankelijkheid om de helderheidstoetsen na te bootsen.";
 "melding.verlichting.mislukt" = "Toetsenbordverlichting kon niet geschakeld worden.";
 "melding.helderheid.terug" = "Automatische toetsenbordhelderheid staat weer zoals je hem had.";
 "melding.nietsterug" = "Er was niets terug te zetten.";
@@ -596,7 +596,7 @@
    gaan naar het scherm EN naar het logboek; het logboek leest ze via L10n.nl. --- */
 "arming.klepaldicht" = "De klep is al dicht. Dit gaat over de vólgende keer dat je hem dichtdoet — doe hem eerst open. Wil je nu aanzetten, gebruik dan de schakelaar.";
 "arming.staatklaar" = "Staat klaar: het wakker houden gaat aan zodra je de klep dichtdoet. Vervalt vanzelf om %@.";
-"wachter.hoelang.minuten" = "al %d minuten";
+"wachter.hoelang.minuten" = "al %d minuten niet";
 "wachter.hoelang.nooit" = "nog nooit";
 "wachter.stil" = "De wachter heeft %@ gekeken. Zolang dat zo blijft, blijft de Mac wakker als Dopamine Code hard afgeschoten wordt. Kijk bij Systeeminstellingen → Algemeen → Inloggen en extensies of Dopamine Code op de achtergrond mag draaien, of gebruik 'Wachter herstellen' bij Instellingen → Diagnose.";
 
@@ -677,7 +677,7 @@
 "arming.verlopen" = "verlopen";
 "arming.nogseconden" = "nog %d s";
 "arming.nogminuten" = "nog %d min";
-"login.doorgebruikergeweigerd" = "Je hebt Dopamine Code uitgezet bij Systeeminstellingen → Algemeen → Inloggen. Zet hem daar weer aan.";
+"login.doorgebruikergeweigerd" = "Je hebt Dopamine Code uitgezet bij Systeeminstellingen → Algemeen → Inloggen en extensies. Zet hem daar weer aan.";
 
 /* --- De wachter: wat een ronde concludeerde, en of hij ingesteld staat. De meldingen
    worden door het wachter-proces als sleutel weggeschreven en hier pas vertaald — zie

@@ -26,7 +26,7 @@
 
 /* --- Menu : avertissement que les garde-fous ne peuvent pas agir --- */
 "menu.ontwapend.titel" = "L'arrêt automatique ne fonctionne pas";
-"menu.ontwapend.uitleg" = "La limite de temps, le seuil de batterie et la surveillance de température ne peuvent pas rendormir le Mac tout seuls : cela demande un mot de passe, et écran rabattu personne ne peut le saisir. Rétablissez-le vous-même si besoin — collez cette ligne dans Terminal :";
+"menu.ontwapend.uitleg" = "La limite de temps, le seuil de batterie et la surveillance de température ne peuvent pas rendormir le Mac tout seuls : cela demande un mot de passe, et écran rabattu personne ne peut le saisir. Rétablissez la veille vous-même si besoin — collez cette ligne dans Terminal :";
 
 /* --- Menu : le Mac s'est endormi quand même --- */
 "menu.gebroken.wel" = "Le Mac s'est endormi quand même";
@@ -47,7 +47,7 @@
 /* --- Menu : rétroéclairage du clavier --- */
 "menu.verlichting.titel" = "Rétroéclairage du clavier";
 "menu.verlichting.schermuit" = "Le clavier reste éteint pour l'instant parce que l'écran est éteint. Ce que vous réglez ici apparaîtra au rallumage.";
-"menu.verlichting.geendirect" = "Ce Mac ne permet pas de régler le rétroéclairage directement. Dopamine Code ne peut que l'allumer en imitant les touches de luminosité, ce qui demande une autorisation dans Confidentialité → Accessibilité.";
+"menu.verlichting.geendirect" = "Ce Mac ne permet pas de régler le rétroéclairage directement. Dopamine Code ne peut que l'allumer en imitant les touches de luminosité, ce qui demande une autorisation dans Confidentialité et sécurité → Accessibilité.";
 "menu.verlichting.instellingen" = "Ouvrir Réglages Système";
 
 /* --- Menu : mises à jour --- */
@@ -146,7 +146,7 @@
 /* --- Instellingen · Algemeen: hoe de app zich meldt --- */
 "alg.meldt.titel" = "Comment l'app se manifeste";
 "alg.melding" = "Notification si quelque chose se produit en votre absence";
-"alg.melding.uitleg" = "Une notification arrive quand le maintien en éveil s'est arrêté tout seul, quand cet arrêt a échoué, quand le Mac a trop chauffé, quand le Mac s'est endormi quand même, quand le garde-fou a dû relancer l'app, et quand quelque chose voulait s'activer tout seul sans y parvenir. La notification attend que votre écran soit déverrouillé puis reste affichée — un son à 03:12, personne ne l'entend. Aucune notification quand l'activation automatique a réussi : cela figure dans le panneau et dans le journal, et une notification quotidienne à 09:00 diluerait les six ci-dessus.";
+"alg.melding.uitleg" = "Une notification arrive quand le maintien en éveil s'est arrêté tout seul, quand cet arrêt a échoué, quand le Mac a trop chauffé, quand le Mac s'est endormi quand même, quand le filet de sécurité a dû relancer l'app, et quand quelque chose voulait s'activer tout seul sans y parvenir. La notification attend que votre écran soit déverrouillé puis reste affichée — un son à 03:12, personne ne l'entend. Aucune notification quand l'activation automatique a réussi : cela figure dans le panneau et dans le journal, et une notification quotidienne à 09:00 diluerait les six ci-dessus.";
 "alg.geluid" = "Son à l'activation et à l'arrêt";
 "alg.geluid.netwerk" = "Son quand la connexion internet tombe";
 "alg.knipper" = "Faire clignoter brièvement le rétroéclairage";
@@ -210,7 +210,7 @@
 "schema.weekend" = "chaque week-end";
 "schema.nooit" = "jamais";
 "schema.probleem.geendag" = "aucun jour n'est coché";
-"schema.probleem.zelfdetijd" = "l'heure de début et de fin sont identiques";
+"schema.probleem.zelfdetijd" = "les heures de début et de fin sont identiques";
 
 /* --- Instellingen · Zelf aanzetten: op vaste tijden --- */
 "aan.schema.titel" = "À heures fixes";
@@ -232,9 +232,9 @@
 
 /* --- Instellingen · Zelf aanzetten: klep en vangnetten --- */
 "aan.klep.titel" = "Dès que vous rabattez l'écran";
-"aan.klep.uitleg" = "Cela se trouve dans le panneau de la barre des menus et pas ici, car cela vaut une seule fois : vous cliquez \"Activer dès que je rabats l'écran\", vous rabattez, et le maintien en éveil s'active. Sinon, cela expire tout seul au bout de cinq minutes et l'app le dit. Cela ne survit délibérément pas à un redémarrage : personne n'attend plus qu'une chose armée il y a des heures se déclenche.";
+"aan.klep.uitleg" = "Cela se trouve dans le panneau de la barre des menus et pas ici, car cela vaut une seule fois : vous cliquez \"Garder éveillé dès que je rabats l'écran\", vous rabattez, et le maintien en éveil s'active. Sinon, cela expire tout seul au bout de cinq minutes et l'app le dit. Cela ne survit délibérément pas à un redémarrage : personne n'attend plus qu'une chose armée il y a des heures se déclenche.";
 "aan.omheen.titel" = "Ce qui reste en place quoi qu'il arrive";
-"aan.omheen.uitleg" = "Tout ce qui s'active tout seul ici emprunte exactement le même chemin que l'interrupteur : la même limite de temps, le même seuil de batterie et la même surveillance de température. Si l'activation n'est pas sûre à ce moment — batterie trop faible, Mac trop chaud, ou dispense de mot de passe disparue — rien ne se produit, et vous en recevez une notification. Une planification ne dure jamais plus que la limite de temps : si celle-ci est de 4 heures et la fenêtre jusqu'à 18:00, cela s'arrête à 13:00 et pas à 18:00. Et dans une même fenêtre, la planification s'active au plus une fois, même si quelque chose s'est arrêté entre-temps — sinon elle rétablirait ce qu'un garde-fou vient de relâcher.";
+"aan.omheen.uitleg" = "Tout ce qui s'active tout seul ici emprunte exactement le même chemin que l'interrupteur : la même limite de temps, le même seuil de batterie et la même surveillance de température. Si l'activation n'est pas sûre à ce moment — batterie trop faible, Mac trop chaud, ou dispense de mot de passe disparue — rien ne se produit, et vous en recevez une notification. Une planification ne dure jamais plus que la limite de temps : si celle-ci est de 4 heures et la fenêtre jusqu'à 18:00, cela s'arrête à 13:00 et pas à 18:00. Et dans une même fenêtre, la planification s'active au plus une fois, même si quelque chose s'est arrêté entre-temps — sinon elle rétablirait ce qu'le filet de sécurité vient de relâcher.";
 
 /* --- Waarden die de diagnose samenstelt --- */
 "diag.ja" = "oui";
@@ -248,7 +248,7 @@
 
 /* --- De wachter, zoals hij zichzelf beschrijft --- */
 "wachter.geladen" = "chargé";
-"wachter.nietgeladen" = "PAS chargé";
+"wachter.nietgeladen" = "NON chargé";
 "wachter.nognietgekeken" = "%@, n'a pas encore regardé";
 "wachter.keek" = "%1$@, a regardé %2$@";
 "wachter.secondengeleden" = "il y a %d s";
@@ -274,13 +274,13 @@
 "diag.loginvia" = "Lancement à l'ouverture via";
 "diag.temperatuur" = "Température";
 "diag.rekensnelheid" = "Vitesse de calcul";
-"diag.rekensnelheid.uitleg" = "100% signifie que macOS ne bride pas le Mac. Moins veut dire : réduit pour refroidir.";
+"diag.rekensnelheid.uitleg" = "100% signifie que macOS ne bride pas le Mac. Une valeur plus basse signifie : bridé pour refroidir.";
 "diag.opnieuwuitlezen" = "Relire";
 
 /* --- Instellingen · Diagnose: de wachter --- */
 "diag.wachter.titel" = "Le veilleur, au cas où l'app disparaîtrait";
 "diag.wachter" = "Veilleur";
-"diag.wachter.uitleg" = "Si Dopamine Code est tué net — kill -9, ou un plantage — il ne reste aucune chance de rétablir le blocage de veille, et le Mac reste éveillé jusqu'à ce que la batterie soit vide. C'est pourquoi toutes les 30 secondes un petit veilleur vérifie si le blocage est actif alors que l'app ne tourne plus ; dans ce cas il relance l'app, qui fait alors le ménage elle-même. Il ne bascule jamais rien lui-même, et après un Quitter normal il ne revient pas.";
+"diag.wachter.uitleg" = "Si Dopamine Code est tué net — kill -9, ou un plantage — il ne reste aucune chance de lever le blocage de veille, et le Mac reste éveillé jusqu'à ce que la batterie soit vide. C'est pourquoi toutes les 30 secondes un petit veilleur vérifie si le blocage est actif alors que l'app ne tourne plus ; dans ce cas il relance l'app, qui fait alors le ménage elle-même. Il ne bascule jamais rien lui-même, et après un Quitter normal il ne revient pas.";
 "diag.wachter.vanzelf" = "Cela se fait tout seul et ne peut pas être désactivé — tout comme la surveillance de température.";
 "diag.wachter.herstellen" = "Réparer le veilleur";
 
@@ -327,17 +327,17 @@
 "melding.procesweg" = "Le processus %d ne tourne pas (plus), il n'y a donc rien à attendre.";
 "melding.grant.eerst" = "%@. Installez-la d'abord dans Réglages → Diagnostic. Sans cette règle, la limite de temps, le seuil de batterie et la surveillance de température ne pourront pas rendormir le Mac plus tard — et écran rabattu, personne ne peut saisir le mot de passe demandé.";
 "melding.grant.installeer" = "Installez la dispense de mot de passe dans Réglages → Diagnostic.";
-"melding.geannuleerd.mogelijkaan" = "Annulé, mais le Mac est peut-être quand même maintenu éveillé. Dopamine Code va rétablir cela.";
+"melding.geannuleerd.mogelijkaan" = "Annulé, mais le Mac est peut-être quand même maintenu éveillé. Dopamine Code va désactiver le blocage de veille.";
 "melding.geannuleerd" = "Annulé.";
 "melding.vlag.anders" = "La commande n'a signalé aucune erreur, mais le blocage de veille est à %@ au lieu de 1.";
 "melding.onleesbaar" = "illisible";
 "melding.letop.zondergrant" = "Attention : sans la dispense de mot de passe, la limite de temps, le seuil de batterie et la surveillance de température ne pourront pas rendormir le Mac ensuite.";
 "melding.letop.geenwachtwoord" = "Attention : ce Mac est réglé pour ne pas demander de mot de passe après verrouillage. L'écran se verrouille bien, mais n'importe qui peut le rouvrir.";
 "melding.slot.viascreensaver" = "Écran verrouillé via l'économiseur d'écran.";
-"melding.slot.mislukt" = "L'écran ne s'est PAS verrouillé — le Mac va rester ouvert sans surveillance. Le maintien en éveil continue.";
+"melding.slot.mislukt" = "L'écran ne s'est PAS verrouillé — le Mac restera déverrouillé et sans surveillance. Le maintien en éveil continue.";
 "melding.scherm.nietuit" = "L'écran ne s'est pas éteint. Sous un écran rabattu, il continue de briller sans qu'on le voie et consomme la batterie.";
 "melding.geannuleerd.nogwakker" = "Annulé — le Mac est toujours maintenu éveillé.";
-"melding.uitzetten.mislukt" = "La désactivation a échoué. Rétablissez-le vous-même dans Terminal avec : sudo pmset -a disablesleep 0";
+"melding.uitzetten.mislukt" = "La désactivation a échoué. Rétablissez la veille vous-même dans Terminal avec : sudo pmset -a disablesleep 0";
 "melding.warm" = "Le Mac chauffe";
 "melding.internet.titel" = "La connexion internet a été coupée";
 "melding.nietgestopt" = "Le maintien en éveil n'a pas pu être arrêté, et tant qu'il est actif le Mac ne peut pas dormir.";
@@ -352,7 +352,7 @@
 "melding.tot.app.eneind" = "Le Mac reste éveillé jusqu'à ce que %1$@ ait terminé, et en tout cas pas au-delà de %2$@.";
 "melding.sessie.ookapp" = "La session en cours s'arrêtera aussi dès que %@ aura terminé.";
 "melding.bezig" = "Occupé avec le blocage de veille ; réessayez dans un instant.";
-"melding.toegankelijkheid" = "Dopamine Code a besoin d'une autorisation dans Réglages Système → Confidentialité → Accessibilité pour imiter les touches de luminosité.";
+"melding.toegankelijkheid" = "Dopamine Code a besoin d'une autorisation dans Réglages Système → Confidentialité et sécurité → Accessibilité pour imiter les touches de luminosité.";
 "melding.verlichting.mislukt" = "Le rétroéclairage du clavier n'a pas pu être basculé.";
 "melding.helderheid.terug" = "La luminosité automatique du clavier est revenue comme vous l'aviez.";
 "melding.nietsterug" = "Il n'y avait rien à rétablir.";
@@ -417,7 +417,7 @@
 "vangnet.wachter.gelezen" = "drapeau lu, %@";
 "aandacht.kop" = "Nécessite votre attention";
 "kaart.fout" = "Quelque chose ne va pas";
-"vangnet.wachter.stil" = "Le gardien n'a pas regardé depuis trop longtemps";
+"vangnet.wachter.stil" = "Le veilleur n'a rien vérifié depuis trop longtemps";
 
 /* --- État d'erreur : status = .error(...), visible dans la carte d'état et la ligne d'attention --- */
 "fout.vlag.onleesbaar" = "Impossible de lire si le Mac est autorisé à dormir";
@@ -439,7 +439,7 @@
 /* De namen van de vangnettegels. */
 "tegel.accu" = "Batterie";
 "tegel.warmte" = "Chaleur";
-"tegel.wachter" = "Gardien";
+"tegel.wachter" = "Veilleur";
 "tegel.grens.accu" = "s'arrête à %d%%";
 "tegel.grens.warmte" = "s'arrête à %1$d sur %2$d";
 
@@ -466,21 +466,21 @@
 "menu.vakantie.dagen" = "%d jours";
 "menu.vakantie.onbeperkt" = "jusqu'à ce que je l'arrête";
 "menu.vakantie.uitleg.dagen" = "La session continue jusqu'à la fin de ces jours. Le seuil de batterie et la surveillance thermique restent actifs.";
-"menu.vakantie.uitleg.onbeperkt" = "Aucune limite de temps : la session dure jusqu'à ce que vous l'arrêtiez. Le seuil de batterie et la surveillance thermique interviennent toujours, et le gardien efface le drapeau si l'app tombe.";
+"menu.vakantie.uitleg.onbeperkt" = "Aucune limite de temps : la session dure jusqu'à ce que vous l'arrêtiez. Le seuil de batterie et la surveillance thermique interviennent toujours, et le veilleur efface le drapeau si l'app tombe.";
 "kaart.vakantie" = "Reste éveillé";
 "reden.vakantie" = "le mode vacances a été désactivé";
-"reden.vakantie.dagen" = "la session vacances de %d jours était terminée";
+"reden.vakantie.dagen" = "le mode vacances de %d jours était écoulé";
 "melding.tot.app.vakantie" = "Le Mac reste éveillé jusqu'à ce que %@ ait terminé, sans heure de fin.";
 
 /* Het scherm aanhouden: een IOPMAssertion, iets anders dan de kernelvlag. */
 "alg.schermaan" = "Garder l'écran allumé pendant une session";
-"alg.schermaan.uitleg" = "Empêche macOS de baisser ou d'éteindre l'écran tant que l'écran est ouvert. Le verrouillage reste donc absent, puisqu'il suit l'extinction de l'écran. Les deux choix ci-dessus ne concernent que ce que fait l'app elle-même ; celui-ci retient le système. Écran rabattu, il relâche et ces choix reprennent la main.";
+"alg.schermaan.uitleg" = "Empêche macOS de baisser ou d'éteindre l'écran tant que l'écran est ouvert. Le verrouillage reste donc absent, puisqu'il suit l'extinction de l'écran. Les deux choix ci-dessus ne concernent que ce que fait l'app elle-même ; celui-ci retient le système. Écran rabattu, il lâche prise et ces choix reprennent la main.";
 
 /* De muispor. Zie MuisPor voor wat er gemeten is. */
-"alg.muispor" = "Bouger la souris en silence";
+"alg.muispor" = "Bouger la souris de façon invisible en cas d'inactivité";
 "alg.muispor.na" = "après %d min";
 "alg.muispor.geenrecht" = "Ne fonctionne pas encore : l'app n'a pas le droit d'envoyer des entrées. Accordez l'Accessibilité, puis relancez l'app — macOS retient la réponse tant qu'elle tourne.";
-"alg.muispor.uitleg" = "Déplace le curseur d'un point et le ramène aussitôt, donc il reste où il était. Uniquement quand c'est vraiment calme, il ne lutte donc jamais avec votre main. Prévu pour les apps qui vous marquent absent. Mesuré : cela n'empêche pas l'économiseur d'écran de macOS — celui-ci ne compte que les vraies entrées. Utilisez l'option ci-dessus pour cela.";
+"alg.muispor.uitleg" = "Déplace le curseur d'un point et le ramène aussitôt, donc il reste où il était. Uniquement quand c'est vraiment calme, il ne lutte donc jamais avec votre main. Prévu pour les apps qui vous marquent absent. Mesuré : cela n'empêche pas l'économiseur d'écran de macOS de se déclencher — celui-ci ne compte que les vraies entrées. Utilisez l'option ci-dessus pour cela.";
 "menu.muispor.geenrecht" = "Ne fonctionne pas : accordez l'Accessibilité et relancez l'app.";
 "alg.muispor.zichtbaar" = "Saut visible";
 "alg.muispor.zichtbaar.uitleg" = "Le curseur décrit un arc de 120 points aller-retour au lieu d'un seul. Pour voir que ça marche. Il finit là où il a commencé, et comme il ne bouge qu'après des minutes de silence, il ne peut jamais gêner votre main.";
@@ -489,7 +489,7 @@
 
 /* --- La ligne de commande. Jusqu'ici elle reposait sur des phrases néerlandaises
    codées en dur dans Sources/dopamine/main.swift. --- */
-"cli.hulp" = "dopamine — piloter Dopamine Code depuis la ligne de commande\n\n  dopamine on                     garder éveillé, pour la durée configurée\n  dopamine on --for 2h            ... pour une durée choisie (2h, 90m, 1h30m, 45)\n  dopamine on --until 18:00       ... jusqu'à une heure (une heure déjà passée\n                                      compte pour demain)\n  dopamine on --until-exit 4711   ... jusqu'à la fin de ce processus ; depuis un script :\n                                      dopamine on --until-exit $$\n  dopamine off                    arrêter de garder éveillé\n  dopamine status                 ce qui se passe en ce moment\n  dopamine status --json          la même chose, pour les scripts\n\nAvec --json la sortie est toujours du JSON valide, même en cas d'erreur. Le verdict est dans\nle code de sortie :\n\n  0  fait\n  1  refusé (un garde-fou, ou l'arrêt a échoué)\n  2  mauvais usage\n  4  Dopamine Code ne tourne pas\n\nLa limite de temps, le seuil de batterie et la surveillance thermique s'appliquent ici aussi.\nUne durée est bornée entre 5 minutes et 24 heures, et une session en cours n'est jamais\nprolongée — pour cela il faut d'abord l'arrêter.";
+"cli.hulp" = "dopamine — piloter Dopamine Code depuis la ligne de commande\n\n  dopamine on                     garder éveillé, pour la durée configurée\n  dopamine on --for 2h            ... pour une durée choisie (2h, 90m, 1h30m, 45)\n  dopamine on --until 18:00       ... jusqu'à une heure (une heure déjà passée\n                                      compte pour demain)\n  dopamine on --until-exit 4711   ... jusqu'à la fin de ce processus ; depuis un script :\n                                      dopamine on --until-exit $$\n  dopamine off                    arrêter de garder éveillé\n  dopamine status                 ce qui se passe en ce moment\n  dopamine status --json          la même chose, pour les scripts\n\nAvec --json la sortie est toujours du JSON valide, même en cas d'erreur. Le verdict est dans\nle code de sortie :\n\n  0  réussi\n  1  refusé (un filet de sécurité, ou l'arrêt a échoué)\n  2  mauvais usage\n  4  Dopamine Code ne tourne pas\n\nLa limite de temps, le seuil de batterie et la surveillance de température s'appliquent ici aussi.\nUne durée est bornée entre 5 minutes et 24 heures, et une session en cours n'est jamais\nprolongée — pour cela il faut d'abord l'arrêter.";
 "cli.geenopdracht" = "Indiquez une commande : on, off ou status.";
 "cli.onbekendeopdracht" = "Commande inconnue : %@";
 "cli.onbekendeoptie" = "Option inconnue : %@";
@@ -508,7 +508,7 @@
 "duur.klem.langer" = "Plus de 24 heures, ce n'est pas possible.";
 "duur.klem.korter" = "Moins de 5 minutes, ce n'est pas possible.";
 "duur.sessie.geklemd" = "%1$@ Cette session s'arrête à %2$@, %3$@ après l'activation.";
-"duur.sessie.grens" = "Cette session s'arrête plus tôt, à %@ : une limite la borne, et ceci ne la déplace pas.";
+"duur.sessie.grens" = "Cette session s'arrête plus tôt, à %@ : une autre limite s'applique, et ce réglage ne la repousse pas.";
 "duur.sessie.stopt" = "Cette session s'arrête à %1$@ — %2$@ après l'activation.";
 "duur.staart" = "La durée est maintenant de %1$@. Activez le maintien en éveil tout de suite et il s'arrête à %2$@ ; activez-le plus tard et la fin se décale d'autant.";
 "duur.tot" = "Jusqu'à %1$@. %2$@";
@@ -520,10 +520,10 @@
 "weiger.accu" = "Batterie %1$d%%, sous votre seuil de %2$d%%. Branchez le chargeur, ou abaissez le seuil.";
 "weiger.temperatuur" = "Le Mac est trop chaud. Attendez qu'il ait refroidi et réessayez.";
 "weiger.pid.weg.nietsgestart" = "Le processus %d n'existe pas (plus) ; rien n'a été lancé.";
-"weiger.grant.ontbreekt" = "%@. Sans cette règle, la limite de temps, le seuil de batterie et la surveillance thermique ne peuvent pas rendormir le Mac sans intervention. Installez-la dans Réglages → Diagnostic.";
+"weiger.grant.ontbreekt" = "%@. Sans cette règle, la limite de temps, le seuil de batterie et la surveillance de température ne peuvent pas rendormir le Mac sans intervention. Installez-la dans Réglages → Diagnostic.";
 "weiger.geentoestemming" = "Pas d'autorisation pour activer le blocage de veille. Installez la dispense de mot de passe dans Réglages → Diagnostic.";
 "weiger.geannuleerd" = "Annulé lors de la demande d'autorisation.";
-"weiger.vlag.anders" = "La commande n'a signalé aucune erreur, mais le blocage de veille vaut %@ au lieu de 1.";
+"weiger.vlag.anders" = "La commande n'a signalé aucune erreur, mais le blocage de veille est à %@ au lieu de 1.";
 "weiger.nietgelukt" = "Le maintien en éveil a échoué : %@";
 "weiger.albeeindigd" = "La session était déjà terminée avant d'avoir vraiment commencé.";
 
@@ -532,19 +532,19 @@
 "kanaal.gestart.tot" = "Le Mac reste éveillé jusqu'à %1$@ (%2$@).";
 "kanaal.gestart.zondereindtijd" = "Le Mac reste éveillé sans heure de fin (mode vacances).";
 "kanaal.stopt.eerder" = "S'arrête plus tôt dès que %@ a terminé.";
-"kanaal.limiet.ervoor" = "Vous avez demandé %1$@, mais la limite de temps de %2$@ tombe avant.";
-"kanaal.liepal" = "Une session était déjà en cours ; aucune seconde n'a été lancée.";
+"kanaal.limiet.ervoor" = "Vous avez demandé jusqu'à %1$@, mais la limite de temps de %2$@ tombe plus tôt.";
+"kanaal.liepal" = "Une session était déjà en cours ; aucune autre n'a été lancée.";
 "kanaal.liepal.tot" = "Elle court jusqu'à %@.";
 "kanaal.stopt.ook" = "Elle s'arrête aussi dès que %@ a terminé.";
-"kanaal.bezet" = "Dopamine Code est justement occupé par le blocage de veille. Réessayez dans un instant.";
+"kanaal.bezet" = "Dopamine Code est en train de modifier le blocage de veille. Réessayez dans un instant.";
 "kanaal.liepniets" = "Rien n'était en cours ; le maintien en éveil était déjà désactivé.";
 "kanaal.uit" = "Le maintien en éveil est désactivé ; le Mac peut à nouveau dormir.";
 "kanaal.uitzetten.mislukt" = "La désactivation a échoué.";
-"kanaal.zetzelfterug" = "Rétablissez-le vous-même si nécessaire : sudo pmset -a disablesleep 0";
+"kanaal.zetzelfterug" = "Rétablissez la veille vous-même si nécessaire : sudo pmset -a disablesleep 0";
 "kanaal.status.aan" = "Le Mac est maintenu éveillé";
 "kanaal.status.tot" = " jusqu'à %@";
 "kanaal.status.koppeling" = ", et s'arrête dès que %@ a terminé";
-"kanaal.status.vlagzondersessie" = "Le blocage de veille est actif sans session en cours. Dopamine Code tente de le rétablir.";
+"kanaal.status.vlagzondersessie" = "Le blocage de veille est actif sans session en cours. Dopamine Code tente de le lever.";
 "kanaal.status.onleesbaar" = "Le blocage de veille est illisible.";
 
 /* --- Le garde-fou qui relance l'app après un kill -9 ou un plantage. --- */
@@ -552,14 +552,14 @@
 "vangnet.weggevallen" = "Dopamine Code avait disparu alors que le Mac était maintenu éveillé.";
 "vangnet.staart.opgeruimd" = "Le blocage de veille a été levé ; le Mac peut à nouveau dormir.";
 "vangnet.staart.nogaan" = "Le blocage de veille est toujours actif — le Mac ne peut pas dormir pour l'instant.";
-"vangnet.terug.klok" = "Relancé par le garde-fou à %1$@. %2$@";
+"vangnet.terug.klok" = "Relancé par le filet de sécurité à %1$@. %2$@";
 
 /* --- La cause en proposition, pour « Activé automatiquement parce que … ». --- */
 "omdat.schakelaar" = "vous avez basculé l'interrupteur";
 "omdat.cli" = "la ligne de commande l'a demandé";
 "omdat.klep" = "vous avez demandé l'activation dès la fermeture de l'écran";
 "omdat.app" = "%@ s'est mis à tourner";
-"omdat.schema" = "la fenêtre de planning %@ s'est ouverte";
+"omdat.schema" = "la fenêtre de planification %@ s'est ouverte";
 "omdat.sneltoets" = "vous avez appuyé sur le raccourci";
 "arming.vervallen" = "La mise en attente a expiré : vous n'avez pas rabattu l'écran dans les %d minutes. Le maintien en éveil est désactivé.";
 "trigger.tot" = "jusqu'à %1$@ (%2$@)";
@@ -570,20 +570,20 @@
 /* --- Mise en attente sur l'écran, et le garde-fou devenu silencieux. --- */
 "arming.klepaldicht" = "L'écran est déjà rabattu. Ceci concerne la prochaine fermeture — relevez-le d'abord. Pour activer tout de suite, utilisez l'interrupteur.";
 "arming.staatklaar" = "En attente : le maintien en éveil s'activera dès que vous rabattrez l'écran. Expire de lui-même à %@.";
-"wachter.hoelang.minuten" = "depuis %d minutes";
-"wachter.hoelang.nooit" = "encore jamais";
-"wachter.stil" = "Le garde-fou n'a pas vérifié %@. Tant que cela dure, le Mac reste éveillé si Dopamine Code est tué brutalement. Vérifiez dans Réglages Système → Général → Ouverture et extensions si Dopamine Code peut tourner en arrière-plan, ou utilisez « Restaurer le garde-fou » dans Réglages → Diagnostic.";
+"wachter.hoelang.minuten" = "n'a rien vérifié depuis %d minutes";
+"wachter.hoelang.nooit" = "n'a encore jamais rien vérifié";
+"wachter.stil" = "Le veilleur %@. Tant que cela dure, le Mac reste éveillé si Dopamine Code est tué brutalement. Vérifiez dans Réglages Système → Général → Ouverture et extensions si Dopamine Code peut tourner en arrière-plan, ou utilisez « Réparer le veilleur » dans Réglages → Diagnostic.";
 
 /* --- Quatre autres motifs d'arrêt, aux côtés de reden.tijdom et reden.warm. --- */
 "reden.vlagzondersessie" = "le drapeau était actif sans session en cours";
 "reden.vlagonleesbaar" = " (drapeau illisible)";
 "reden.geannuleerd.aanzetten" = "annulé pendant l'activation";
 "reden.nainstallatie" = "nettoyage après l'installation de la dispense";
-"reden.schemaliepot" = "le planning courait jusqu'à %@";
+"reden.schemaliepot" = "la planification courait jusqu'à %@";
 
 /* --- Notifications, le message thermique, la dispense, l'ouverture à la session et l'alerte à la fermeture. --- */
 "melding.sessieafgelopen.klok" = "À %1$@ : %2$@. Le Mac peut à nouveau dormir.";
-"melding.stoppen.mislukt.klok" = "La tentative %1$d d'arrêt a échoué (%2$@). Rétablissez-le vous-même dans Terminal avec : sudo pmset -a disablesleep 0";
+"melding.stoppen.mislukt.klok" = "La tentative %1$d d'arrêt a échoué (%2$@). Rétablissez la veille vous-même dans Terminal avec : sudo pmset -a disablesleep 0";
 "melding.warm.snelheid" = " et tourne maintenant à %d%% de sa vitesse.";
 "melding.warm.punt" = ".";
 "melding.warm.kritiek" = "Si cela devient critique, Dopamine Code s'arrête de lui-même.";
@@ -593,7 +593,7 @@
 "login.nogaanzetten" = "Activez maintenant Dopamine Code dans Réglages Système → Général → Ouverture et extensions.";
 "login.gelukt" = "Dopamine Code démarrera désormais à l'ouverture de session (via %@).";
 "afsluiten.alert.kop" = "Le Mac ne peut toujours pas se mettre en veille";
-"afsluiten.alert.tekst" = "Dopamine Code n'a pas pu désactiver le maintien en éveil à la fermeture. Rétablissez-le vous-même : ouvrez Terminal et exécutez cette ligne.";
+"afsluiten.alert.tekst" = "Dopamine Code n'a pas pu désactiver le maintien en éveil à la fermeture. Rétablissez la veille vous-même : ouvrez Terminal et exécutez cette ligne.";
 
 /* --- Le canal de commande lui-même : s'il écoute, et sinon pourquoi. --- */
 "kanaal.nogniet" = "pas encore démarré";
@@ -628,7 +628,7 @@
 "grant.prompt.verwijderen" = "Dopamine Code supprime sa règle sudoers.";
 "diag.vlag.aan" = "1 — le Mac ne peut pas dormir";
 "diag.vlag.uit" = "0 — le Mac peut dormir";
-"geschiedenis.vangnetgreepin" = "un garde-fou est intervenu : %@";
+"geschiedenis.vangnetgreepin" = "un filet de sécurité est intervenu : %@";
 "geschiedenis.geenafsluitregel" = "pas de ligne de clôture — l'app a disparu ou a été remplacée, la fin n'est donc pas dans le journal";
 "geschiedenis.logboekweg" = "Le journal ne se trouve pas à %@.";
 "geschiedenis.leesfout" = "%1$@ n'a pas pu être lu : %2$@";
@@ -641,9 +641,9 @@
 "shell.timeout" = "%1$@ n'a pas répondu en %2$ds";
 "vlag.pmsetfout" = "pmset a signalé une erreur";
 "arming.verlopen" = "expiré";
-"arming.nogseconden" = "%d s restantes";
-"arming.nogminuten" = "%d min restantes";
-"login.doorgebruikergeweigerd" = "Vous avez désactivé Dopamine Code dans Réglages Système → Général → Ouverture. Réactivez-le là.";
+"arming.nogseconden" = "encore %d s";
+"arming.nogminuten" = "encore %d min";
+"login.doorgebruikergeweigerd" = "Vous avez désactivé Dopamine Code dans Réglages Système → Général → Ouverture et extensions. Réactivez-le à cet endroit.";
 
 /* --- Le garde-fou : ce qu'un tour a conclu, et s'il est en place. --- */
 "wachter.melding.onafgemaakt" = "tour inachevé";
