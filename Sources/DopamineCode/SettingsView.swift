@@ -793,8 +793,8 @@ struct SettingsView: View {
                 // keep-awake on in the menu bar next to it.
                 LabeledContent("diag.slaapblokkade",
                                value: model.kernelFlag.map {
-                                   $0 ? "1 — de Mac mag niet slapen" : "0 — de Mac mag slapen"
-                               } ?? "onleesbaar")
+                                   $0 ? L10n.t("diag.vlag.aan") : L10n.t("diag.vlag.uit")
+                               } ?? L10n.t("melding.onleesbaar"))
                 LabeledContent("diag.klepslaap", value: diagnostics.clamshellCausesSleep)
                 Text("diag.klepslaap.uitleg")
                     .font(.caption).foregroundStyle(.secondary)
@@ -978,7 +978,7 @@ struct SettingsView: View {
         var delen: [String] = []
         if let trigger = sessie.trigger { delen.append("gestart via \(trigger)") }
         if let vangnet = sessie.vangnet {
-            delen.append("een vangnet greep in: \(vangnet)")
+            delen.append(L10n.t("geschiedenis.vangnetgreepin", vangnet))
         } else if let reden = sessie.reden {
             delen.append("gestopt: \(reden)")
         }
@@ -986,8 +986,7 @@ struct SettingsView: View {
         if sessie.eind == nil && !loopt {
             // Dit is het gat waar het vangnet uit fase 2 voor bestaat, en het hoort met zoveel
             // woorden in beeld te staan in plaats van als een lege regel.
-            delen.append("geen afsluitregel — de app is weggevallen of vervangen, dus het einde "
-                         + "staat niet in het logboek")
+            delen.append(L10n.t("geschiedenis.geenafsluitregel"))
         }
         return delen.isEmpty ? nil : delen.joined(separator: " · ")
     }

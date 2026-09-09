@@ -608,3 +608,28 @@
 "kanaal.fout.bind" = "bind() auf %1$@ schlug fehl: %2$@";
 "kanaal.fout.listen" = "listen() schlug fehl: %@";
 "kanaal.nietbegrepen" = "Dopamine Code hat diese Anfrage nicht verstanden.";
+
+/* --- Meldungstitel, das Tastenkürzel, die Freigabe, das Diagnose-Flag und die Verlaufszeile. --- */
+"melding.titel.sessiegestopt" = "Das Wachhalten hat von selbst aufgehört";
+"melding.titel.kannietslapen" = "Der Mac kann nicht schlafen";
+"melding.titel.tewarm" = "Der Mac ist zu warm geworden";
+"melding.titel.tochgeslapen" = "Der Mac hat trotzdem geschlafen";
+"melding.titel.weggevallen" = "Dopamine Code war verschwunden";
+"melding.titel.triggermislukt" = "Das selbsttätige Einschalten hat nicht funktioniert";
+"sneltoets.modifiernodig" = "Ein Tastenkürzel braucht mindestens ⌘, ⌥ oder ⌃. Ohne so eine Taste würde es diese Taste in jeder App abfangen.";
+"sneltoets.nietaangenomen" = "macOS wollte das Tastenkürzel nicht annehmen (Fehlercode %d).";
+"sneltoets.albezet" = "%@ wird schon von etwas anderem benutzt. Wähle eine andere Kombination.";
+"sneltoets.mislukt" = "%1$@ konnte nicht eingestellt werden (Fehlercode %2$d).";
+"grant.wachtwoordnodig" = "sudo erlaubt 'pmset -a disablesleep %@' schon, aber nicht ohne Passwort — wahrscheinlich über die Standardregel für Administratoren, nicht über die Dopamine-Code-Regel.";
+"grant.sudoweigert" = "sudo lehnt die Regel ab";
+"grant.scriptontbreekt" = "Das Grant-Skript ist nicht in die App eingebaut. Baue neu mit ./build.sh";
+"grant.scriptbeschadigd" = "Das eingebaute Grant-Skript ist beschädigt.";
+"grant.prompt.installeren" = "Dopamine Code installiert eine sudoers-Regel für genau zwei pmset-Befehle.";
+"grant.prompt.verwijderen" = "Dopamine Code entfernt seine sudoers-Regel.";
+"diag.vlag.aan" = "1 — der Mac darf nicht schlafen";
+"diag.vlag.uit" = "0 — der Mac darf schlafen";
+"geschiedenis.vangnetgreepin" = "ein Sicherheitsnetz griff ein: %@";
+"geschiedenis.geenafsluitregel" = "keine Abschlusszeile — die App ist verschwunden oder wurde ersetzt, das Ende steht also nicht im Protokoll";
+"geschiedenis.logboekweg" = "Das Protokoll liegt nicht unter %@.";
+"geschiedenis.leesfout" = "%1$@ konnte nicht gelesen werden: %2$@";
+"reden.appafgesloten" = "die App wurde beendet";

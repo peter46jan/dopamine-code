@@ -43,12 +43,12 @@ enum Notify {
 
         var title: String {
             switch self {
-            case .sessionEnded: return "Het wakker houden is vanzelf gestopt"
-            case .releaseFailed: return "De Mac kan niet gaan slapen"
-            case .thermalCritical: return "De Mac is te warm geworden"
-            case .macSlept: return "De Mac heeft tóch geslapen"
-            case .restartedAfterLoss: return "Dopamine Code was weggevallen"
-            case .triggerRefused: return "Vanzelf aanzetten is niet gelukt"
+            case .sessionEnded: return L10n.t("melding.titel.sessiegestopt")
+            case .releaseFailed: return L10n.t("melding.titel.kannietslapen")
+            case .thermalCritical: return L10n.t("melding.titel.tewarm")
+            case .macSlept: return L10n.t("melding.titel.tochgeslapen")
+            case .restartedAfterLoss: return L10n.t("melding.titel.weggevallen")
+            case .triggerRefused: return L10n.t("melding.titel.triggermislukt")
             }
         }
 

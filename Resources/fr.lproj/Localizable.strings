@@ -608,3 +608,28 @@
 "kanaal.fout.bind" = "bind() sur %1$@ a échoué : %2$@";
 "kanaal.fout.listen" = "listen() a échoué : %@";
 "kanaal.nietbegrepen" = "Dopamine Code n'a pas compris cette requête.";
+
+/* --- Titres de notification, le raccourci, la dispense, le drapeau de diagnostic et la ligne d'historique. --- */
+"melding.titel.sessiegestopt" = "Le maintien en éveil s'est arrêté de lui-même";
+"melding.titel.kannietslapen" = "Le Mac ne peut pas se mettre en veille";
+"melding.titel.tewarm" = "Le Mac est devenu trop chaud";
+"melding.titel.tochgeslapen" = "Le Mac a quand même dormi";
+"melding.titel.weggevallen" = "Dopamine Code avait disparu";
+"melding.titel.triggermislukt" = "L'activation automatique a échoué";
+"sneltoets.modifiernodig" = "Un raccourci a besoin d'au moins ⌘, ⌥ ou ⌃. Sans cela, il capterait cette touche dans toutes les apps.";
+"sneltoets.nietaangenomen" = "macOS a refusé le raccourci (code d'erreur %d).";
+"sneltoets.albezet" = "%@ est déjà utilisé par autre chose. Choisissez une autre combinaison.";
+"sneltoets.mislukt" = "%1$@ n'a pas pu être défini (code d'erreur %2$d).";
+"grant.wachtwoordnodig" = "sudo autorise bien 'pmset -a disablesleep %@', mais pas sans mot de passe — probablement via la règle par défaut des administrateurs, pas via celle de Dopamine Code.";
+"grant.sudoweigert" = "sudo refuse la règle";
+"grant.scriptontbreekt" = "Le script de dispense n'est pas intégré à l'app. Reconstruisez avec ./build.sh";
+"grant.scriptbeschadigd" = "Le script de dispense intégré est endommagé.";
+"grant.prompt.installeren" = "Dopamine Code installe une règle sudoers pour exactement deux commandes pmset.";
+"grant.prompt.verwijderen" = "Dopamine Code supprime sa règle sudoers.";
+"diag.vlag.aan" = "1 — le Mac ne peut pas dormir";
+"diag.vlag.uit" = "0 — le Mac peut dormir";
+"geschiedenis.vangnetgreepin" = "un garde-fou est intervenu : %@";
+"geschiedenis.geenafsluitregel" = "pas de ligne de clôture — l'app a disparu ou a été remplacée, la fin n'est donc pas dans le journal";
+"geschiedenis.logboekweg" = "Le journal ne se trouve pas à %@.";
+"geschiedenis.leesfout" = "%1$@ n'a pas pu être lu : %2$@";
+"reden.appafgesloten" = "l'app a été quittée";

@@ -639,3 +639,29 @@
 "kanaal.fout.bind" = "bind() op %1$@ mislukte: %2$@";
 "kanaal.fout.listen" = "listen() mislukte: %@";
 "kanaal.nietbegrepen" = "Dopamine Code begreep dit verzoek niet.";
+
+/* --- Meldingtitels, de sneltoets, de wachtwoordvrijstelling, de diagnosevlag en de
+   geschiedenisregel. Alle alleen naar het scherm. --- */
+"melding.titel.sessiegestopt" = "Het wakker houden is vanzelf gestopt";
+"melding.titel.kannietslapen" = "De Mac kan niet gaan slapen";
+"melding.titel.tewarm" = "De Mac is te warm geworden";
+"melding.titel.tochgeslapen" = "De Mac heeft tóch geslapen";
+"melding.titel.weggevallen" = "Dopamine Code was weggevallen";
+"melding.titel.triggermislukt" = "Vanzelf aanzetten is niet gelukt";
+"sneltoets.modifiernodig" = "Een sneltoets heeft minstens ⌘, ⌥ of ⌃ nodig. Zonder zo'n toets zou hij die toets in elke app opslokken.";
+"sneltoets.nietaangenomen" = "macOS wilde de sneltoets niet aannemen (foutcode %d).";
+"sneltoets.albezet" = "%@ is al in gebruik door iets anders. Kies een andere combinatie.";
+"sneltoets.mislukt" = "%1$@ kon niet ingesteld worden (foutcode %2$d).";
+"grant.wachtwoordnodig" = "sudo staat 'pmset -a disablesleep %@' wel toe, maar niet zonder wachtwoord — waarschijnlijk via de standaardregel voor beheerders, niet via de Dopamine Code-regel.";
+"grant.sudoweigert" = "sudo weigert de regel";
+"grant.scriptontbreekt" = "Het grant-script is niet in de app ingebouwd. Bouw opnieuw met ./build.sh";
+"grant.scriptbeschadigd" = "Ingebouwd grant-script is beschadigd.";
+"grant.prompt.installeren" = "Dopamine Code installeert een sudoers-regel voor precies twee pmset-commando's.";
+"grant.prompt.verwijderen" = "Dopamine Code verwijdert zijn sudoers-regel.";
+"diag.vlag.aan" = "1 — de Mac mag niet slapen";
+"diag.vlag.uit" = "0 — de Mac mag slapen";
+"geschiedenis.vangnetgreepin" = "een vangnet greep in: %@";
+"geschiedenis.geenafsluitregel" = "geen afsluitregel — de app is weggevallen of vervangen, dus het einde staat niet in het logboek";
+"geschiedenis.logboekweg" = "Het logboek staat niet op %@.";
+"geschiedenis.leesfout" = "%1$@ kon niet gelezen worden: %2$@";
+"reden.appafgesloten" = "de app werd afgesloten";

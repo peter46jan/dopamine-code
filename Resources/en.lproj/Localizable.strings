@@ -607,3 +607,28 @@
 "kanaal.fout.bind" = "bind() on %1$@ failed: %2$@";
 "kanaal.fout.listen" = "listen() failed: %@";
 "kanaal.nietbegrepen" = "Dopamine Code did not understand this request.";
+
+/* --- Notification titles, the shortcut, the grant, the diagnostics flag and the history line. --- */
+"melding.titel.sessiegestopt" = "Keeping awake stopped on its own";
+"melding.titel.kannietslapen" = "The Mac cannot go to sleep";
+"melding.titel.tewarm" = "The Mac got too warm";
+"melding.titel.tochgeslapen" = "The Mac slept after all";
+"melding.titel.weggevallen" = "Dopamine Code had gone away";
+"melding.titel.triggermislukt" = "Switching on by itself did not work";
+"sneltoets.modifiernodig" = "A shortcut needs at least ⌘, ⌥ or ⌃. Without one of those it would swallow that key in every app.";
+"sneltoets.nietaangenomen" = "macOS refused to take the shortcut (error code %d).";
+"sneltoets.albezet" = "%@ is already in use by something else. Pick a different combination.";
+"sneltoets.mislukt" = "%1$@ could not be set (error code %2$d).";
+"grant.wachtwoordnodig" = "sudo does permit 'pmset -a disablesleep %@', but not without a password — probably through the default rule for admins, not through the Dopamine Code rule.";
+"grant.sudoweigert" = "sudo refuses the rule";
+"grant.scriptontbreekt" = "The grant script is not built into the app. Rebuild with ./build.sh";
+"grant.scriptbeschadigd" = "The built-in grant script is damaged.";
+"grant.prompt.installeren" = "Dopamine Code is installing a sudoers rule for exactly two pmset commands.";
+"grant.prompt.verwijderen" = "Dopamine Code is removing its sudoers rule.";
+"diag.vlag.aan" = "1 — the Mac may not sleep";
+"diag.vlag.uit" = "0 — the Mac may sleep";
+"geschiedenis.vangnetgreepin" = "a safety net stepped in: %@";
+"geschiedenis.geenafsluitregel" = "no closing line — the app went away or was replaced, so the end is not in the log";
+"geschiedenis.logboekweg" = "The log is not at %@.";
+"geschiedenis.leesfout" = "%1$@ could not be read: %2$@";
+"reden.appafgesloten" = "the app was quit";

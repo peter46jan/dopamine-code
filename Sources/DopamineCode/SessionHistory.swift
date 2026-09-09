@@ -76,7 +76,7 @@ struct SessionHistory {
             guard FileManager.default.fileExists(atPath: bestand.path) else {
                 // Het archief hoort er meestal niet te zijn; het huidige logboek wel.
                 if bestand == logboek {
-                    resultaat.leesfout = "Het logboek staat niet op \(bestand.path)."
+                    resultaat.leesfout = L10n.t("geschiedenis.logboekweg", bestand.path)
                 }
                 continue
             }
@@ -87,8 +87,9 @@ struct SessionHistory {
             } catch {
                 // Nooit stil: een onleesbaar logboek levert anders een leeg lijstje op dat er
                 // precies zo uitziet als "je hebt de app nog nooit aangezet".
-                resultaat.leesfout = "\(bestand.lastPathComponent) kon niet gelezen worden: "
-                    + error.localizedDescription
+                resultaat.leesfout = L10n.t("geschiedenis.leesfout",
+                                           bestand.lastPathComponent,
+                                           error.localizedDescription)
             }
         }
         resultaat.gelezenRegels = regels.count
@@ -183,7 +184,7 @@ struct SessionHistory {
             // verderop in het logboek staat.
             if tekst.hasPrefix("Dopamine Code afgesloten"), let index = netGesloten,
                sessies[index].reden == nil {
-                sessies[index].reden = "de app werd afgesloten"
+                sessies[index].reden = L10n.t("reden.appafgesloten")
                 continue
             }
 
