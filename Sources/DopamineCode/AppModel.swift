@@ -1883,7 +1883,9 @@ final class AppModel: ObservableObject {
             // room. The clock is in the body because "just now" is meaningless by morning.
             let clock = DateFormatter()
             clock.dateFormat = "HH:mm"
-            Notify.post(.sessionEnded, "Om \(clock.string(from: Date())): \(reason). De Mac mag weer slapen.")
+            Notify.post(.sessionEnded,
+                        L10n.t("melding.sessieafgelopen.klok",
+                               clock.string(from: Date()), reason))
         }
     }
 
@@ -1943,8 +1945,7 @@ final class AppModel: ObservableObject {
                 // Inside the throttle on purpose. Outside it this would post every twenty
                 // seconds all night for one unchanging problem.
                 Notify.post(.releaseFailed,
-                            "Poging \(releaseAttempts) om te stoppen mislukte (\(reason)). Zet het "
-                            + "zelf terug in Terminal met: sudo pmset -a disablesleep 0")
+                            L10n.t("melding.stoppen.mislukt.klok", releaseAttempts, reason))
                 // Re-checking the grant costs two more processes, so only do it alongside
                 // the throttled alarm rather than on every failed attempt.
                 await refreshGrantAsync()
@@ -2712,14 +2713,14 @@ final class AppModel: ObservableObject {
                 // extra subproces bij, urenlang, met de klep dicht.
                 self.cpuSpeedLimit = limit
                 self.lastMessage = L10n.t("melding.warm")
-                    + (limit.map { $0 < 100 ? " en draait nu op \($0)% snelheid." : "." } ?? ".")
-                    + " Wordt het kritiek, dan stopt Dopamine Code vanzelf."
+                    + (limit.map {
+                        $0 < 100 ? L10n.t("melding.warm.snelheid", $0) : L10n.t("melding.warm.punt")
+                    } ?? L10n.t("melding.warm.punt"))
+                    + " " + L10n.t("melding.warm.kritiek")
             }
         case .critical:
             EventLog.shared.error("Thermische druk KRITIEK — slaap onmiddellijk weer toestaan.")
-            Notify.post(.thermalCritical,
-                        "Het wakker houden is gestopt zodat macOS zelf weer kan ingrijpen: die "
-                        + "automatische noodslaap staat uit zolang de Mac wakker gehouden wordt.")
+            Notify.post(.thermalCritical, L10n.t("melding.warm.gestopt"))
             Task { await forceRelease(reason: L10n.t("reden.warm")) }
         }
     }
@@ -2832,8 +2833,8 @@ final class AppModel: ObservableObject {
             case .installed:
                 await refreshGrantAsync()
                 lastMessage = grantStatus == .granted
-                    ? "Wachtwoordvrijstelling geïnstalleerd."
-                    : "De regel is geschreven, maar het systeem bevestigt hem nog niet."
+                    ? L10n.t("grant.geinstalleerd")
+                    : L10n.t("grant.geschreven.nietbevestigd")
                 // A stuck flag can now be cleared, so drop the backoff and try at once.
                 allowImmediateRetry()
                 if SleepFlag.read() == true && !intendedOn {
@@ -3121,9 +3122,8 @@ final class AppModel: ObservableObject {
             switch LaunchAtLogin.enable() {
             case .success(let mechanism):
                 lastMessage = LaunchAtLogin.requiresApproval
-                    ? "Zet Dopamine Code nu nog aan bij Systeeminstellingen → Algemeen → "
-                      + "Inloggen en extensies."
-                    : "Dopamine Code start voortaan mee bij het inloggen (via \(mechanism.rawValue))."
+                    ? L10n.t("login.nogaanzetten")
+                    : L10n.t("login.gelukt", mechanism.rawValue)
             case .failure(let error):
                 Prefs.launchAtLogin = false
                 lastMessage = L10n.t("melding.login.mislukt", error.localizedDescription)
@@ -3202,10 +3202,8 @@ final class AppModel: ObservableObject {
             EventLog.shared.error("Vlag kon bij afsluiten NIET teruggezet worden — de Mac slaapt niet.")
             if !ScreenState.isLocked && !(SleepFlag.clamshellClosed() ?? lidClosed) {
                 let alert = NSAlert()
-                alert.messageText = "De Mac kan nog steeds niet gaan slapen"
-                alert.informativeText =
-                    "Dopamine Code kon het wakker houden bij het afsluiten niet uitzetten. "
-                    + "Zet het zelf terug: open Terminal en voer deze regel uit."
+                alert.messageText = L10n.t("afsluiten.alert.kop")
+                alert.informativeText = L10n.t("afsluiten.alert.tekst")
                     + "\n\nsudo pmset -a disablesleep 0"
                 alert.alertStyle = .critical
                 alert.addButton(withTitle: "OK")

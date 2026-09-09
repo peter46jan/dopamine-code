@@ -607,3 +607,19 @@
 "reden.geannuleerd.aanzetten" = "geannuleerd tijdens aanzetten";
 "reden.nainstallatie" = "opruimen na installatie van de vrijstelling";
 "reden.schemaliepot" = "het schema liep tot %@";
+
+/* --- Meldingen, de warmtemelding, de vrijstelling, start-bij-inloggen en het
+   waarschuwingsvenster bij afsluiten. Alle vier alleen naar het scherm; de logregels
+   ernaast zijn hun eigen Nederlandse zinnen. --- */
+"melding.sessieafgelopen.klok" = "Om %1$@: %2$@. De Mac mag weer slapen.";
+"melding.stoppen.mislukt.klok" = "Poging %1$d om te stoppen mislukte (%2$@). Zet het zelf terug in Terminal met: sudo pmset -a disablesleep 0";
+"melding.warm.snelheid" = " en draait nu op %d%% snelheid.";
+"melding.warm.punt" = ".";
+"melding.warm.kritiek" = "Wordt het kritiek, dan stopt Dopamine Code vanzelf.";
+"melding.warm.gestopt" = "Het wakker houden is gestopt zodat macOS zelf weer kan ingrijpen: die automatische noodslaap staat uit zolang de Mac wakker gehouden wordt.";
+"grant.geinstalleerd" = "Wachtwoordvrijstelling geïnstalleerd.";
+"grant.geschreven.nietbevestigd" = "De regel is geschreven, maar het systeem bevestigt hem nog niet.";
+"login.nogaanzetten" = "Zet Dopamine Code nu nog aan bij Systeeminstellingen → Algemeen → Inloggen en extensies.";
+"login.gelukt" = "Dopamine Code start voortaan mee bij het inloggen (via %@).";
+"afsluiten.alert.kop" = "De Mac kan nog steeds niet gaan slapen";
+"afsluiten.alert.tekst" = "Dopamine Code kon het wakker houden bij het afsluiten niet uitzetten. Zet het zelf terug: open Terminal en voer deze regel uit.";

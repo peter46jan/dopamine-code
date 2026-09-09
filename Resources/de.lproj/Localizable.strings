@@ -580,3 +580,17 @@
 "reden.geannuleerd.aanzetten" = "beim Einschalten abgebrochen";
 "reden.nainstallatie" = "Aufräumen nach der Installation der Freigabe";
 "reden.schemaliepot" = "der Zeitplan lief bis %@";
+
+/* --- Meldungen, die Wärmemeldung, die Freigabe, Start bei der Anmeldung und der Warnhinweis beim Beenden. --- */
+"melding.sessieafgelopen.klok" = "Um %1$@: %2$@. Der Mac darf wieder schlafen.";
+"melding.stoppen.mislukt.klok" = "Versuch %1$d zu beenden schlug fehl (%2$@). Setze es selbst im Terminal zurück mit: sudo pmset -a disablesleep 0";
+"melding.warm.snelheid" = " und läuft jetzt mit %d%% Geschwindigkeit.";
+"melding.warm.punt" = ".";
+"melding.warm.kritiek" = "Wird es kritisch, hört Dopamine Code von selbst auf.";
+"melding.warm.gestopt" = "Das Wachhalten wurde beendet, damit macOS selbst wieder eingreifen kann: dieser automatische Notschlaf ist aus, solange der Mac wach gehalten wird.";
+"grant.geinstalleerd" = "Passwortfreigabe installiert.";
+"grant.geschreven.nietbevestigd" = "Die Regel ist geschrieben, aber das System bestätigt sie noch nicht.";
+"login.nogaanzetten" = "Schalte Dopamine Code jetzt noch unter Systemeinstellungen → Allgemein → Anmeldeobjekte & Erweiterungen ein.";
+"login.gelukt" = "Dopamine Code startet ab jetzt bei der Anmeldung mit (über %@).";
+"afsluiten.alert.kop" = "Der Mac kann noch immer nicht schlafen";
+"afsluiten.alert.tekst" = "Dopamine Code konnte das Wachhalten beim Beenden nicht ausschalten. Setze es selbst zurück: öffne Terminal und führe diese Zeile aus.";

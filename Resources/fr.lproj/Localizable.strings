@@ -580,3 +580,17 @@
 "reden.geannuleerd.aanzetten" = "annulé pendant l'activation";
 "reden.nainstallatie" = "nettoyage après l'installation de la dispense";
 "reden.schemaliepot" = "le planning courait jusqu'à %@";
+
+/* --- Notifications, le message thermique, la dispense, l'ouverture à la session et l'alerte à la fermeture. --- */
+"melding.sessieafgelopen.klok" = "À %1$@ : %2$@. Le Mac peut à nouveau dormir.";
+"melding.stoppen.mislukt.klok" = "La tentative %1$d d'arrêt a échoué (%2$@). Rétablissez-le vous-même dans Terminal avec : sudo pmset -a disablesleep 0";
+"melding.warm.snelheid" = " et tourne maintenant à %d%% de sa vitesse.";
+"melding.warm.punt" = ".";
+"melding.warm.kritiek" = "Si cela devient critique, Dopamine Code s'arrête de lui-même.";
+"melding.warm.gestopt" = "Le maintien en éveil s'est arrêté pour que macOS puisse reprendre la main : cette veille d'urgence automatique est désactivée tant que le Mac est maintenu éveillé.";
+"grant.geinstalleerd" = "Dispense de mot de passe installée.";
+"grant.geschreven.nietbevestigd" = "La règle est écrite, mais le système ne la confirme pas encore.";
+"login.nogaanzetten" = "Activez maintenant Dopamine Code dans Réglages Système → Général → Ouverture et extensions.";
+"login.gelukt" = "Dopamine Code démarrera désormais à l'ouverture de session (via %@).";
+"afsluiten.alert.kop" = "Le Mac ne peut toujours pas se mettre en veille";
+"afsluiten.alert.tekst" = "Dopamine Code n'a pas pu désactiver le maintien en éveil à la fermeture. Rétablissez-le vous-même : ouvrez Terminal et exécutez cette ligne.";

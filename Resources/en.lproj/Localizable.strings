@@ -579,3 +579,17 @@
 "reden.geannuleerd.aanzetten" = "cancelled while switching on";
 "reden.nainstallatie" = "cleaning up after installing the grant";
 "reden.schemaliepot" = "the schedule ran until %@";
+
+/* --- Notifications, the heat message, the grant, launch-at-login and the shutdown alert. --- */
+"melding.sessieafgelopen.klok" = "At %1$@: %2$@. The Mac may sleep again.";
+"melding.stoppen.mislukt.klok" = "Attempt %1$d to stop failed (%2$@). Put it back yourself in Terminal with: sudo pmset -a disablesleep 0";
+"melding.warm.snelheid" = " and is now running at %d%% speed.";
+"melding.warm.punt" = ".";
+"melding.warm.kritiek" = "If it turns critical, Dopamine Code stops on its own.";
+"melding.warm.gestopt" = "Keeping awake has stopped so macOS can step in again itself: that automatic emergency sleep is off for as long as the Mac is kept awake.";
+"grant.geinstalleerd" = "Passwordless grant installed.";
+"grant.geschreven.nietbevestigd" = "The rule has been written, but the system does not confirm it yet.";
+"login.nogaanzetten" = "Now switch Dopamine Code on under System Settings → General → Login Items & Extensions.";
+"login.gelukt" = "Dopamine Code will start at login from now on (via %@).";
+"afsluiten.alert.kop" = "The Mac still cannot go to sleep";
+"afsluiten.alert.tekst" = "Dopamine Code could not switch keeping awake off while shutting down. Put it back yourself: open Terminal and run this line.";
