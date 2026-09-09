@@ -573,3 +573,10 @@
 "wachter.hoelang.minuten" = "schon %d Minuten";
 "wachter.hoelang.nooit" = "noch nie";
 "wachter.stil" = "Der Wächter hat %@ nachgesehen. Solange das so bleibt, bleibt der Mac wach, wenn Dopamine Code hart abgeschossen wird. Sieh unter Systemeinstellungen → Allgemein → Anmeldeobjekte & Erweiterungen nach, ob Dopamine Code im Hintergrund laufen darf, oder nutze 'Wächter wiederherstellen' unter Einstellungen → Diagnose.";
+
+/* --- Vier weitere Stoppgründe, neben reden.tijdom und reden.warm. --- */
+"reden.vlagzondersessie" = "die Sperre war an, ohne dass eine Sitzung lief";
+"reden.vlagonleesbaar" = " (Sperre unlesbar)";
+"reden.geannuleerd.aanzetten" = "beim Einschalten abgebrochen";
+"reden.nainstallatie" = "Aufräumen nach der Installation der Freigabe";
+"reden.schemaliepot" = "der Zeitplan lief bis %@";

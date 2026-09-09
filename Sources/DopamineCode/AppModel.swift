@@ -703,7 +703,7 @@ final class AppModel: ObservableObject {
         if let cap = notLaterThan, cap < byLimit {
             return (cap, capReason ?? L10n.t("reden.liepot", Self.clockText(cap)))
         }
-        return (byLimit, "de ingestelde tijd was om")
+        return (byLimit, L10n.t("reden.tijdom"))
     }
 
     private func applyDeadline(start: Date) {
@@ -1294,7 +1294,7 @@ final class AppModel: ObservableObject {
             // open here would silently disable all three for as long as the read fails.
             status = .error(L10n.t("fout.vlag.onleesbaar"))
             if intendedOn, let reason = releaseReason() {
-                await forceRelease(reason: reason + " (vlag onleesbaar)")
+                await forceRelease(reason: reason + L10n.t("reden.vlagonleesbaar"))
             }
             return
         }
@@ -1345,7 +1345,7 @@ final class AppModel: ObservableObject {
             if !status.isError {
                 status = .error(L10n.t("fout.zondersessie"))
             }
-            await attemptRelease(reason: "vlag stond aan zonder actieve sessie")
+            await attemptRelease(reason: L10n.t("reden.vlagzondersessie"))
             return
         }
 
@@ -1555,7 +1555,7 @@ final class AppModel: ObservableObject {
         let uitkomst = await startTrigger(
             SessionRequest(trigger: .schema(omschrijving: venster.omschrijving),
                            notLaterThan: einde,
-                           notLaterThanReason: "het schema liep tot \(Self.clockText(einde))"),
+                           notLaterThanReason: L10n.t("reden.schemaliepot", Self.clockText(einde))),
         )
         switch uitkomst {
         case .gestart:
@@ -2001,7 +2001,7 @@ final class AppModel: ObservableObject {
         sessionLimitMinutes = nil
         sessionNotLaterThan = nil
         sessionCapReason = nil
-        deadlineReason = "de ingestelde tijd was om"
+        deadlineReason = L10n.t("reden.tijdom")
         sessionTrigger = nil
         clearBinding()
         displayReassertTimer?.invalidate()
@@ -2326,7 +2326,7 @@ final class AppModel: ObservableObject {
             if SleepFlag.read() != false {
                 status = .error(L10n.t("fout.zondersessie"))
                 lastMessage = L10n.t("melding.geannuleerd.mogelijkaan")
-                await attemptRelease(reason: "geannuleerd tijdens aanzetten")
+                await attemptRelease(reason: L10n.t("reden.geannuleerd.aanzetten"))
             } else {
                 status = .off
                 lastMessage = L10n.t("melding.geannuleerd")
@@ -2720,7 +2720,7 @@ final class AppModel: ObservableObject {
             Notify.post(.thermalCritical,
                         "Het wakker houden is gestopt zodat macOS zelf weer kan ingrijpen: die "
                         + "automatische noodslaap staat uit zolang de Mac wakker gehouden wordt.")
-            Task { await forceRelease(reason: "de Mac werd te warm") }
+            Task { await forceRelease(reason: L10n.t("reden.warm")) }
         }
     }
 
@@ -2837,7 +2837,7 @@ final class AppModel: ObservableObject {
                 // A stuck flag can now be cleared, so drop the backoff and try at once.
                 allowImmediateRetry()
                 if SleepFlag.read() == true && !intendedOn {
-                    await attemptRelease(reason: "opruimen na installatie van de vrijstelling")
+                    await attemptRelease(reason: L10n.t("reden.nainstallatie"))
                     // A successful release clears `lastMessage` — it has to, or a stale
                     // failure line survives the repair. Restate the outcome here, or the
                     // one click that fixed everything would report nothing at all.

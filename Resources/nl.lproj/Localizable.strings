@@ -599,3 +599,11 @@
 "wachter.hoelang.minuten" = "al %d minuten";
 "wachter.hoelang.nooit" = "nog nooit";
 "wachter.stil" = "De wachter heeft %@ gekeken. Zolang dat zo blijft, blijft de Mac wakker als Dopamine Code hard afgeschoten wordt. Kijk bij Systeeminstellingen → Algemeen → Inloggen en extensies of Dopamine Code op de achtergrond mag draaien, of gebruik 'Wachter herstellen' bij Instellingen → Diagnose.";
+
+/* --- Nog vier stopredenen, in dezelfde reeks als reden.tijdom en reden.warm.
+   Die twee stonden er al; deze vier stonden nog vast in het Nederlands. --- */
+"reden.vlagzondersessie" = "vlag stond aan zonder actieve sessie";
+"reden.vlagonleesbaar" = " (vlag onleesbaar)";
+"reden.geannuleerd.aanzetten" = "geannuleerd tijdens aanzetten";
+"reden.nainstallatie" = "opruimen na installatie van de vrijstelling";
+"reden.schemaliepot" = "het schema liep tot %@";

@@ -573,3 +573,10 @@
 "wachter.hoelang.minuten" = "depuis %d minutes";
 "wachter.hoelang.nooit" = "encore jamais";
 "wachter.stil" = "Le garde-fou n'a pas vérifié %@. Tant que cela dure, le Mac reste éveillé si Dopamine Code est tué brutalement. Vérifiez dans Réglages Système → Général → Ouverture et extensions si Dopamine Code peut tourner en arrière-plan, ou utilisez « Restaurer le garde-fou » dans Réglages → Diagnostic.";
+
+/* --- Quatre autres motifs d'arrêt, aux côtés de reden.tijdom et reden.warm. --- */
+"reden.vlagzondersessie" = "le drapeau était actif sans session en cours";
+"reden.vlagonleesbaar" = " (drapeau illisible)";
+"reden.geannuleerd.aanzetten" = "annulé pendant l'activation";
+"reden.nainstallatie" = "nettoyage après l'installation de la dispense";
+"reden.schemaliepot" = "le planning courait jusqu'à %@";

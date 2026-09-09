@@ -572,3 +572,10 @@
 "wachter.hoelang.minuten" = "for %d minutes now";
 "wachter.hoelang.nooit" = "never yet";
 "wachter.stil" = "The watchdog has not looked %@. While that lasts, the Mac stays awake if Dopamine Code is killed outright. Check under System Settings → General → Login Items & Extensions whether Dopamine Code may run in the background, or use 'Restore watchdog' under Settings → Diagnostics.";
+
+/* --- Four more release reasons, alongside reden.tijdom and reden.warm. --- */
+"reden.vlagzondersessie" = "the flag was on with no active session";
+"reden.vlagonleesbaar" = " (flag unreadable)";
+"reden.geannuleerd.aanzetten" = "cancelled while switching on";
+"reden.nainstallatie" = "cleaning up after installing the grant";
+"reden.schemaliepot" = "the schedule ran until %@";
