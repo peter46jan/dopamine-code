@@ -492,3 +492,22 @@
 "alg.muispor.zichtbaar.uitleg" = "De cursor maakt een boog van 120 punten heen en weer terug in plaats van één punt. Om te zien dát het werkt. Hij eindigt waar hij begon, en omdat er alleen gepord wordt als het al minuten stil is, kan hij nooit met je hand in de weg zitten.";
 "alg.netwerkaan" = "Netwerk bereikbaar houden tijdens een sessie";
 "alg.netwerkaan.uitleg" = "De kernelvlag houdt het systeem wakker maar zegt niets over de radio: macOS mag de wifi in een spaarstand zetten terwijl de Mac gewoon doorwerkt. Dit houdt hem bereikbaar, ook met de klep dicht. Zichtbaar in pmset -g assertions. Het haalt één oorzaak weg van wegvallende verbindingen; een router die herstart valt hier niet mee te redden.";
+
+/* --- De opdrachtregel. Draaide tot nu toe op vaste Nederlandse zinnen in
+   Sources/dopamine/main.swift; die staan nu hier, zoals de regel in CLAUDE.md het al
+   vroeg. De binary heeft geen eigen bundel, dus Bundle.main is de app-bundel en vindt
+   deze .lproj-mappen ook vanaf de opdrachtregel. --- */
+"cli.hulp" = "dopamine — bedien Dopamine Code vanaf de opdrachtregel\n\n  dopamine on                     zet het wakker houden aan met de ingestelde duur\n  dopamine on --for 2h            ... voor een eigen duur (2h, 90m, 1h30m, 45)\n  dopamine on --until 18:00       ... tot een tijdstip (een tijdstip in het verleden\n                                      telt als morgen)\n  dopamine on --until-exit 4711   ... tot dat proces klaar is; vanuit een script:\n                                      dopamine on --until-exit $$\n  dopamine off                    zet het wakker houden uit\n  dopamine status                 wat er nu aan de hand is\n  dopamine status --json          hetzelfde, voor scripts\n\nBij --json is de uitvoer altijd geldige JSON, ook als er iets misgaat. Het oordeel zit in\nde exitcode:\n\n  0  gelukt\n  1  geweigerd (een vangnet, of het stoppen lukte niet)\n  2  verkeerd gebruik\n  4  Dopamine Code draait niet\n\nDe tijdslimiet, de accugrens en de temperatuurbewaking gelden ook hier. Een duur wordt\ngeklemd op 5 minuten tot 24 uur, en een lopende sessie wordt nooit verlengd — daarvoor moet\nje hem eerst stoppen.";
+"cli.geenopdracht" = "Geef een opdracht: on, off of status.";
+"cli.onbekendeopdracht" = "Onbekende opdracht: %@";
+"cli.onbekendeoptie" = "Onbekende optie: %@";
+"cli.mistwaarde" = "%@ mist een waarde.";
+"cli.geenduur" = "'%@' is geen duur. Gebruik bijvoorbeeld 2h, 90m of 1h30m.";
+"cli.geentijdstip" = "'%@' is geen tijdstip. Gebruik bijvoorbeeld 18:00.";
+"cli.geenprocesnummer" = "'%@' is geen procesnummer.";
+"cli.appdraaitniet" = "Dopamine Code draait niet, dus er is niets om te bedienen. Start de app en probeer het opnieuw.";
+"cli.verbindenmislukt" = "Verbinden met Dopamine Code mislukte: %@";
+"cli.vraagnietverstuurd" = "De vraag kon niet naar Dopamine Code gestuurd worden.";
+"cli.geenantwoord" = "Dopamine Code gaf geen antwoord. Kijk in het logboek: ~/Library/Logs/Dopamine Code/dopamine-code.log";
+"cli.antwoordonleesbaar" = "Het antwoord van Dopamine Code was niet te lezen.";
+"cli.antwoordnietweertegeven" = "Het antwoord kon niet weergegeven worden.";

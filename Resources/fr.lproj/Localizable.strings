@@ -486,3 +486,20 @@
 "alg.muispor.zichtbaar.uitleg" = "Le curseur décrit un arc de 120 points aller-retour au lieu d'un seul. Pour voir que ça marche. Il finit là où il a commencé, et comme il ne bouge qu'après des minutes de silence, il ne peut jamais gêner votre main.";
 "alg.netwerkaan" = "Garder le réseau joignable pendant une session";
 "alg.netwerkaan.uitleg" = "Le drapeau du noyau garde le système éveillé mais ne dit rien de la radio : macOS peut mettre le Wi-Fi en veille pendant que le Mac continue de travailler. Ceci le garde joignable, écran rabattu compris. Visible dans pmset -g assertions. Cela supprime une cause de coupures ; un routeur qui redémarre lui échappe.";
+
+/* --- La ligne de commande. Jusqu'ici elle reposait sur des phrases néerlandaises
+   codées en dur dans Sources/dopamine/main.swift. --- */
+"cli.hulp" = "dopamine — piloter Dopamine Code depuis la ligne de commande\n\n  dopamine on                     garder éveillé, pour la durée configurée\n  dopamine on --for 2h            ... pour une durée choisie (2h, 90m, 1h30m, 45)\n  dopamine on --until 18:00       ... jusqu'à une heure (une heure déjà passée\n                                      compte pour demain)\n  dopamine on --until-exit 4711   ... jusqu'à la fin de ce processus ; depuis un script :\n                                      dopamine on --until-exit $$\n  dopamine off                    arrêter de garder éveillé\n  dopamine status                 ce qui se passe en ce moment\n  dopamine status --json          la même chose, pour les scripts\n\nAvec --json la sortie est toujours du JSON valide, même en cas d'erreur. Le verdict est dans\nle code de sortie :\n\n  0  fait\n  1  refusé (un garde-fou, ou l'arrêt a échoué)\n  2  mauvais usage\n  4  Dopamine Code ne tourne pas\n\nLa limite de temps, le seuil de batterie et la surveillance thermique s'appliquent ici aussi.\nUne durée est bornée entre 5 minutes et 24 heures, et une session en cours n'est jamais\nprolongée — pour cela il faut d'abord l'arrêter.";
+"cli.geenopdracht" = "Indiquez une commande : on, off ou status.";
+"cli.onbekendeopdracht" = "Commande inconnue : %@";
+"cli.onbekendeoptie" = "Option inconnue : %@";
+"cli.mistwaarde" = "Il manque une valeur pour %@.";
+"cli.geenduur" = "'%@' n'est pas une durée. Utilisez par exemple 2h, 90m ou 1h30m.";
+"cli.geentijdstip" = "'%@' n'est pas une heure. Utilisez par exemple 18:00.";
+"cli.geenprocesnummer" = "'%@' n'est pas un numéro de processus.";
+"cli.appdraaitniet" = "Dopamine Code ne tourne pas, il n'y a donc rien à piloter. Lancez l'app et réessayez.";
+"cli.verbindenmislukt" = "La connexion à Dopamine Code a échoué : %@";
+"cli.vraagnietverstuurd" = "La requête n'a pas pu être envoyée à Dopamine Code.";
+"cli.geenantwoord" = "Dopamine Code n'a pas répondu. Consultez le journal : ~/Library/Logs/Dopamine Code/dopamine-code.log";
+"cli.antwoordonleesbaar" = "La réponse de Dopamine Code était illisible.";
+"cli.antwoordnietweertegeven" = "La réponse n'a pas pu être affichée.";

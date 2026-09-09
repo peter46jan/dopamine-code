@@ -485,3 +485,20 @@
 "alg.muispor.zichtbaar.uitleg" = "The cursor arcs 120 points out and back instead of one. So you can see that it works. It ends where it started, and since it only nudges after minutes of silence, it can never get in the way of your hand.";
 "alg.netwerkaan" = "Keep the network reachable during a session";
 "alg.netwerkaan.uitleg" = "The kernel flag keeps the system awake but says nothing about the radio: macOS may put Wi-Fi into a low-power state while the Mac carries on working. This keeps it reachable, lid closed as well. Visible in pmset -g assertions. It removes one cause of dropped connections; a router that reboots is beyond its reach.";
+
+/* --- The command line. Until now it ran on hardcoded Dutch sentences in
+   Sources/dopamine/main.swift. --- */
+"cli.hulp" = "dopamine — drive Dopamine Code from the command line\n\n  dopamine on                     start keeping awake, for the configured duration\n  dopamine on --for 2h            ... for a duration of your own (2h, 90m, 1h30m, 45)\n  dopamine on --until 18:00       ... until a time of day (a time already past\n                                      counts as tomorrow)\n  dopamine on --until-exit 4711   ... until that process is done; from a script:\n                                      dopamine on --until-exit $$\n  dopamine off                    stop keeping awake\n  dopamine status                 what is going on right now\n  dopamine status --json          the same, for scripts\n\nWith --json the output is always valid JSON, even when something goes wrong. The verdict is\nin the exit code:\n\n  0  done\n  1  refused (a safety net, or stopping failed)\n  2  wrong usage\n  4  Dopamine Code is not running\n\nThe time limit, the battery floor and the heat watch apply here too. A duration is clamped\nto between 5 minutes and 24 hours, and a running session is never extended — for that you\nhave to stop it first.";
+"cli.geenopdracht" = "Give a command: on, off or status.";
+"cli.onbekendeopdracht" = "Unknown command: %@";
+"cli.onbekendeoptie" = "Unknown option: %@";
+"cli.mistwaarde" = "%@ is missing a value.";
+"cli.geenduur" = "'%@' is not a duration. Use 2h, 90m or 1h30m, for example.";
+"cli.geentijdstip" = "'%@' is not a time of day. Use 18:00, for example.";
+"cli.geenprocesnummer" = "'%@' is not a process id.";
+"cli.appdraaitniet" = "Dopamine Code is not running, so there is nothing to drive. Start the app and try again.";
+"cli.verbindenmislukt" = "Connecting to Dopamine Code failed: %@";
+"cli.vraagnietverstuurd" = "The request could not be sent to Dopamine Code.";
+"cli.geenantwoord" = "Dopamine Code gave no reply. Check the log: ~/Library/Logs/Dopamine Code/dopamine-code.log";
+"cli.antwoordonleesbaar" = "The reply from Dopamine Code could not be read.";
+"cli.antwoordnietweertegeven" = "The reply could not be rendered.";
