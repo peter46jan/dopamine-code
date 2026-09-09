@@ -541,3 +541,27 @@
 "weiger.vlag.anders" = "Het commando gaf geen fout, maar de slaapblokkade staat op %@ in plaats van op 1.";
 "weiger.nietgelukt" = "Wakker houden is niet gelukt: %@";
 "weiger.albeeindigd" = "De sessie was alweer beëindigd voordat hij goed en wel liep.";
+
+/* --- Het besturingskanaal: wat `dopamine on`, `off` en `status` terugkrijgen.
+   Stond vast in het Nederlands in AppModel.handleControl.
+
+   De statuszin heeft losse sleutels voor de aanhef en elke staart. Zestien combinaties
+   als hele zinnen uitschrijven zou vier bestanden met bijna-gelijke regels opleveren. --- */
+"kanaal.nietgestart" = "niet gestart";
+"kanaal.gestart.tot" = "De Mac blijft wakker tot %1$@ (%2$@).";
+"kanaal.gestart.zondereindtijd" = "De Mac blijft wakker zonder eindtijd (vakantiestand).";
+"kanaal.stopt.eerder" = "Stopt eerder als %@ klaar is.";
+"kanaal.limiet.ervoor" = "Je vroeg tot %1$@, maar de tijdslimiet van %2$@ ligt daarvóór.";
+"kanaal.liepal" = "Er liep al een sessie; er is geen tweede gestart.";
+"kanaal.liepal.tot" = "Die loopt tot %@.";
+"kanaal.stopt.ook" = "Hij stopt ook als %@ klaar is.";
+"kanaal.bezet" = "Dopamine Code is net met de slaapblokkade bezig. Probeer het zo opnieuw.";
+"kanaal.liepniets" = "Er liep niets; het wakker houden stond al uit.";
+"kanaal.uit" = "Het wakker houden staat uit; de Mac mag weer slapen.";
+"kanaal.uitzetten.mislukt" = "Uitzetten lukte niet.";
+"kanaal.zetzelfterug" = "Zet het zo nodig zelf terug: sudo pmset -a disablesleep 0";
+"kanaal.status.aan" = "De Mac wordt wakker gehouden";
+"kanaal.status.tot" = " tot %@";
+"kanaal.status.koppeling" = ", en stopt zodra %@ klaar is";
+"kanaal.status.vlagzondersessie" = "De slaapblokkade staat aan zonder dat er een sessie loopt. Dopamine Code probeert dat terug te zetten.";
+"kanaal.status.onleesbaar" = "De slaapblokkade is niet uit te lezen.";

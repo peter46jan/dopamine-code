@@ -525,3 +525,23 @@
 "weiger.vlag.anders" = "The command reported no error, but the sleep block reads %@ instead of 1.";
 "weiger.nietgelukt" = "Keeping awake did not work: %@";
 "weiger.albeeindigd" = "The session had already ended before it was properly running.";
+
+/* --- The control channel: what `dopamine on`, `off` and `status` hand back. --- */
+"kanaal.nietgestart" = "not started";
+"kanaal.gestart.tot" = "The Mac stays awake until %1$@ (%2$@).";
+"kanaal.gestart.zondereindtijd" = "The Mac stays awake with no end time (holiday mode).";
+"kanaal.stopt.eerder" = "Stops sooner once %@ is done.";
+"kanaal.limiet.ervoor" = "You asked for %1$@, but the time limit of %2$@ falls before that.";
+"kanaal.liepal" = "A session was already running; no second one was started.";
+"kanaal.liepal.tot" = "It runs until %@.";
+"kanaal.stopt.ook" = "It also stops once %@ is done.";
+"kanaal.bezet" = "Dopamine Code is busy with the sleep block right now. Try again shortly.";
+"kanaal.liepniets" = "Nothing was running; keeping awake was already off.";
+"kanaal.uit" = "Keeping awake is off; the Mac may sleep again.";
+"kanaal.uitzetten.mislukt" = "Switching off did not work.";
+"kanaal.zetzelfterug" = "Put it back yourself if you have to: sudo pmset -a disablesleep 0";
+"kanaal.status.aan" = "The Mac is being kept awake";
+"kanaal.status.tot" = " until %@";
+"kanaal.status.koppeling" = ", and stops once %@ is done";
+"kanaal.status.vlagzondersessie" = "The sleep block is on without a session running. Dopamine Code is trying to clear it.";
+"kanaal.status.onleesbaar" = "The sleep block cannot be read.";

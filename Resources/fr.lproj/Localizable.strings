@@ -526,3 +526,23 @@
 "weiger.vlag.anders" = "La commande n'a signalé aucune erreur, mais le blocage de veille vaut %@ au lieu de 1.";
 "weiger.nietgelukt" = "Le maintien en éveil a échoué : %@";
 "weiger.albeeindigd" = "La session était déjà terminée avant d'avoir vraiment commencé.";
+
+/* --- Le canal de commande : ce que renvoient `dopamine on`, `off` et `status`. --- */
+"kanaal.nietgestart" = "non démarré";
+"kanaal.gestart.tot" = "Le Mac reste éveillé jusqu'à %1$@ (%2$@).";
+"kanaal.gestart.zondereindtijd" = "Le Mac reste éveillé sans heure de fin (mode vacances).";
+"kanaal.stopt.eerder" = "S'arrête plus tôt dès que %@ a terminé.";
+"kanaal.limiet.ervoor" = "Vous avez demandé %1$@, mais la limite de temps de %2$@ tombe avant.";
+"kanaal.liepal" = "Une session était déjà en cours ; aucune seconde n'a été lancée.";
+"kanaal.liepal.tot" = "Elle court jusqu'à %@.";
+"kanaal.stopt.ook" = "Elle s'arrête aussi dès que %@ a terminé.";
+"kanaal.bezet" = "Dopamine Code est justement occupé par le blocage de veille. Réessayez dans un instant.";
+"kanaal.liepniets" = "Rien n'était en cours ; le maintien en éveil était déjà désactivé.";
+"kanaal.uit" = "Le maintien en éveil est désactivé ; le Mac peut à nouveau dormir.";
+"kanaal.uitzetten.mislukt" = "La désactivation a échoué.";
+"kanaal.zetzelfterug" = "Rétablissez-le vous-même si nécessaire : sudo pmset -a disablesleep 0";
+"kanaal.status.aan" = "Le Mac est maintenu éveillé";
+"kanaal.status.tot" = " jusqu'à %@";
+"kanaal.status.koppeling" = ", et s'arrête dès que %@ a terminé";
+"kanaal.status.vlagzondersessie" = "Le blocage de veille est actif sans session en cours. Dopamine Code tente de le rétablir.";
+"kanaal.status.onleesbaar" = "Le blocage de veille est illisible.";

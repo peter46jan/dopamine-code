@@ -2888,7 +2888,7 @@ final class AppModel: ObservableObject {
 
     /// Wat Instellingen → Diagnose over het besturingskanaal laat zien.
     var controlChannelText: String {
-        controlServer?.toestandsTekst ?? "niet gestart"
+        controlServer?.toestandsTekst ?? L10n.t("kanaal.nietgestart")
     }
 
     /// De kopieerbare regel om `dopamine` op je PATH te zetten. Nooit automatisch: een app
@@ -2926,32 +2926,28 @@ final class AppModel: ObservableObject {
                 // Een script hoort te kunnen zien dát er geen klok loopt, in plaats van een
                 // tijdstip te krijgen dat er niet is.
                 var zin = eind.map {
-                    "De Mac blijft wakker tot \(Self.momentText($0)) (\(Self.durationText(minuten)))."
-                } ?? "De Mac blijft wakker zonder eindtijd (vakantiestand)."
-                if let binding { zin += " Stopt eerder als \(binding.identity.label) klaar is." }
+                    L10n.t("kanaal.gestart.tot", Self.momentText($0), Self.durationText(minuten))
+                } ?? L10n.t("kanaal.gestart.zondereindtijd")
+                if let binding { zin += " " + L10n.t("kanaal.stopt.eerder", binding.identity.label) }
                 if let eind, let cap = verzoek.nietLaterDan, cap > eind {
                     // Eerlijk zeggen dat de tijdslimiet vóór het gevraagde tijdstip ligt,
                     // in plaats van een eindtijd te beloven die niet gehaald wordt.
-                    zin += " Je vroeg tot \(Self.clockText(cap)), maar de tijdslimiet van "
-                        + "\(Self.durationText(minuten)) ligt daarvóór."
+                    zin += " " + L10n.t("kanaal.limiet.ervoor",
+                                        Self.clockText(cap), Self.durationText(minuten))
                 }
                 return controlResponse(gelukt: true, zin: zin, code: 0)
 
             case .liepAl(let eind):
-                var zin = "Er liep al een sessie; er is geen tweede gestart."
-                if let eind { zin += " Die loopt tot \(Self.momentText(eind))." }
-                if let binding { zin += " Hij stopt ook als \(binding.identity.label) klaar is." }
+                var zin = L10n.t("kanaal.liepal")
+                if let eind { zin += " " + L10n.t("kanaal.liepal.tot", Self.momentText(eind)) }
+                if let binding { zin += " " + L10n.t("kanaal.stopt.ook", binding.identity.label) }
                 return controlResponse(gelukt: true, zin: zin, code: 0)
 
             case .geweigerd(let reden):
                 return controlResponse(gelukt: false, zin: reden, code: 1)
 
             case .bezet:
-                return controlResponse(
-                    gelukt: false,
-                    zin: "Dopamine Code is net met de slaapblokkade bezig. Probeer het zo opnieuw.",
-                    code: 1
-                )
+                return controlResponse(gelukt: false, zin: L10n.t("kanaal.bezet"), code: 1)
             }
 
         case .uit:
@@ -2959,17 +2955,20 @@ final class AppModel: ObservableObject {
             // Ook zonder sessie doorgaan als de vlag aan staat: dan is er juist iets op te
             // ruimen. Alleen als er aantoonbaar niets aan staat is dit een lege handeling.
             if !intendedOn && SleepFlag.read() == false {
-                return controlResponse(gelukt: true, zin: "Er liep niets; het wakker houden stond al uit.", code: 0)
+                return controlResponse(gelukt: true, zin: L10n.t("kanaal.liepniets"), code: 0)
             }
             // Zonder wachtwoordvenster: een buildscript kan er geen invullen.
+            //
+            // De reden blijft Nederlands: `stopSession` zet hem in het logboek en niet in
+            // `lastMessage` — dat pad heeft zijn eigen sleutels.
             let gelukt = await stopSession(reason: "via de opdrachtregel", allowPrompt: false)
             if gelukt {
-                return controlResponse(gelukt: true, zin: "Het wakker houden staat uit; de Mac mag weer slapen.", code: 0)
+                return controlResponse(gelukt: true, zin: L10n.t("kanaal.uit"), code: 0)
             }
             return controlResponse(
                 gelukt: false,
-                zin: (lastMessage ?? "Uitzetten lukte niet.")
-                    + " Zet het zo nodig zelf terug: sudo pmset -a disablesleep 0",
+                zin: (lastMessage ?? L10n.t("kanaal.uitzetten.mislukt"))
+                    + " " + L10n.t("kanaal.zetzelfterug"),
                 code: 1
             )
         }
@@ -2977,21 +2976,24 @@ final class AppModel: ObservableObject {
 
     private func controlStatusSentence() -> String {
         if intendedOn {
-            var zin = "De Mac wordt wakker gehouden"
-            if let deadline { zin += " tot \(Self.momentText(deadline))" }
+            // Per stuk een sleutel, want de staarten zijn optioneel: er zijn zestien
+            // combinaties en die als hele zinnen uitschrijven zou vier bestanden met
+            // zestien bijna-gelijke regels opleveren die bij elke wijziging uit de pas
+            // gaan lopen. De aanhef en elke staart zijn afzonderlijk te vertalen.
+            var zin = L10n.t("kanaal.status.aan")
+            if let deadline { zin += L10n.t("kanaal.status.tot", Self.momentText(deadline)) }
             if let remainingText { zin += " (\(remainingText))" }
-            if let binding { zin += ", en stopt zodra \(binding.identity.label) klaar is" }
+            if let binding { zin += L10n.t("kanaal.status.koppeling", binding.identity.label) }
             if let sessionTrigger { zin += " — \(sessionTrigger.zin)" }
             return zin + "."
         }
         switch SleepFlag.read() {
         case true:
-            return "De slaapblokkade staat aan zonder dat er een sessie loopt. "
-                + "Dopamine Code probeert dat terug te zetten."
+            return L10n.t("kanaal.status.vlagzondersessie")
         case false:
-            return "Er loopt niets; het wakker houden staat uit."
+            return L10n.t("kanaal.liepniets")
         default:
-            return "De slaapblokkade is niet uit te lezen."
+            return L10n.t("kanaal.status.onleesbaar")
         }
     }
 

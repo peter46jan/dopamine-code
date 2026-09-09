@@ -526,3 +526,23 @@
 "weiger.vlag.anders" = "Der Befehl meldete keinen Fehler, aber die Schlafsperre steht auf %@ statt auf 1.";
 "weiger.nietgelukt" = "Das Wachhalten hat nicht funktioniert: %@";
 "weiger.albeeindigd" = "Die Sitzung war schon beendet, bevor sie richtig lief.";
+
+/* --- Der Steuerkanal: was `dopamine on`, `off` und `status` zurückgeben. --- */
+"kanaal.nietgestart" = "nicht gestartet";
+"kanaal.gestart.tot" = "Der Mac bleibt bis %1$@ wach (%2$@).";
+"kanaal.gestart.zondereindtijd" = "Der Mac bleibt ohne Endzeit wach (Urlaubsmodus).";
+"kanaal.stopt.eerder" = "Endet früher, sobald %@ fertig ist.";
+"kanaal.limiet.ervoor" = "Du hast bis %1$@ verlangt, aber das Zeitlimit von %2$@ liegt davor.";
+"kanaal.liepal" = "Es lief schon eine Sitzung; eine zweite wurde nicht gestartet.";
+"kanaal.liepal.tot" = "Sie läuft bis %@.";
+"kanaal.stopt.ook" = "Sie endet auch, sobald %@ fertig ist.";
+"kanaal.bezet" = "Dopamine Code ist gerade mit der Schlafsperre beschäftigt. Versuche es gleich erneut.";
+"kanaal.liepniets" = "Es lief nichts; das Wachhalten war schon aus.";
+"kanaal.uit" = "Das Wachhalten ist aus; der Mac darf wieder schlafen.";
+"kanaal.uitzetten.mislukt" = "Das Ausschalten hat nicht funktioniert.";
+"kanaal.zetzelfterug" = "Setze es notfalls selbst zurück: sudo pmset -a disablesleep 0";
+"kanaal.status.aan" = "Der Mac wird wach gehalten";
+"kanaal.status.tot" = " bis %@";
+"kanaal.status.koppeling" = ", und endet, sobald %@ fertig ist";
+"kanaal.status.vlagzondersessie" = "Die Schlafsperre ist an, ohne dass eine Sitzung läuft. Dopamine Code versucht, das zurückzusetzen.";
+"kanaal.status.onleesbaar" = "Die Schlafsperre lässt sich nicht auslesen.";
