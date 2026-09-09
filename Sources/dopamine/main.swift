@@ -10,31 +10,12 @@ import Foundation
 // Draait de app niet, dan is dat een gewone `connect()`-fout en zegt hij dat gewoon —
 // exitcode 4, geen gok, en zeker geen poging om de app zelf te starten.
 
-let uitgebreideHulp = """
-dopamine — bedien Dopamine Code vanaf de opdrachtregel
-
-  dopamine on                     zet het wakker houden aan met de ingestelde duur
-  dopamine on --for 2h            ... voor een eigen duur (2h, 90m, 1h30m, 45)
-  dopamine on --until 18:00       ... tot een tijdstip (een tijdstip in het verleden
-                                      telt als morgen)
-  dopamine on --until-exit 4711   ... tot dat proces klaar is; vanuit een script:
-                                      dopamine on --until-exit $$
-  dopamine off                    zet het wakker houden uit
-  dopamine status                 wat er nu aan de hand is
-  dopamine status --json          hetzelfde, voor scripts
-
-Bij --json is de uitvoer altijd geldige JSON, ook als er iets misgaat. Het oordeel zit in
-de exitcode:
-
-  0  gelukt
-  1  geweigerd (een vangnet, of het stoppen lukte niet)
-  2  verkeerd gebruik
-  4  Dopamine Code draait niet
-
-De tijdslimiet, de accugrens en de temperatuurbewaking gelden ook hier. Een duur wordt
-geklemd op 5 minuten tot 24 uur, en een lopende sessie wordt nooit verlengd — daarvoor moet
-je hem eerst stoppen.
-"""
+/// De hulptekst staat in de vier `.strings`-bestanden en niet hier.
+///
+/// Deze binary heeft geen eigen bundel: hij staat in `Contents/MacOS` van de app, dus
+/// `Bundle.main` is dezelfde bundel met dezelfde `.lproj`-mappen. `NSLocalizedString` vindt
+/// ze daarmee ook vanuit de opdrachtregel, zonder dat er iets meegekopieerd hoeft te worden.
+let uitgebreideHulp = L10n.t("cli.hulp")
 
 /// Één plek die afdrukt en stopt, zodat `--json` ook op elk foutpad geldige JSON oplevert.
 func klaar(_ antwoord: ControlChannel.Response, json: Bool) -> Never {
@@ -45,7 +26,24 @@ func klaar(_ antwoord: ControlChannel.Response, json: Bool) -> Never {
             print(tekst)
         } else {
             // Nooit stil falen, en nooit halve JSON: dit blijft leesbaar voor `jq`.
-            print("{\"gelukt\":false,\"code\":2,\"zin\":\"Het antwoord kon niet weergegeven worden.\"}")
+            //
+            // De zin komt sinds de omzetting naar `.strings` uit een vertaling, en die mag een
+            // aanhalingsteken of backslash bevatten — in het Frans is een apostrof gewoon. Met
+            // de zin in een handgeschreven JSON-string zou dat precies hier ongeldige JSON
+            // opleveren, op het ene pad dat bestaat om dat te voorkomen. Dus laat
+            // `JSONSerialization` het escapen doen.
+            let noodgeval: [String: Any] = [
+                "gelukt": false,
+                "code": 2,
+                "zin": L10n.t("cli.antwoordnietweertegeven"),
+            ]
+            if let data = try? JSONSerialization.data(withJSONObject: noodgeval, options: [.sortedKeys]),
+               let tekst = String(data: data, encoding: .utf8) {
+                print(tekst)
+            } else {
+                // Het laatste vangnet kan zelf niet van een vertaling afhangen.
+                print("{\"code\":2,\"gelukt\":false,\"zin\":\"The reply could not be rendered.\"}")
+            }
             exit(2)
         }
     } else {
@@ -119,7 +117,7 @@ func verkeerdGebruik(_ zin: String) -> Never {
 /// horen, niet stilzwijgend een sessie met de standaardduur te krijgen.
 func leesVerzoek(_ woorden: [String]) -> ControlChannel.Request {
     guard let commando = woorden.first else {
-        verkeerdGebruik("Geef een opdracht: on, off of status.")
+        verkeerdGebruik(L10n.t("cli.geenopdracht"))
     }
     let rest = Array(woorden.dropFirst())
 
@@ -129,11 +127,11 @@ func leesVerzoek(_ woorden: [String]) -> ControlChannel.Request {
         exit(0)
 
     case "off", "uit":
-        guard rest.isEmpty else { verkeerdGebruik("Onbekende optie: \(rest[0])") }
+        guard rest.isEmpty else { verkeerdGebruik(L10n.t("cli.onbekendeoptie", rest[0])) }
         return ControlChannel.Request(soort: .uit)
 
     case "status":
-        guard rest.isEmpty else { verkeerdGebruik("Onbekende optie: \(rest[0])") }
+        guard rest.isEmpty else { verkeerdGebruik(L10n.t("cli.onbekendeoptie", rest[0])) }
         return ControlChannel.Request(soort: .status)
 
     case "on", "aan":
@@ -141,33 +139,33 @@ func leesVerzoek(_ woorden: [String]) -> ControlChannel.Request {
         var index = 0
         while index < rest.count {
             let vlag = rest[index]
-            guard index + 1 < rest.count else { verkeerdGebruik("\(vlag) mist een waarde.") }
+            guard index + 1 < rest.count else { verkeerdGebruik(L10n.t("cli.mistwaarde", vlag)) }
             let tekst = rest[index + 1]
             switch vlag {
             case "--for", "--voor":
                 guard let minuten = minutenUit(tekst) else {
-                    verkeerdGebruik("'\(tekst)' is geen duur. Gebruik bijvoorbeeld 2h, 90m of 1h30m.")
+                    verkeerdGebruik(L10n.t("cli.geenduur", tekst))
                 }
                 verzoek.minuten = minuten
             case "--until", "--tot":
                 guard let tijdstip = tijdstipUit(tekst) else {
-                    verkeerdGebruik("'\(tekst)' is geen tijdstip. Gebruik bijvoorbeeld 18:00.")
+                    verkeerdGebruik(L10n.t("cli.geentijdstip", tekst))
                 }
                 verzoek.nietLaterDan = tijdstip
             case "--until-exit", "--tot-einde":
                 guard let pid = Int32(tekst), pid > 0 else {
-                    verkeerdGebruik("'\(tekst)' is geen procesnummer.")
+                    verkeerdGebruik(L10n.t("cli.geenprocesnummer", tekst))
                 }
                 verzoek.pid = pid
             default:
-                verkeerdGebruik("Onbekende optie: \(vlag)")
+                verkeerdGebruik(L10n.t("cli.onbekendeoptie", vlag))
             }
             index += 2
         }
         return verzoek
 
     default:
-        verkeerdGebruik("Onbekende opdracht: \(commando)")
+        verkeerdGebruik(L10n.t("cli.onbekendeopdracht", commando))
     }
 }
 
@@ -181,32 +179,24 @@ switch verbinding {
 case .verbonden(let socket):
     fd = socket
 case .appDraaitNiet:
-    klaar(.lokaal(
-        zin: "Dopamine Code draait niet, dus er is niets om te bedienen. Start de app en "
-            + "probeer het opnieuw.",
-        code: 4
-    ), json: jsonGevraagd)
+    klaar(.lokaal(zin: L10n.t("cli.appdraaitniet"), code: 4), json: jsonGevraagd)
 case .fout(let melding):
-    klaar(.lokaal(zin: "Verbinden met Dopamine Code mislukte: \(melding)", code: 4), json: jsonGevraagd)
+    klaar(.lokaal(zin: L10n.t("cli.verbindenmislukt", melding), code: 4), json: jsonGevraagd)
 }
 
 guard let regel = try? ControlChannel.line(verzoek), ControlChannel.write(regel, to: fd) else {
     close(fd)
-    klaar(.lokaal(zin: "De vraag kon niet naar Dopamine Code gestuurd worden.", code: 4), json: jsonGevraagd)
+    klaar(.lokaal(zin: L10n.t("cli.vraagnietverstuurd"), code: 4), json: jsonGevraagd)
 }
 
 guard let antwoordData = ControlChannel.readLine(from: fd) else {
     close(fd)
-    klaar(.lokaal(
-        zin: "Dopamine Code gaf geen antwoord. Kijk in het logboek: "
-            + "~/Library/Logs/Dopamine Code/dopamine-code.log",
-        code: 4
-    ), json: jsonGevraagd)
+    klaar(.lokaal(zin: L10n.t("cli.geenantwoord"), code: 4), json: jsonGevraagd)
 }
 close(fd)
 
 guard let antwoord = try? ControlChannel.decoder().decode(ControlChannel.Response.self, from: antwoordData) else {
-    klaar(.lokaal(zin: "Het antwoord van Dopamine Code was niet te lezen.", code: 4), json: jsonGevraagd)
+    klaar(.lokaal(zin: L10n.t("cli.antwoordonleesbaar"), code: 4), json: jsonGevraagd)
 }
 
 klaar(antwoord, json: jsonGevraagd)

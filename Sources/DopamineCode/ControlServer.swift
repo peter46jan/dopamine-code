@@ -28,7 +28,7 @@ final class ControlServer: @unchecked Sendable {
 
     private var listener: Int32 = -1
     private var acceptSource: DispatchSourceRead?
-    private var toestand = "nog niet gestart"
+    private var toestand = L10n.t("kanaal.nogniet")
 
     init(handler: @escaping Handler) {
         self.handler = handler
@@ -49,7 +49,8 @@ final class ControlServer: @unchecked Sendable {
         let path = ControlChannel.socketPath
 
         guard path.utf8.count <= ControlChannel.maxPathLength else {
-            fail("het pad is \(path.utf8.count) tekens en er passen er maar \(ControlChannel.maxPathLength): \(path)")
+            fail(L10n.t("kanaal.fout.padtelang", path.utf8.count, ControlChannel.maxPathLength, path),
+                 L10n.nl("kanaal.fout.padtelang", path.utf8.count, ControlChannel.maxPathLength, path))
             return
         }
 
@@ -60,7 +61,8 @@ final class ControlServer: @unchecked Sendable {
                 attributes: [.posixPermissions: 0o700]
             )
         } catch {
-            fail("de map kon niet aangemaakt worden: \(error.localizedDescription)")
+            fail(L10n.t("kanaal.fout.mapniet", error.localizedDescription),
+                 L10n.nl("kanaal.fout.mapniet", error.localizedDescription))
             return
         }
 
@@ -69,7 +71,8 @@ final class ControlServer: @unchecked Sendable {
         // en dat is dezelfde soort ruzie als twee schrijvers op de kernelvlag.
         if case .verbonden(let probe) = ControlChannel.connect(timeoutSeconds: 2) {
             close(probe)
-            fail("er luistert al iets op \(path); deze instantie neemt het besturingskanaal niet over")
+            fail(L10n.t("kanaal.fout.aleeniets", path),
+                 L10n.nl("kanaal.fout.aleeniets", path))
             return
         }
 
@@ -77,14 +80,16 @@ final class ControlServer: @unchecked Sendable {
 
         let fd = socket(AF_UNIX, SOCK_STREAM, 0)
         guard fd >= 0 else {
-            fail("socket() mislukte: \(ControlChannel.errnoText())")
+            fail(L10n.t("kanaal.fout.socket", ControlChannel.errnoText()),
+                 L10n.nl("kanaal.fout.socket", ControlChannel.errnoText()))
             return
         }
         ControlChannel.suppressSigPipe(fd)
 
         guard var addr = ControlChannel.address(for: path) else {
             close(fd)
-            fail("het pad past niet in een socketadres: \(path)")
+            fail(L10n.t("kanaal.fout.padpastniet", path),
+                 L10n.nl("kanaal.fout.padpastniet", path))
             return
         }
         let bound = withUnsafePointer(to: &addr) { ptr in
@@ -95,7 +100,8 @@ final class ControlServer: @unchecked Sendable {
         guard bound == 0 else {
             let text = ControlChannel.errnoText()
             close(fd)
-            fail("bind() op \(path) mislukte: \(text)")
+            fail(L10n.t("kanaal.fout.bind", path, text),
+                 L10n.nl("kanaal.fout.bind", path, text))
             return
         }
 
@@ -107,7 +113,8 @@ final class ControlServer: @unchecked Sendable {
             let text = ControlChannel.errnoText()
             close(fd)
             unlink(path)
-            fail("listen() mislukte: \(text)")
+            fail(L10n.t("kanaal.fout.listen", text),
+                 L10n.nl("kanaal.fout.listen", text))
             return
         }
 
@@ -123,15 +130,17 @@ final class ControlServer: @unchecked Sendable {
         acceptSource = source
         source.resume()
 
-        toestand = "luistert op \(path)"
+        toestand = L10n.t("kanaal.luistert", path)
         EventLog.shared.info("Besturingskanaal luistert op \(path).")
     }
 
-    private func fail(_ reden: String) {
-        toestand = "werkt niet — \(reden)"
+    /// De reden komt er twee keer in: vertaald voor `toestand`, dat in Instellingen →
+    /// Diagnose staat, en Nederlands voor het logboek. Zie `L10n.nl`. Eén `String` volstond
+    /// niet zodra deze zinnen sleutels werden, want ze gaan naar beide.
+    private func fail(_ reden: String, _ redenNL: String) {
+        toestand = L10n.t("kanaal.werktniet", reden)
         // Nooit stil: zonder deze regel doet `dopamine` het gewoon niet en zegt de app niets.
-        EventLog.shared.error("Besturingskanaal kon niet gestart worden: \(reden). "
-                             + "De opdrachtregel werkt nu niet; de menubalk wel.")
+        EventLog.shared.error(L10n.nl("kanaal.werktniet.log", redenNL))
     }
 
     // MARK: - Verbindingen
@@ -174,7 +183,7 @@ final class ControlServer: @unchecked Sendable {
         }
         guard let verzoek = try? ControlChannel.decoder().decode(ControlChannel.Request.self, from: line) else {
             EventLog.shared.warn("Besturingskanaal: onbegrijpelijk verzoek ontvangen.")
-            reply(.lokaal(zin: "Dopamine Code begreep dit verzoek niet.", code: 2), to: fd)
+            reply(.lokaal(zin: L10n.t("kanaal.nietbegrepen"), code: 2), to: fd)
             return
         }
 

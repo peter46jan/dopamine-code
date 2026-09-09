@@ -123,7 +123,7 @@ enum SleepFlag {
         }
         guard admin.ok, !pmsetReportedFailure(admin) else {
             EventLog.shared.error("Beheerdersprompt mislukt: \(admin.combined)")
-            return .failed(admin.combined.isEmpty ? "pmset meldde een fout" : admin.combined)
+            return .failed(admin.combined.isEmpty ? L10n.t("vlag.pmsetfout") : admin.combined)
         }
         return verify(expecting: on, after: "osascript admin pmset -a disablesleep \(value)")
     }

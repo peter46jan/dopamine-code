@@ -102,6 +102,16 @@ omgekeerd geverifieerd door hem expres te laten falen. Doe dat ook bij nieuwe.
 - **`.strings`: dezelfde invulwaarden in elke taal.** `String(format:)` leest ze uit de
   vertáálde zin. Eén `%d` te weinig laat een waarde verdwijnen, één te veel is een crash bij
   iemand die jouw taal niet spreekt. `verify.sh --talen` vergelijkt ze.
+- **Een fragment dat op zichzelf klopt, kan in de gastzin onzin worden.** `--talen` vergelijkt
+  sleutels en invulwaarden en staat groen zolang die kloppen; het leest nooit de zin die er
+  uiteindelijk staat. "De wachter heeft %@ gekeken" was met "nog nooit" goed en met "al 12
+  minuten" precies het omgekeerde van de waarschuwing — en omdat het Engels en het Frans de
+  ontkenning naar de gastzin hadden verplaatst, stond daar "has not looked never yet". Vier
+  talen fout, controle groen. Wie fragmenten samenstelt, leest ze uitgerekend terug met
+  `swiftc -O tools/zinnen.swift -o /tmp/zinnen && /tmp/zinnen .`; zet er een nieuwe
+  samenstelling bij zodra je er een maakt. En let op fragmenten die in twee verschillende
+  zinsbouwen belanden: `omdat.*` gaat zowel achter "omdat" als los tussen haakjes, wat in het
+  Duits niet allebei kan.
 - **Guards testen is niet het pad testen.** De eerste echte run van `release.sh` strandde op
   een regel die nooit was uitgevoerd, omdat de wachtposten altijd eerder afsloegen.
 - **"macOS geeft geen graden" was te kort door de bocht.** `ProcessInfo.thermalState` geeft ze

@@ -51,7 +51,7 @@
 /* --- Menu: toetsenbordverlichting --- */
 "menu.verlichting.titel" = "Toetsenbordverlichting";
 "menu.verlichting.schermuit" = "Het toetsenbord blijft nu donker omdat het scherm uit staat. Wat je hier instelt zie je pas als het scherm weer aan gaat.";
-"menu.verlichting.geendirect" = "Deze Mac laat de verlichting niet rechtstreeks instellen. Dopamine Code kan hem alleen schakelen door de helderheidstoetsen na te bootsen, en daarvoor is toestemming nodig bij Privacy → Toegankelijkheid.";
+"menu.verlichting.geendirect" = "Deze Mac laat de verlichting niet rechtstreeks instellen. Dopamine Code kan hem alleen schakelen door de helderheidstoetsen na te bootsen, en daarvoor is toestemming nodig bij Privacy en beveiliging → Toegankelijkheid.";
 "menu.verlichting.instellingen" = "Systeeminstellingen openen";
 
 /* --- Menu: bijwerken --- */
@@ -236,7 +236,7 @@
 
 /* --- Instellingen · Zelf aanzetten: klep en vangnetten --- */
 "aan.klep.titel" = "Zodra je de klep dichtdoet";
-"aan.klep.uitleg" = "Dit staat in het menubalk-paneel en niet hier, want het geldt één keer: je klikt \"Aanzetten zodra ik de klep dichtdoe\", je klapt dicht, en het wakker houden gaat aan. Doe je het niet, dan vervalt het na vijf minuten vanzelf en zegt de app dat ook. Het overleeft met opzet geen herstart: iets dat klaarstaat en pas uren later afgaat verwacht niemand nog.";
+"aan.klep.uitleg" = "Dit staat in het menubalk-paneel en niet hier, want het geldt één keer: je klikt \"Wakker houden zodra ik de klep sluit\", je klapt dicht, en het wakker houden gaat aan. Doe je het niet, dan vervalt het na vijf minuten vanzelf en zegt de app dat ook. Het overleeft met opzet geen herstart: iets dat klaarstaat en pas uren later afgaat verwacht niemand nog.";
 "aan.omheen.titel" = "Wat er hoe dan ook omheen blijft zitten";
 "aan.omheen.uitleg" = "Alles wat hier vanzelf aangaat loopt langs precies dezelfde weg als de schakelaar: dezelfde tijdslimiet, dezelfde accugrens en dezelfde temperatuurbewaking. Kan er op dat moment niet veilig aangezet worden — de accu is te leeg, de Mac is te warm, of de wachtwoordvrijstelling is weg — dan gebeurt er niets, en krijg je daar een melding van. Een schema loopt nooit langer dan de tijdslimiet: staat die op 4 uur en het venster tot 18:00, dan stopt het om 13:00 en niet om 18:00. En binnen één venster gaat het schema hooguit één keer aan, ook als er iets tussendoor stopte — anders zou het schema terugzetten wat een vangnet net had laten vallen.";
 
@@ -356,7 +356,7 @@
 "melding.tot.app.eneind" = "De Mac blijft wakker tot %1$@ klaar is, en hoe dan ook niet langer dan tot %2$@.";
 "melding.sessie.ookapp" = "De lopende sessie stopt nu ook zodra %@ klaar is.";
 "melding.bezig" = "Even bezig met de slaapblokkade; probeer het zo opnieuw.";
-"melding.toegankelijkheid" = "Dopamine Code heeft toestemming nodig bij Systeeminstellingen → Privacy → Toegankelijkheid om de helderheidstoetsen na te bootsen.";
+"melding.toegankelijkheid" = "Dopamine Code heeft toestemming nodig bij Systeeminstellingen → Privacy en beveiliging → Toegankelijkheid om de helderheidstoetsen na te bootsen.";
 "melding.verlichting.mislukt" = "Toetsenbordverlichting kon niet geschakeld worden.";
 "melding.helderheid.terug" = "Automatische toetsenbordhelderheid staat weer zoals je hem had.";
 "melding.nietsterug" = "Er was niets terug te zetten.";
@@ -492,3 +492,219 @@
 "alg.muispor.zichtbaar.uitleg" = "De cursor maakt een boog van 120 punten heen en weer terug in plaats van één punt. Om te zien dát het werkt. Hij eindigt waar hij begon, en omdat er alleen gepord wordt als het al minuten stil is, kan hij nooit met je hand in de weg zitten.";
 "alg.netwerkaan" = "Netwerk bereikbaar houden tijdens een sessie";
 "alg.netwerkaan.uitleg" = "De kernelvlag houdt het systeem wakker maar zegt niets over de radio: macOS mag de wifi in een spaarstand zetten terwijl de Mac gewoon doorwerkt. Dit houdt hem bereikbaar, ook met de klep dicht. Zichtbaar in pmset -g assertions. Het haalt één oorzaak weg van wegvallende verbindingen; een router die herstart valt hier niet mee te redden.";
+
+/* --- De opdrachtregel. Draaide tot nu toe op vaste Nederlandse zinnen in
+   Sources/dopamine/main.swift; die staan nu hier, zoals de regel in CLAUDE.md het al
+   vroeg. De binary heeft geen eigen bundel, dus Bundle.main is de app-bundel en vindt
+   deze .lproj-mappen ook vanaf de opdrachtregel. --- */
+"cli.hulp" = "dopamine — bedien Dopamine Code vanaf de opdrachtregel\n\n  dopamine on                     zet het wakker houden aan met de ingestelde duur\n  dopamine on --for 2h            ... voor een eigen duur (2h, 90m, 1h30m, 45)\n  dopamine on --until 18:00       ... tot een tijdstip (een tijdstip in het verleden\n                                      telt als morgen)\n  dopamine on --until-exit 4711   ... tot dat proces klaar is; vanuit een script:\n                                      dopamine on --until-exit $$\n  dopamine off                    zet het wakker houden uit\n  dopamine status                 wat er nu aan de hand is\n  dopamine status --json          hetzelfde, voor scripts\n\nBij --json is de uitvoer altijd geldige JSON, ook als er iets misgaat. Het oordeel zit in\nde exitcode:\n\n  0  gelukt\n  1  geweigerd (een vangnet, of het stoppen lukte niet)\n  2  verkeerd gebruik\n  4  Dopamine Code draait niet\n\nDe tijdslimiet, de accugrens en de temperatuurbewaking gelden ook hier. Een duur wordt\ngeklemd op 5 minuten tot 24 uur, en een lopende sessie wordt nooit verlengd — daarvoor moet\nje hem eerst stoppen.";
+"cli.geenopdracht" = "Geef een opdracht: on, off of status.";
+"cli.onbekendeopdracht" = "Onbekende opdracht: %@";
+"cli.onbekendeoptie" = "Onbekende optie: %@";
+"cli.mistwaarde" = "%@ mist een waarde.";
+"cli.geenduur" = "'%@' is geen duur. Gebruik bijvoorbeeld 2h, 90m of 1h30m.";
+"cli.geentijdstip" = "'%@' is geen tijdstip. Gebruik bijvoorbeeld 18:00.";
+"cli.geenprocesnummer" = "'%@' is geen procesnummer.";
+"cli.appdraaitniet" = "Dopamine Code draait niet, dus er is niets om te bedienen. Start de app en probeer het opnieuw.";
+"cli.verbindenmislukt" = "Verbinden met Dopamine Code mislukte: %@";
+"cli.vraagnietverstuurd" = "De vraag kon niet naar Dopamine Code gestuurd worden.";
+"cli.geenantwoord" = "Dopamine Code gaf geen antwoord. Kijk in het logboek: ~/Library/Logs/Dopamine Code/dopamine-code.log";
+"cli.antwoordonleesbaar" = "Het antwoord van Dopamine Code was niet te lezen.";
+"cli.antwoordnietweertegeven" = "Het antwoord kon niet weergegeven worden.";
+
+/* --- De duurkiezer: wat er terugkomt als je een eindtijd of een duur kiest.
+   Stond vast in het Nederlands in AppModel.setAutoOffUntil. --- */
+"duur.klem.langer" = "Langer dan 24 uur kan niet.";
+"duur.klem.korter" = "Korter dan 5 minuten kan niet.";
+"duur.sessie.geklemd" = "%1$@ Deze sessie stopt om %2$@, %3$@ na het aanzetten.";
+"duur.sessie.grens" = "Deze sessie stopt al eerder, om %@: daar ligt een grens overheen die hiermee niet op te schuiven is.";
+"duur.sessie.stopt" = "Deze sessie stopt om %1$@ — %2$@ na het aanzetten.";
+"duur.staart" = "De duur staat nu op %1$@. Zet je het wakker houden nú aan, dan stopt het om %2$@; zet je het later aan, dan schuift het einde mee.";
+"duur.tot" = "Tot %1$@. %2$@";
+
+/* --- Weigeringen: waarom aanzetten of aanpassen niet doorging. Deze zinnen komen
+   terug bij de opdrachtregel, de sneltoets en de zelf-aanzet-triggers. Stonden vast in
+   het Nederlands in AppModel.
+
+   Het logboek houdt zijn eigen Nederlandse regels; alleen daar waar een weigering in een
+   logregel geïnterpoleerd wordt, staat er nu een vertaalde staart achter. Geen enkele
+   controle in verify.sh of de audit leest die regels woordelijk terug. --- */
+"weiger.pid.weg.sessieloopt" = "Proces %d bestaat niet (meer). De sessie loopt gewoon door.";
+"weiger.sessie.zondereindtijd" = "Er loopt een sessie zonder eindtijd; die wordt vanzelf gestopt. Probeer het zo opnieuw.";
+"weiger.nietverlengen" = "Een lopende sessie wordt niet verlengd — stop de sessie eerst. Hij loopt nu tot %@.";
+"weiger.accu" = "Accu %1$d%%, onder je grens van %2$d%%. Sluit de lader aan, of verlaag de accugrens.";
+"weiger.temperatuur" = "De Mac is te warm. Wacht tot hij is afgekoeld en probeer het opnieuw.";
+"weiger.pid.weg.nietsgestart" = "Proces %d bestaat niet (meer); er is niets gestart.";
+"weiger.grant.ontbreekt" = "%@. Zonder die regel kunnen de tijdslimiet, de accugrens en de temperatuurbewaking de Mac later niet vanzelf weer laten slapen. Installeer hem bij Instellingen → Diagnose.";
+"weiger.geentoestemming" = "Geen toestemming om de slaapblokkade aan te zetten. Installeer de wachtwoordvrijstelling bij Instellingen → Diagnose.";
+"weiger.geannuleerd" = "Geannuleerd bij het vragen om toestemming.";
+"weiger.vlag.anders" = "Het commando gaf geen fout, maar de slaapblokkade staat op %@ in plaats van op 1.";
+"weiger.nietgelukt" = "Wakker houden is niet gelukt: %@";
+"weiger.albeeindigd" = "De sessie was alweer beëindigd voordat hij goed en wel liep.";
+
+/* --- Het besturingskanaal: wat `dopamine on`, `off` en `status` terugkrijgen.
+   Stond vast in het Nederlands in AppModel.handleControl.
+
+   De statuszin heeft losse sleutels voor de aanhef en elke staart. Zestien combinaties
+   als hele zinnen uitschrijven zou vier bestanden met bijna-gelijke regels opleveren. --- */
+"kanaal.nietgestart" = "niet gestart";
+"kanaal.gestart.tot" = "De Mac blijft wakker tot %1$@ (%2$@).";
+"kanaal.gestart.zondereindtijd" = "De Mac blijft wakker zonder eindtijd (vakantiestand).";
+"kanaal.stopt.eerder" = "Stopt eerder als %@ klaar is.";
+"kanaal.limiet.ervoor" = "Je vroeg tot %1$@, maar de tijdslimiet van %2$@ ligt daarvóór.";
+"kanaal.liepal" = "Er liep al een sessie; er is geen tweede gestart.";
+"kanaal.liepal.tot" = "Die loopt tot %@.";
+"kanaal.stopt.ook" = "Hij stopt ook als %@ klaar is.";
+"kanaal.bezet" = "Dopamine Code is net met de slaapblokkade bezig. Probeer het zo opnieuw.";
+"kanaal.liepniets" = "Er liep niets; het wakker houden stond al uit.";
+"kanaal.uit" = "Het wakker houden staat uit; de Mac mag weer slapen.";
+"kanaal.uitzetten.mislukt" = "Uitzetten lukte niet.";
+"kanaal.zetzelfterug" = "Zet het zo nodig zelf terug: sudo pmset -a disablesleep 0";
+"kanaal.status.aan" = "De Mac wordt wakker gehouden";
+"kanaal.status.tot" = " tot %@";
+"kanaal.status.koppeling" = ", en stopt zodra %@ klaar is";
+"kanaal.status.vlagzondersessie" = "De slaapblokkade staat aan zonder dat er een sessie loopt. Dopamine Code probeert dat terug te zetten.";
+"kanaal.status.onleesbaar" = "De slaapblokkade is niet uit te lezen.";
+
+/* --- Het vangnet dat de app terughaalt na kill -9 of een crash. Deze zinnen gaan
+   naar het scherm EN naar het logboek; het logboek leest ze via L10n.nl en blijft dus
+   Nederlands. --- */
+"kanaal.afsluiten" = "Dopamine Code is aan het afsluiten.";
+"vangnet.weggevallen" = "Dopamine Code was weggevallen terwijl de Mac wakker gehouden werd.";
+"vangnet.staart.opgeruimd" = "De slaapblokkade is opgeruimd; de Mac mag weer slapen.";
+"vangnet.staart.nogaan" = "De slaapblokkade staat nog aan — de Mac kan nu niet slapen.";
+"vangnet.terug.klok" = "Om %1$@ teruggehaald door het vangnet. %2$@";
+
+/* --- De aanleiding als clausule, voor "Vanzelf aangezet omdat …". Derde vorm naast
+   trigger.* (hele mededeling) en aanleiding.* (kaal zelfstandig naamwoord); die twee
+   passen niet achter "omdat". Zie SessionTrigger.omdat.
+
+   Deze zin komt op het scherm EN in het logboek; het logboek leest hem via L10n.nl. --- */
+"omdat.schakelaar" = "je de schakelaar omzette";
+"omdat.cli" = "de opdrachtregel erom vroeg";
+"omdat.klep" = "je had gevraagd om aan te gaan zodra de klep dichtging";
+"omdat.app" = "%@ ging draaien";
+"omdat.schema" = "het schema-venster %@ ging open";
+"omdat.sneltoets" = "je de sneltoets indrukte";
+"arming.vervallen" = "Het klaarzetten is vervallen: je hebt de klep binnen %d minuten niet dichtgedaan. Het wakker houden staat uit.";
+"trigger.tot" = "tot %1$@ (%2$@)";
+"trigger.zondereindtijd" = "zonder eindtijd (vakantiestand)";
+"trigger.aangezet" = "Vanzelf aangezet omdat %1$@. De Mac blijft wakker %2$@.";
+"melding.trigger.geweigerd.klok" = "Om %1$@ wilde Dopamine Code vanzelf aanzetten (%2$@), maar dat kon niet: %3$@";
+
+/* --- Klaarzetten op de klep, en de wachter die stil is gevallen. De laatste twee
+   gaan naar het scherm EN naar het logboek; het logboek leest ze via L10n.nl. --- */
+"arming.klepaldicht" = "De klep is al dicht. Dit gaat over de vólgende keer dat je hem dichtdoet — doe hem eerst open. Wil je nu aanzetten, gebruik dan de schakelaar.";
+"arming.staatklaar" = "Staat klaar: het wakker houden gaat aan zodra je de klep dichtdoet. Vervalt vanzelf om %@.";
+"wachter.hoelang.minuten" = "al %d minuten niet";
+"wachter.hoelang.nooit" = "nog nooit";
+"wachter.stil" = "De wachter heeft %@ gekeken. Zolang dat zo blijft, blijft de Mac wakker als Dopamine Code hard afgeschoten wordt. Kijk bij Systeeminstellingen → Algemeen → Inloggen en extensies of Dopamine Code op de achtergrond mag draaien, of gebruik 'Wachter herstellen' bij Instellingen → Diagnose.";
+
+/* --- Nog vier stopredenen, in dezelfde reeks als reden.tijdom en reden.warm.
+   Die twee stonden er al; deze vier stonden nog vast in het Nederlands. --- */
+"reden.vlagzondersessie" = "vlag stond aan zonder actieve sessie";
+"reden.vlagonleesbaar" = " (vlag onleesbaar)";
+"reden.geannuleerd.aanzetten" = "geannuleerd tijdens aanzetten";
+"reden.nainstallatie" = "opruimen na installatie van de vrijstelling";
+"reden.schemaliepot" = "het schema liep tot %@";
+
+/* --- Meldingen, de warmtemelding, de vrijstelling, start-bij-inloggen en het
+   waarschuwingsvenster bij afsluiten. Alle vier alleen naar het scherm; de logregels
+   ernaast zijn hun eigen Nederlandse zinnen. --- */
+"melding.sessieafgelopen.klok" = "Om %1$@: %2$@. De Mac mag weer slapen.";
+"melding.stoppen.mislukt.klok" = "Poging %1$d om te stoppen mislukte (%2$@). Zet het zelf terug in Terminal met: sudo pmset -a disablesleep 0";
+"melding.warm.snelheid" = " en draait nu op %d%% snelheid.";
+"melding.warm.punt" = ".";
+"melding.warm.kritiek" = "Wordt het kritiek, dan stopt Dopamine Code vanzelf.";
+"melding.warm.gestopt" = "Het wakker houden is gestopt zodat macOS zelf weer kan ingrijpen: die automatische noodslaap staat uit zolang de Mac wakker gehouden wordt.";
+"grant.geinstalleerd" = "Wachtwoordvrijstelling geïnstalleerd.";
+"grant.geschreven.nietbevestigd" = "De regel is geschreven, maar het systeem bevestigt hem nog niet.";
+"login.nogaanzetten" = "Zet Dopamine Code nu nog aan bij Systeeminstellingen → Algemeen → Inloggen en extensies.";
+"login.gelukt" = "Dopamine Code start voortaan mee bij het inloggen (via %@).";
+"afsluiten.alert.kop" = "De Mac kan nog steeds niet gaan slapen";
+"afsluiten.alert.tekst" = "Dopamine Code kon het wakker houden bij het afsluiten niet uitzetten. Zet het zelf terug: open Terminal en voer deze regel uit.";
+
+/* --- Het besturingskanaal zelf: of het luistert, en waarom niet. Staat in
+   Instellingen → Diagnose. De foutredenen gaan ook naar het logboek, dus ze bestaan
+   twee keer — zie ControlServer.fail en L10n.nl. --- */
+"kanaal.nogniet" = "nog niet gestart";
+"kanaal.luistert" = "luistert op %@";
+"kanaal.werktniet" = "werkt niet — %@";
+"kanaal.werktniet.log" = "Besturingskanaal kon niet gestart worden: %@. De opdrachtregel werkt nu niet; de menubalk wel.";
+"kanaal.fout.padtelang" = "het pad is %1$d tekens en er passen er maar %2$d: %3$@";
+"kanaal.fout.mapniet" = "de map kon niet aangemaakt worden: %@";
+"kanaal.fout.aleeniets" = "er luistert al iets op %@; deze instantie neemt het besturingskanaal niet over";
+"kanaal.fout.socket" = "socket() mislukte: %@";
+"kanaal.fout.padpastniet" = "het pad past niet in een socketadres: %@";
+"kanaal.fout.bind" = "bind() op %1$@ mislukte: %2$@";
+"kanaal.fout.listen" = "listen() mislukte: %@";
+"kanaal.nietbegrepen" = "Dopamine Code begreep dit verzoek niet.";
+
+/* --- Meldingtitels, de sneltoets, de wachtwoordvrijstelling, de diagnosevlag en de
+   geschiedenisregel. Alle alleen naar het scherm. --- */
+"melding.titel.sessiegestopt" = "Het wakker houden is vanzelf gestopt";
+"melding.titel.kannietslapen" = "De Mac kan niet gaan slapen";
+"melding.titel.tewarm" = "De Mac is te warm geworden";
+"melding.titel.tochgeslapen" = "De Mac heeft tóch geslapen";
+"melding.titel.weggevallen" = "Dopamine Code was weggevallen";
+"melding.titel.triggermislukt" = "Vanzelf aanzetten is niet gelukt";
+"sneltoets.modifiernodig" = "Een sneltoets heeft minstens ⌘, ⌥ of ⌃ nodig. Zonder zo'n toets zou hij die toets in elke app opslokken.";
+"sneltoets.nietaangenomen" = "macOS wilde de sneltoets niet aannemen (foutcode %d).";
+"sneltoets.albezet" = "%@ is al in gebruik door iets anders. Kies een andere combinatie.";
+"sneltoets.mislukt" = "%1$@ kon niet ingesteld worden (foutcode %2$d).";
+"grant.wachtwoordnodig" = "sudo staat 'pmset -a disablesleep %@' wel toe, maar niet zonder wachtwoord — waarschijnlijk via de standaardregel voor beheerders, niet via de Dopamine Code-regel.";
+"grant.sudoweigert" = "sudo weigert de regel";
+"grant.scriptontbreekt" = "Het grant-script is niet in de app ingebouwd. Bouw opnieuw met ./build.sh";
+"grant.scriptbeschadigd" = "Ingebouwd grant-script is beschadigd.";
+"grant.prompt.installeren" = "Dopamine Code installeert een sudoers-regel voor precies twee pmset-commando's.";
+"grant.prompt.verwijderen" = "Dopamine Code verwijdert zijn sudoers-regel.";
+"diag.vlag.aan" = "1 — de Mac mag niet slapen";
+"diag.vlag.uit" = "0 — de Mac mag slapen";
+"geschiedenis.vangnetgreepin" = "een vangnet greep in: %@";
+"geschiedenis.geenafsluitregel" = "geen afsluitregel — de app is weggevallen of vervangen, dus het einde staat niet in het logboek";
+"geschiedenis.logboekweg" = "Het logboek staat niet op %@.";
+"geschiedenis.leesfout" = "%1$@ kon niet gelezen worden: %2$@";
+"reden.appafgesloten" = "de app werd afgesloten";
+
+/* --- De laatste losse zinnen: het verbinden met het kanaal (uit de opdrachtregel),
+   het starten van een subproces, de aftelling van het klaarzetten, en de weigering van
+   start-bij-inloggen. Alle alleen naar het scherm. --- */
+"kanaal.padtelang" = "Het pad naar het besturingskanaal is te lang (%1$d van %2$d tekens): %3$@";
+"kanaal.verbindenmislukt" = "Verbinden met %1$@ mislukte: %2$@";
+"shell.nietgestart" = "kon %1$@ niet starten: %2$@";
+"shell.timeout" = "%1$@ reageerde niet binnen %2$ds";
+"vlag.pmsetfout" = "pmset meldde een fout";
+"arming.verlopen" = "verlopen";
+"arming.nogseconden" = "nog %d s";
+"arming.nogminuten" = "nog %d min";
+"login.doorgebruikergeweigerd" = "Je hebt Dopamine Code uitgezet bij Systeeminstellingen → Algemeen → Inloggen en extensies. Zet hem daar weer aan.";
+
+/* --- De wachter: wat een ronde concludeerde, en of hij ingesteld staat. De meldingen
+   worden door het wachter-proces als sleutel weggeschreven en hier pas vertaald — zie
+   RestartGuard.Melding. --- */
+"wachter.melding.onafgemaakt" = "onafgemaakte ronde";
+"wachter.melding.vlaguit" = "de slaapblokkade stond uit";
+"wachter.melding.appdraait" = "de app draait";
+"wachter.melding.nietvanons" = "blokkade aan, maar niet van ons";
+"wachter.melding.respijt" = "respijt na bewust afsluiten (%d×)";
+"wachter.melding.zonderapp" = "blokkade aan zonder app (%d×)";
+"wachter.melding.bundelonleesbaar" = "kan de bundel niet lezen";
+"wachter.melding.bouwmap" = "kopie uit de bouwmap, niets gestart";
+"wachter.melding.wachten" = "wachten tot de volgende poging mag";
+"wachter.melding.bundelnietinorde" = "bundel niet in orde";
+"wachter.melding.rechtstreeks" = "rechtstreeks gestart";
+"wachter.melding.rechtstreeksmislukt" = "rechtstreeks starten mislukte";
+"wachter.melding.teruggehaald" = "app teruggehaald (poging %d)";
+"wachter.melding.terughalenmislukt" = "terughalen mislukte";
+"wachter.vorigeafsluiting" = "Vorige afsluiting om %1$@ (%2$@); de slaapblokkade stond toen %3$@";
+"wachter.stondtoen.aan" = "nog aan.";
+"wachter.stondtoen.uit" = "uit.";
+"wachter.nietingesteld.geenexecutable" = "niet ingesteld — de bundel mist CFBundleExecutable";
+"wachter.nietingesteld.bouwmap" = "niet ingesteld voor een kopie uit de bouwmap";
+"wachter.nietingesteld.fout" = "niet ingesteld — %@";
+"wachter.nietgeladen.launchctl" = "NIET geladen — launchctl weigerde: %@";
+
+/* --- De samenvatting van meerdere netwerkstoringen, voor de melding bij openklappen.
+   Enkelvoud en meervoud apart, net als bij de losse storing hierboven. --- */
+"storing.samenvatting.min.een" = "%1$d keer geen internet, samen ongeveer %2$d minuut. De eerste keer: %3$@.";
+"storing.samenvatting.min.meer" = "%1$d keer geen internet, samen ongeveer %2$d minuten. De eerste keer: %3$@.";

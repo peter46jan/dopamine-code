@@ -24,17 +24,17 @@
 "menu.stoppenals.placeholder" = "Stop when an app has finished…";
 
 /* --- Menu: warning that the safety nets cannot work --- */
-"menu.ontwapend.titel" = "Stopping by itself will not work";
+"menu.ontwapend.titel" = "Stopping by itself does not work right now";
 "menu.ontwapend.uitleg" = "The time limit, the battery floor and the temperature watch cannot put the Mac back to sleep on their own: that needs a password, and with the lid closed nobody can type one. Put it back yourself if you need to — paste this line into Terminal:";
 
 /* --- Menu: the Mac slept anyway --- */
 "menu.gebroken.wel" = "The Mac slept anyway";
 "menu.gebroken.niet" = "Mac slept — the block was not on";
-"menu.gebroken.uitleg.wel" = "That should not be possible while the sleep block was on: on this Mac the promise does not hold.";
+"menu.gebroken.uitleg.wel" = "That should not have been possible while the sleep block was on: on this Mac the promise does not hold.";
 "menu.gebroken.uitleg.niet" = "The sleep block had been switched off outside Dopamine Code, so this says nothing about the block itself.";
 
 /* --- Menu: the sudoers rule is missing --- */
-"menu.grant.uitleg" = "Without this one-time rule, macOS asks for your password every time it switches. With the lid closed nobody can type it, so the Mac cannot go back to sleep by itself afterwards.";
+"menu.grant.uitleg" = "Without this one-time rule, macOS asks for your password every time it is switched. With the lid closed nobody can type it, so the Mac cannot go back to sleep by itself afterwards.";
 "menu.grant.installeren" = "Install rule…";
 "menu.grant.opnieuw" = "Check again";
 "menu.grant.terminal" = "Or in Terminal:";
@@ -46,7 +46,7 @@
 /* --- Menu: keyboard backlight --- */
 "menu.verlichting.titel" = "Keyboard backlight";
 "menu.verlichting.schermuit" = "The keyboard stays dark right now because the display is off. What you set here shows once the display comes back on.";
-"menu.verlichting.geendirect" = "This Mac does not let the backlight be set directly. Dopamine Code can only switch it by imitating the brightness keys, and that needs permission under Privacy → Accessibility.";
+"menu.verlichting.geendirect" = "This Mac does not let the backlight be set directly. Dopamine Code can only switch it by imitating the brightness keys, and that needs permission under Privacy & Security → Accessibility.";
 "menu.verlichting.instellingen" = "Open System Settings";
 
 /* --- Menu: updates --- */
@@ -166,7 +166,7 @@
 "bij.onbekend" = "unknown";
 "bij.bron" = "Source";
 "bij.toggle" = "Check whether a newer version exists";
-"bij.uitleg" = "Asks GitHub at most once a day what the newest version is. GitHub sees your IP address doing so, as it does on any visit to a website. The app never downloads or installs anything — updating stays a command you run yourself.";
+"bij.uitleg" = "Asks GitHub at most once a day what the newest version is. In doing so it shows GitHub your IP address, as any visit to a website does. The app never downloads or installs anything — updating stays a command you run yourself.";
 "bij.nukijken" = "Check now";
 "bij.status.beschikbaar" = "Version %@ available";
 "bij.status.actueel" = "You are up to date";
@@ -181,7 +181,7 @@
 "snel.afbreken" = "Cancel";
 "snel.opnemen" = "Record…";
 "snel.wissen" = "Clear";
-"snel.uitleg" = "The shortcut does exactly what the switch in the panel does, and passes exactly the same checks: if the battery is too low, the Mac too warm, or the password exemption missing, it will not switch on either. You hear the error sound and it goes into the log; you get no notification, because you are at the keyboard at that moment.";
+"snel.uitleg" = "The shortcut does exactly what the switch in the panel does, and goes through exactly the same checks: if the battery is too low, the Mac too warm, or the password exemption missing, it will not switch on either. You hear the error sound and it goes into the log; you get no notification, because you are at the keyboard at that moment.";
 "snel.uitleg.combinatie" = "Record a combination that includes ⌘, ⌥ or ⌃. Without such a key the shortcut would swallow that key in every app. Esc cancels recording.";
 
 /* --- Instellingen · Vanzelf stoppen: na een tijd --- */
@@ -231,7 +231,7 @@
 
 /* --- Instellingen · Zelf aanzetten: klep en vangnetten --- */
 "aan.klep.titel" = "As soon as you close the lid";
-"aan.klep.uitleg" = "This lives in the menu bar panel and not here, because it applies once: you click \"Turn on when I close the lid\", you close it, and keeping awake switches on. If you do not, it expires by itself after five minutes and the app says so. It deliberately does not survive a restart: nobody expects something armed hours ago to still go off.";
+"aan.klep.uitleg" = "This lives in the menu bar panel and not here, because it applies once: you click \"Keep awake when I close the lid\", you close it, and keeping awake switches on. If you do not, it expires by itself after five minutes and the app says so. It deliberately does not survive a restart: nobody expects something armed hours ago to still go off.";
 "aan.omheen.titel" = "What stays wrapped around it regardless";
 "aan.omheen.uitleg" = "Everything that switches on by itself here takes exactly the same route as the switch: the same time limit, the same battery floor and the same temperature watch. If it cannot be switched on safely at that moment — the battery too low, the Mac too warm, or the password exemption gone — nothing happens, and you get a notification about it. A schedule never runs longer than the time limit: set that to 4 hours with the window until 18:00, and it stops at 13:00 and not at 18:00. And within one window the schedule fires at most once, even if something stopped in between — otherwise the schedule would put back what a safety net had just released.";
 
@@ -328,7 +328,7 @@
 "melding.grant.installeer" = "Install the password exemption under Settings → Diagnostics.";
 "melding.geannuleerd.mogelijkaan" = "Cancelled, but the Mac may be kept awake anyway. Dopamine Code will put that back.";
 "melding.geannuleerd" = "Cancelled.";
-"melding.vlag.anders" = "The command reported no error, but the sleep block is at %@ instead of 1.";
+"melding.vlag.anders" = "The command reported no error, but the sleep block reads %@ instead of 1.";
 "melding.onleesbaar" = "unreadable";
 "melding.letop.zondergrant" = "Note: without the password exemption, the time limit, the battery floor and the temperature watch cannot let the Mac sleep again later.";
 "melding.letop.geenwachtwoord" = "Note: this Mac is set not to ask for a password after locking. The screen does lock, but anyone can open it again.";
@@ -351,7 +351,7 @@
 "melding.tot.app.eneind" = "The Mac stays awake until %1$@ has finished, and in any case no longer than until %2$@.";
 "melding.sessie.ookapp" = "The running session now also stops as soon as %@ has finished.";
 "melding.bezig" = "Busy with the sleep block; try again in a moment.";
-"melding.toegankelijkheid" = "Dopamine Code needs permission under System Settings → Privacy → Accessibility to imitate the brightness keys.";
+"melding.toegankelijkheid" = "Dopamine Code needs permission under System Settings → Privacy & Security → Accessibility to imitate the brightness keys.";
 "melding.verlichting.mislukt" = "The keyboard backlight could not be switched.";
 "melding.helderheid.terug" = "Automatic keyboard brightness is back the way you had it.";
 "melding.nietsterug" = "There was nothing to restore.";
@@ -464,11 +464,11 @@
 "menu.vakantie" = "Vacation mode";
 "menu.vakantie.dagen" = "%d days";
 "menu.vakantie.onbeperkt" = "until I switch it off";
-"menu.vakantie.uitleg.dagen" = "The session keeps running until those days are up. The battery floor and the thermal watch still apply.";
-"menu.vakantie.uitleg.onbeperkt" = "No time limit: the session runs until you switch it off. The battery floor and the thermal watch still step in, and the watchdog clears the flag if the app falls over.";
+"menu.vakantie.uitleg.dagen" = "The session keeps running until those days are up. The battery floor and the temperature watch still apply.";
+"menu.vakantie.uitleg.onbeperkt" = "No time limit: the session runs until you switch it off. The battery floor and the temperature watch still step in, and the watchdog clears the flag if the app falls over.";
 "kaart.vakantie" = "Staying awake";
 "reden.vakantie" = "vacation mode was switched off";
-"reden.vakantie.dagen" = "the %d-day vacation session was up";
+"reden.vakantie.dagen" = "the %d days of vacation mode were up";
 "melding.tot.app.vakantie" = "The Mac stays awake until %@ has finished, with no end time.";
 
 /* Het scherm aanhouden: een IOPMAssertion, iets anders dan de kernelvlag. */
@@ -476,12 +476,197 @@
 "alg.schermaan.uitleg" = "Stops macOS from dimming or switching off the screen while the lid is open. That also keeps the lock away, since locking follows the screen going off. The two choices above only govern what the app itself does; this one holds the system back. With the lid closed it lets go and those choices take over.";
 
 /* De muispor. Zie MuisPor voor wat er gemeten is. */
-"alg.muispor" = "Nudge the mouse when it goes quiet";
+"alg.muispor" = "Nudge the mouse invisibly when things go quiet";
 "alg.muispor.na" = "after %d min";
 "alg.muispor.geenrecht" = "Not working yet: the app may not send input. Grant Accessibility, then restart the app — macOS remembers the answer for as long as it runs.";
-"alg.muispor.uitleg" = "Moves the cursor one point across and straight back, so it stays where it was. Only when it is genuinely quiet, so it never fights your hand. Meant for apps that mark you away. Measured: this does not hold off macOS's own screen saver — that counts real input only. Use the option above for that.";
+"alg.muispor.uitleg" = "Moves the cursor one point across and straight back, so it stays where it was. Only when it is genuinely quiet, so it never fights your hand. Meant for apps that mark you as away. Measured: this does not hold off macOS's own screen saver — that counts real input only. Use the option above for that.";
 "menu.muispor.geenrecht" = "Not working: grant Accessibility, then restart the app.";
 "alg.muispor.zichtbaar" = "Visible jump";
 "alg.muispor.zichtbaar.uitleg" = "The cursor arcs 120 points out and back instead of one. So you can see that it works. It ends where it started, and since it only nudges after minutes of silence, it can never get in the way of your hand.";
 "alg.netwerkaan" = "Keep the network reachable during a session";
 "alg.netwerkaan.uitleg" = "The kernel flag keeps the system awake but says nothing about the radio: macOS may put Wi-Fi into a low-power state while the Mac carries on working. This keeps it reachable, lid closed as well. Visible in pmset -g assertions. It removes one cause of dropped connections; a router that reboots is beyond its reach.";
+
+/* --- The command line. Until now it ran on hardcoded Dutch sentences in
+   Sources/dopamine/main.swift. --- */
+"cli.hulp" = "dopamine — drive Dopamine Code from the command line\n\n  dopamine on                     start keeping awake, for the configured duration\n  dopamine on --for 2h            ... for a duration of your own (2h, 90m, 1h30m, 45)\n  dopamine on --until 18:00       ... until a time of day (a time already past\n                                      counts as tomorrow)\n  dopamine on --until-exit 4711   ... until that process is done; from a script:\n                                      dopamine on --until-exit $$\n  dopamine off                    stop keeping awake\n  dopamine status                 what is going on right now\n  dopamine status --json          the same, for scripts\n\nWith --json the output is always valid JSON, even when something goes wrong. The verdict is\nin the exit code:\n\n  0  done\n  1  refused (a safety net, or stopping failed)\n  2  wrong usage\n  4  Dopamine Code is not running\n\nThe time limit, the battery floor and the temperature watch apply here too. A duration is clamped\nto between 5 minutes and 24 hours, and a running session is never extended — for that you\nhave to stop it first.";
+"cli.geenopdracht" = "Give a command: on, off or status.";
+"cli.onbekendeopdracht" = "Unknown command: %@";
+"cli.onbekendeoptie" = "Unknown option: %@";
+"cli.mistwaarde" = "%@ is missing a value.";
+"cli.geenduur" = "'%@' is not a duration. Use 2h, 90m or 1h30m, for example.";
+"cli.geentijdstip" = "'%@' is not a time of day. Use 18:00, for example.";
+"cli.geenprocesnummer" = "'%@' is not a process id.";
+"cli.appdraaitniet" = "Dopamine Code is not running, so there is nothing to drive. Start the app and try again.";
+"cli.verbindenmislukt" = "Connecting to Dopamine Code failed: %@";
+"cli.vraagnietverstuurd" = "The request could not be sent to Dopamine Code.";
+"cli.geenantwoord" = "Dopamine Code gave no reply. Check the log: ~/Library/Logs/Dopamine Code/dopamine-code.log";
+"cli.antwoordonleesbaar" = "The reply from Dopamine Code could not be read.";
+"cli.antwoordnietweertegeven" = "The reply could not be rendered.";
+
+/* --- The duration picker: what comes back when you pick an end time or a duration. --- */
+"duur.klem.langer" = "Longer than 24 hours is not possible.";
+"duur.klem.korter" = "Shorter than 5 minutes is not possible.";
+"duur.sessie.geklemd" = "%1$@ This session stops at %2$@, %3$@ after it was switched on.";
+"duur.sessie.grens" = "This session stops sooner, at %@: another limit sits above it that this cannot move.";
+"duur.sessie.stopt" = "This session stops at %1$@ — %2$@ after it was switched on.";
+"duur.staart" = "The duration is now %1$@. Switch keeping awake on right now and it stops at %2$@; switch it on later and the end moves with it.";
+"duur.tot" = "Until %1$@. %2$@";
+
+/* --- Refusals: why switching on or adjusting did not go through. --- */
+"weiger.pid.weg.sessieloopt" = "Process %d does not exist (any more). The session simply carries on.";
+"weiger.sessie.zondereindtijd" = "A session without an end time is running; it will be stopped on its own. Try again shortly.";
+"weiger.nietverlengen" = "A running session is never extended — stop the session first. It currently runs until %@.";
+"weiger.accu" = "Battery %1$d%%, below your floor of %2$d%%. Plug in the charger, or lower the battery floor.";
+"weiger.temperatuur" = "The Mac is too warm. Wait until it has cooled down and try again.";
+"weiger.pid.weg.nietsgestart" = "Process %d does not exist (any more); nothing was started.";
+"weiger.grant.ontbreekt" = "%@. Without that rule the time limit, the battery floor and the temperature watch cannot let the Mac sleep again later. Install it under Settings → Diagnostics.";
+"weiger.geentoestemming" = "No permission to switch the sleep block on. Install the password exemption under Settings → Diagnostics.";
+"weiger.geannuleerd" = "Cancelled while asking for permission.";
+"weiger.vlag.anders" = "The command reported no error, but the sleep block reads %@ instead of 1.";
+"weiger.nietgelukt" = "Keeping awake did not work: %@";
+"weiger.albeeindigd" = "The session had already ended before it was properly running.";
+
+/* --- The control channel: what `dopamine on`, `off` and `status` hand back. --- */
+"kanaal.nietgestart" = "not started";
+"kanaal.gestart.tot" = "The Mac stays awake until %1$@ (%2$@).";
+"kanaal.gestart.zondereindtijd" = "The Mac stays awake with no end time (vacation mode).";
+"kanaal.stopt.eerder" = "Stops sooner once %@ is done.";
+"kanaal.limiet.ervoor" = "You asked for %1$@, but the time limit of %2$@ falls before that.";
+"kanaal.liepal" = "A session was already running; no second one was started.";
+"kanaal.liepal.tot" = "It runs until %@.";
+"kanaal.stopt.ook" = "It also stops once %@ is done.";
+"kanaal.bezet" = "Dopamine Code is busy with the sleep block right now. Try again shortly.";
+"kanaal.liepniets" = "Nothing was running; keeping awake was already off.";
+"kanaal.uit" = "Keeping awake is off; the Mac may sleep again.";
+"kanaal.uitzetten.mislukt" = "Switching off did not work.";
+"kanaal.zetzelfterug" = "Put it back yourself if you have to: sudo pmset -a disablesleep 0";
+"kanaal.status.aan" = "The Mac is being kept awake";
+"kanaal.status.tot" = " until %@";
+"kanaal.status.koppeling" = ", and stops once %@ is done";
+"kanaal.status.vlagzondersessie" = "The sleep block is on without a session running. Dopamine Code is trying to clear it.";
+"kanaal.status.onleesbaar" = "The sleep block cannot be read.";
+
+/* --- The watchdog that brings the app back after kill -9 or a crash. --- */
+"kanaal.afsluiten" = "Dopamine Code is shutting down.";
+"vangnet.weggevallen" = "Dopamine Code had gone away while the Mac was being kept awake.";
+"vangnet.staart.opgeruimd" = "The sleep block has been cleared; the Mac may sleep again.";
+"vangnet.staart.nogaan" = "The sleep block is still on — the Mac cannot sleep right now.";
+"vangnet.terug.klok" = "Brought back by the safety net at %1$@. %2$@";
+
+/* --- The cause as a clause, for "Switched on by itself because …". --- */
+"omdat.schakelaar" = "you flipped the switch";
+"omdat.cli" = "the command line asked for it";
+"omdat.klep" = "you had asked it to switch on as soon as the lid closed";
+"omdat.app" = "%@ started running";
+"omdat.schema" = "the schedule window %@ opened";
+"omdat.sneltoets" = "you pressed the shortcut";
+"arming.vervallen" = "It is no longer armed: you did not close the lid within %d minutes. Keeping awake is off.";
+"trigger.tot" = "until %1$@ (%2$@)";
+"trigger.zondereindtijd" = "with no end time (vacation mode)";
+"trigger.aangezet" = "Switched on by itself because %1$@. The Mac stays awake %2$@.";
+"melding.trigger.geweigerd.klok" = "At %1$@ Dopamine Code wanted to switch on by itself (%2$@), but could not: %3$@";
+
+/* --- Arming on the lid, and the watchdog that has gone quiet. --- */
+"arming.klepaldicht" = "The lid is already closed. This is about the next time you close it — open it first. To switch on right now, use the switch.";
+"arming.staatklaar" = "Armed: keeping awake switches on as soon as you close the lid. Lapses on its own at %@.";
+"wachter.hoelang.minuten" = "has not looked for %d minutes";
+"wachter.hoelang.nooit" = "has never looked";
+"wachter.stil" = "The watchdog %@. While that lasts, the Mac stays awake if Dopamine Code is killed outright. Check under System Settings → General → Login Items & Extensions whether Dopamine Code may run in the background, or use 'Repair watchdog' under Settings → Diagnostics.";
+
+/* --- Four more release reasons, alongside reden.tijdom and reden.warm. --- */
+"reden.vlagzondersessie" = "the flag was on with no active session";
+"reden.vlagonleesbaar" = " (flag unreadable)";
+"reden.geannuleerd.aanzetten" = "cancelled while switching on";
+"reden.nainstallatie" = "cleaning up after installing the exemption";
+"reden.schemaliepot" = "the schedule ran until %@";
+
+/* --- Notifications, the heat message, the grant, launch-at-login and the shutdown alert. --- */
+"melding.sessieafgelopen.klok" = "At %1$@: %2$@. The Mac may sleep again.";
+"melding.stoppen.mislukt.klok" = "Attempt %1$d to stop failed (%2$@). Put it back yourself in Terminal with: sudo pmset -a disablesleep 0";
+"melding.warm.snelheid" = " and is now running at %d%% speed.";
+"melding.warm.punt" = ".";
+"melding.warm.kritiek" = "If it turns critical, Dopamine Code stops on its own.";
+"melding.warm.gestopt" = "Keeping awake has stopped so macOS can step in again itself: that automatic emergency sleep is off for as long as the Mac is kept awake.";
+"grant.geinstalleerd" = "Password exemption installed.";
+"grant.geschreven.nietbevestigd" = "The rule has been written, but the system does not confirm it yet.";
+"login.nogaanzetten" = "Now switch Dopamine Code on under System Settings → General → Login Items & Extensions.";
+"login.gelukt" = "Dopamine Code will start at login from now on (via %@).";
+"afsluiten.alert.kop" = "The Mac still cannot go to sleep";
+"afsluiten.alert.tekst" = "Dopamine Code could not switch keeping awake off while shutting down. Put it back yourself: open Terminal and run this line.";
+
+/* --- The control channel itself: whether it listens, and why not. --- */
+"kanaal.nogniet" = "not started yet";
+"kanaal.luistert" = "listening on %@";
+"kanaal.werktniet" = "not working — %@";
+"kanaal.werktniet.log" = "The control channel could not be started: %@. The command line does not work now; the menu bar does.";
+"kanaal.fout.padtelang" = "the path is %1$d characters and only %2$d fit: %3$@";
+"kanaal.fout.mapniet" = "the directory could not be created: %@";
+"kanaal.fout.aleeniets" = "something is already listening on %@; this instance does not take over the control channel";
+"kanaal.fout.socket" = "socket() failed: %@";
+"kanaal.fout.padpastniet" = "the path does not fit in a socket address: %@";
+"kanaal.fout.bind" = "bind() on %1$@ failed: %2$@";
+"kanaal.fout.listen" = "listen() failed: %@";
+"kanaal.nietbegrepen" = "Dopamine Code did not understand this request.";
+
+/* --- Notification titles, the shortcut, the grant, the diagnostics flag and the history line. --- */
+"melding.titel.sessiegestopt" = "Keeping awake stopped on its own";
+"melding.titel.kannietslapen" = "The Mac cannot go to sleep";
+"melding.titel.tewarm" = "The Mac got too warm";
+"melding.titel.tochgeslapen" = "The Mac slept after all";
+"melding.titel.weggevallen" = "Dopamine Code had gone away";
+"melding.titel.triggermislukt" = "Switching on by itself did not work";
+"sneltoets.modifiernodig" = "A shortcut needs at least ⌘, ⌥ or ⌃. Without one of those it would swallow that key in every app.";
+"sneltoets.nietaangenomen" = "macOS refused to take the shortcut (error code %d).";
+"sneltoets.albezet" = "%@ is already in use by something else. Pick a different combination.";
+"sneltoets.mislukt" = "%1$@ could not be set (error code %2$d).";
+"grant.wachtwoordnodig" = "sudo does permit 'pmset -a disablesleep %@', but not without a password — probably through the default rule for admins, not through the Dopamine Code rule.";
+"grant.sudoweigert" = "sudo refuses the rule";
+"grant.scriptontbreekt" = "The grant script is not built into the app. Rebuild with ./build.sh";
+"grant.scriptbeschadigd" = "The built-in grant script is damaged.";
+"grant.prompt.installeren" = "Dopamine Code is installing a sudoers rule for exactly two pmset commands.";
+"grant.prompt.verwijderen" = "Dopamine Code is removing its sudoers rule.";
+"diag.vlag.aan" = "1 — the Mac may not sleep";
+"diag.vlag.uit" = "0 — the Mac may sleep";
+"geschiedenis.vangnetgreepin" = "a safety net stepped in: %@";
+"geschiedenis.geenafsluitregel" = "no closing line — the app went away or was replaced, so the end is not in the log";
+"geschiedenis.logboekweg" = "The log is not at %@.";
+"geschiedenis.leesfout" = "%1$@ could not be read: %2$@";
+"reden.appafgesloten" = "the app was quit";
+
+/* --- The last loose sentences: connecting to the channel, starting a subprocess, the arming countdown, and the login-item refusal. --- */
+"kanaal.padtelang" = "The path to the control channel is too long (%1$d of %2$d characters): %3$@";
+"kanaal.verbindenmislukt" = "Connecting to %1$@ failed: %2$@";
+"shell.nietgestart" = "could not start %1$@: %2$@";
+"shell.timeout" = "%1$@ did not respond within %2$ds";
+"vlag.pmsetfout" = "pmset reported an error";
+"arming.verlopen" = "lapsed";
+"arming.nogseconden" = "%d s left";
+"arming.nogminuten" = "%d min left";
+"login.doorgebruikergeweigerd" = "You switched Dopamine Code off under System Settings → General → Login Items & Extensions. Switch it back on there.";
+
+/* --- The watchdog: what a round concluded, and whether it is installed. --- */
+"wachter.melding.onafgemaakt" = "unfinished round";
+"wachter.melding.vlaguit" = "the sleep block was off";
+"wachter.melding.appdraait" = "the app is running";
+"wachter.melding.nietvanons" = "block on, but not ours";
+"wachter.melding.respijt" = "grace after a deliberate quit (%d×)";
+"wachter.melding.zonderapp" = "block on with no app (%d×)";
+"wachter.melding.bundelonleesbaar" = "cannot read the bundle";
+"wachter.melding.bouwmap" = "copy from the build directory, nothing started";
+"wachter.melding.wachten" = "waiting until the next attempt is allowed";
+"wachter.melding.bundelnietinorde" = "bundle not in order";
+"wachter.melding.rechtstreeks" = "started directly";
+"wachter.melding.rechtstreeksmislukt" = "starting directly failed";
+"wachter.melding.teruggehaald" = "app brought back (attempt %d)";
+"wachter.melding.terughalenmislukt" = "bringing it back failed";
+"wachter.vorigeafsluiting" = "Previous quit at %1$@ (%2$@); the sleep block was then %3$@";
+"wachter.stondtoen.aan" = "still on.";
+"wachter.stondtoen.uit" = "off.";
+"wachter.nietingesteld.geenexecutable" = "not installed — the bundle has no CFBundleExecutable";
+"wachter.nietingesteld.bouwmap" = "not installed for a copy from the build directory";
+"wachter.nietingesteld.fout" = "not installed — %@";
+"wachter.nietgeladen.launchctl" = "NOT loaded — launchctl refused: %@";
+
+/* --- The summary of several network outages, for the report when the lid opens. --- */
+"storing.samenvatting.min.een" = "No internet %1$d times, about %2$d minute in total. The first time: %3$@.";
+"storing.samenvatting.min.meer" = "No internet %1$d times, about %2$d minutes in total. The first time: %3$@.";

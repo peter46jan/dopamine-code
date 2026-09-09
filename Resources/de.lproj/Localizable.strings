@@ -47,7 +47,7 @@
 /* --- Menü: Tastaturbeleuchtung --- */
 "menu.verlichting.titel" = "Tastaturbeleuchtung";
 "menu.verlichting.schermuit" = "Die Tastatur bleibt gerade dunkel, weil der Bildschirm aus ist. Was du hier einstellst, siehst du erst, wenn er wieder angeht.";
-"menu.verlichting.geendirect" = "Dieser Mac lässt die Beleuchtung nicht direkt einstellen. Dopamine Code kann sie nur schalten, indem es die Helligkeitstasten nachahmt, und dafür braucht es die Erlaubnis unter Datenschutz → Bedienungshilfen.";
+"menu.verlichting.geendirect" = "Dieser Mac lässt die Beleuchtung nicht direkt einstellen. Dopamine Code kann sie nur schalten, indem es die Helligkeitstasten nachahmt, und dafür braucht es die Erlaubnis unter Datenschutz & Sicherheit → Bedienungshilfen.";
 "menu.verlichting.instellingen" = "Systemeinstellungen öffnen";
 
 /* --- Menü: Aktualisierungen --- */
@@ -89,9 +89,9 @@
 "trigger.sneltoets" = "mit dem Kurzbefehl eingeschaltet";
 
 /* --- Wat er tijdens een sessie met slot en scherm gebeurt --- */
-"gedrag.slot.klep" = "sperrt beim Schließen des Deckels";
-"gedrag.slot.meteen" = "sperrt sofort";
-"gedrag.slot.nooit" = "sperrt nicht";
+"gedrag.slot.klep" = "sperrt sich beim Schließen des Deckels";
+"gedrag.slot.meteen" = "sperrt sich sofort";
+"gedrag.slot.nooit" = "sperrt sich nie";
 "gedrag.scherm.klep" = "Bildschirm aus beim Schließen des Deckels";
 "gedrag.scherm.meteen" = "Bildschirm sofort aus";
 "gedrag.scherm.aan" = "Bildschirm bleibt an";
@@ -146,7 +146,7 @@
 /* --- Instellingen · Algemeen: hoe de app zich meldt --- */
 "alg.meldt.titel" = "Wie sich die App meldet";
 "alg.melding" = "Mitteilung, wenn etwas passiert, während du weg bist";
-"alg.melding.uitleg" = "Eine Mitteilung kommt, wenn das Wachhalten von selbst geendet hat, wenn dieses Beenden misslang, wenn der Mac zu warm wurde, wenn der Mac trotzdem eingeschlafen ist, wenn die Sicherung die App zurückholen musste, und wenn sich etwas von selbst einschalten wollte, aber nicht konnte. Die Mitteilung wartet, bis dein Bildschirm entsperrt ist, und bleibt dann stehen — einen Ton um 03:12 hört niemand. Keine Mitteilung kommt, wenn das automatische Einschalten geklappt hat: das steht im Panel und im Protokoll, und eine tägliche Mitteilung um 09:00 würde die sechs oben verwässern.";
+"alg.melding.uitleg" = "Eine Mitteilung kommt, wenn das Wachhalten von selbst geendet hat, wenn dieses Beenden misslang, wenn der Mac zu warm wurde, wenn der Mac trotzdem eingeschlafen ist, wenn das Sicherheitsnetz die App zurückholen musste, und wenn sich etwas von selbst einschalten wollte, aber nicht konnte. Die Mitteilung wartet, bis dein Bildschirm entsperrt ist, und bleibt dann stehen — einen Ton um 03:12 hört niemand. Keine Mitteilung kommt, wenn das automatische Einschalten geklappt hat: das steht im Panel und im Protokoll, und eine tägliche Mitteilung um 09:00 würde die sechs oben verwässern.";
 "alg.geluid" = "Ton beim Ein- und Ausschalten";
 "alg.geluid.netwerk" = "Ton, wenn die Internetverbindung ausfällt";
 "alg.knipper" = "Tastaturbeleuchtung kurz blinken lassen";
@@ -232,7 +232,7 @@
 
 /* --- Instellingen · Zelf aanzetten: klep en vangnetten --- */
 "aan.klep.titel" = "Sobald du den Deckel schließt";
-"aan.klep.uitleg" = "Das steht im Menüleisten-Panel und nicht hier, denn es gilt einmal: du klickst \"Einschalten, sobald ich den Deckel schließe\", du klappst zu, und das Wachhalten schaltet ein. Tust du es nicht, verfällt es nach fünf Minuten von selbst und die App sagt das auch. Es überlebt bewusst keinen Neustart: dass etwas Stunden später noch auslöst, erwartet niemand.";
+"aan.klep.uitleg" = "Das steht im Menüleisten-Panel und nicht hier, denn es gilt einmal: du klickst \"Wach halten, sobald ich den Deckel schließe\", du klappst zu, und das Wachhalten schaltet ein. Tust du es nicht, verfällt es nach fünf Minuten von selbst und die App sagt das auch. Es überlebt bewusst keinen Neustart: dass etwas Stunden später noch auslöst, erwartet niemand.";
 "aan.omheen.titel" = "Was auf jeden Fall drumherum bleibt";
 "aan.omheen.uitleg" = "Alles, was sich hier von selbst einschaltet, nimmt genau denselben Weg wie der Schalter: dasselbe Zeitlimit, dieselbe Akkugrenze und dieselbe Temperaturüberwachung. Kann in dem Moment nicht sicher eingeschaltet werden — Akku zu leer, Mac zu warm oder Passwortfreistellung weg — passiert nichts, und du bekommst eine Mitteilung darüber. Ein Zeitplan läuft nie länger als das Zeitlimit: steht das auf 4 Stunden und das Fenster bis 18:00, endet es um 13:00 und nicht um 18:00. Und innerhalb eines Fensters schaltet der Zeitplan höchstens einmal ein, auch wenn zwischendurch etwas beendet wurde — sonst würde der Zeitplan zurücksetzen, was eine Sicherung gerade fallen ließ.";
 
@@ -315,7 +315,7 @@
 /* --- Meldingen die de app in beeld zet --- */
 "melding.opgeruimd" = "Der Mac wurde noch von einem früheren Mal wach gehalten; das ist aufgeräumt.";
 "melding.kanniet.slapen" = "Der Mac kann gerade nicht schlafen. Installiere die Passwortfreistellung unter Einstellungen → Diagnose, dann räumt Dopamine Code das von selbst auf.";
-"melding.trigger.mislukt" = "Automatisches Einschalten misslang (%1$@): %2$@";
+"melding.trigger.mislukt" = "Automatisches Einschalten misslang (weil %1$@): %2$@";
 "melding.staat.al.aan" = "Das Wachhalten ist schon an; das Vorbereiten hat jetzt keinen Sinn.";
 "melding.nietmeerklaar" = "Es steht nicht mehr bereit; Zuklappen bewirkt jetzt nichts.";
 "melding.trigger.draaital" = "%@ ist jetzt als Auslöser eingestellt. Es läuft bereits, also passiert jetzt nichts; beim nächsten Start schaltet das Wachhalten ein.";
@@ -334,7 +334,7 @@
 "melding.letop.zondergrant" = "Achtung: ohne die Passwortfreistellung können Zeitlimit, Akkugrenze und Temperaturüberwachung den Mac später nicht selbst wieder schlafen lassen.";
 "melding.letop.geenwachtwoord" = "Achtung: auf diesem Mac ist eingestellt, dass nach dem Sperren kein Passwort verlangt wird. Der Bildschirm sperrt also, aber jeder kann ihn wieder öffnen.";
 "melding.slot.viascreensaver" = "Bildschirm über den Bildschirmschoner gesperrt.";
-"melding.slot.mislukt" = "Der Bildschirm hat NICHT gesperrt — der Mac steht gleich unbeaufsichtigt offen. Das Wachhalten läuft einfach weiter.";
+"melding.slot.mislukt" = "Der Bildschirm wurde NICHT gesperrt — der Mac steht gleich unbeaufsichtigt offen. Das Wachhalten läuft einfach weiter.";
 "melding.scherm.nietuit" = "Der Bildschirm ging nicht aus. Unter geschlossenem Deckel brennt er dann unsichtbar weiter und kostet Akku.";
 "melding.geannuleerd.nogwakker" = "Abgebrochen — der Mac wird weiterhin wach gehalten.";
 "melding.uitzetten.mislukt" = "Das Ausschalten misslang. Setz es selbst im Terminal zurück mit: sudo pmset -a disablesleep 0";
@@ -352,7 +352,7 @@
 "melding.tot.app.eneind" = "Der Mac bleibt wach, bis %1$@ fertig ist, und keinesfalls länger als bis %2$@.";
 "melding.sessie.ookapp" = "Die laufende Sitzung endet jetzt auch, sobald %@ fertig ist.";
 "melding.bezig" = "Gerade mit der Schlafsperre beschäftigt; versuch es gleich erneut.";
-"melding.toegankelijkheid" = "Dopamine Code braucht die Erlaubnis unter Systemeinstellungen → Datenschutz → Bedienungshilfen, um die Helligkeitstasten nachzuahmen.";
+"melding.toegankelijkheid" = "Dopamine Code braucht die Erlaubnis unter Systemeinstellungen → Datenschutz & Sicherheit → Bedienungshilfen, um die Helligkeitstasten nachzuahmen.";
 "melding.verlichting.mislukt" = "Die Tastaturbeleuchtung konnte nicht geschaltet werden.";
 "melding.helderheid.terug" = "Die automatische Tastaturhelligkeit steht wieder so, wie du sie hattest.";
 "melding.nietsterug" = "Es gab nichts zurückzusetzen.";
@@ -389,7 +389,7 @@
 /* --- Instellingen · Taal --- */
 "taal.titel" = "Sprache";
 "taal.kiezer" = "Sprache der App";
-"taal.systeem" = "Systemsprache folgen";
+"taal.systeem" = "Systemsprache übernehmen";
 "taal.uitleg" = "Unabhängig von der Sprache des restlichen Macs. Das schreibt dieselbe Einstellung wie Systemeinstellungen → Sprache & Region → Apps, die beiden können also nicht auseinanderlaufen.";
 "taal.pasnavolgende" = "Die neue Sprache erscheint beim nächsten Start der App. Beende sie über das Menü und öffne sie erneut.";
 "taal.nuactief" = "Jetzt aktiv: %@";
@@ -399,7 +399,7 @@
 "kaart.gearmd" = "Wartet auf den Deckel";
 "kaart.tot" = "wach bis %@";
 "kaart.eindigt" = "Endet um";
-"vangnet.kop" = "Sicherungen";
+"vangnet.kop" = "Sicherheitsnetze";
 "vangnet.accu.lader" = "am Netzteil";
 "vangnet.wachter.interval" = "alle 30 s";
 "vangnet.wachter.nognietgekeken" = "hat noch nicht nachgesehen";
@@ -458,7 +458,7 @@
 "stop.warm.eenheid.systeem" = "Wie macOS";
 "stop.warm.eenheid.celsius" = "Celsius";
 "stop.warm.eenheid.fahrenheit" = "Fahrenheit";
-"stop.warm.eenheid.uitleg" = "Die gemessene Chiptemperatur steht im Panel neben der Wärmeanzeige. Die Sicherung greift nicht bei diesen Graden, sondern bei der vierstufigen Stufe, die macOS selbst meldet — ein heißer Mac ist nicht dasselbe wie ein gedrosselter. Sind die Sensoren nicht lesbar, steht dort nichts.";
+"stop.warm.eenheid.uitleg" = "Die gemessene Chiptemperatur steht im Panel neben der Wärmeanzeige. Das Sicherheitsnetz greift nicht bei diesen Graden, sondern bei der vierstufigen Einstufung, die macOS selbst meldet — ein heißer Mac ist nicht dasselbe wie ein gedrosselter. Sind die Sensoren nicht lesbar, steht dort nichts.";
 
 /* De vakantiestand: een sessie zonder tijdslimiet, of met een limiet in dagen.
    Alleen de tijdslimiet gaat eraf; de accugrens en de warmtebewaking blijven. */
@@ -469,7 +469,7 @@
 "menu.vakantie.uitleg.onbeperkt" = "Kein Zeitlimit: die Sitzung läuft, bis du sie ausschaltest. Die Akkugrenze und die Wärmeüberwachung greifen weiterhin ein, und der Wächter räumt das Flag auf, wenn die App abstürzt.";
 "kaart.vakantie" = "Bleibt wach";
 "reden.vakantie" = "der Urlaubsmodus wurde ausgeschaltet";
-"reden.vakantie.dagen" = "die Urlaubssitzung von %d Tagen war um";
+"reden.vakantie.dagen" = "der Urlaubsmodus von %d Tagen war um";
 "melding.tot.app.vakantie" = "Der Mac bleibt wach, bis %@ fertig ist, ohne Endzeit.";
 
 /* Het scherm aanhouden: een IOPMAssertion, iets anders dan de kernelvlag. */
@@ -486,3 +486,188 @@
 "alg.muispor.zichtbaar.uitleg" = "Der Zeiger macht einen Bogen von 120 Punkten hin und zurück statt einen. Damit du siehst, dass es funktioniert. Er endet, wo er begann, und da nur nach Minuten der Stille angestoßen wird, kann er deiner Hand nie in die Quere kommen.";
 "alg.netwerkaan" = "Netzwerk während einer Sitzung erreichbar halten";
 "alg.netwerkaan.uitleg" = "Das Kernel-Flag hält das System wach, sagt aber nichts über das Funkmodul: macOS darf das WLAN in einen Sparmodus versetzen, während der Mac weiterarbeitet. Dies hält ihn erreichbar, auch bei geschlossenem Deckel. Sichtbar in pmset -g assertions. Es beseitigt eine Ursache für Verbindungsabbrüche; einen neu startenden Router rettet es nicht.";
+
+/* --- Die Kommandozeile. Bisher lief sie auf festen niederländischen Sätzen in
+   Sources/dopamine/main.swift. --- */
+"cli.hulp" = "dopamine — Dopamine Code über die Befehlszeile steuern\n\n  dopamine on                     das Wachhalten mit der eingestellten Dauer starten\n  dopamine on --for 2h            ... mit eigener Dauer (2h, 90m, 1h30m, 45)\n  dopamine on --until 18:00       ... bis zu einer Uhrzeit (eine bereits vergangene\n                                      Uhrzeit gilt als morgen)\n  dopamine on --until-exit 4711   ... bis dieser Prozess fertig ist; aus einem Skript:\n                                      dopamine on --until-exit $$\n  dopamine off                    das Wachhalten beenden\n  dopamine status                 was gerade los ist\n  dopamine status --json          dasselbe, für Skripte\n\nMit --json ist die Ausgabe immer gültiges JSON, auch wenn etwas schiefgeht. Das Urteil steht\nim Exit-Code:\n\n  0  erfolgreich\n  1  abgelehnt (ein Sicherheitsnetz, oder das Beenden schlug fehl)\n  2  falsche Verwendung\n  4  Dopamine Code läuft nicht\n\nDas Zeitlimit, die Akkugrenze und die Temperaturüberwachung gelten auch hier. Eine Dauer wird auf\n5 Minuten bis 24 Stunden begrenzt, und eine laufende Sitzung wird nie verlängert — dafür\nmusst du sie erst beenden.";
+"cli.geenopdracht" = "Gib einen Befehl an: on, off oder status.";
+"cli.onbekendeopdracht" = "Unbekannter Befehl: %@";
+"cli.onbekendeoptie" = "Unbekannte Option: %@";
+"cli.mistwaarde" = "Für %@ fehlt ein Wert.";
+"cli.geenduur" = "'%@' ist keine Dauer. Verwende zum Beispiel 2h, 90m oder 1h30m.";
+"cli.geentijdstip" = "'%@' ist keine Uhrzeit. Verwende zum Beispiel 18:00.";
+"cli.geenprocesnummer" = "'%@' ist keine Prozessnummer.";
+"cli.appdraaitniet" = "Dopamine Code läuft nicht, es gibt also nichts zu steuern. Starte die App und versuche es erneut.";
+"cli.verbindenmislukt" = "Die Verbindung zu Dopamine Code schlug fehl: %@";
+"cli.vraagnietverstuurd" = "Die Anfrage konnte nicht an Dopamine Code gesendet werden.";
+"cli.geenantwoord" = "Dopamine Code gab keine Antwort. Schau ins Protokoll: ~/Library/Logs/Dopamine Code/dopamine-code.log";
+"cli.antwoordonleesbaar" = "Die Antwort von Dopamine Code war nicht lesbar.";
+"cli.antwoordnietweertegeven" = "Die Antwort konnte nicht dargestellt werden.";
+
+/* --- Die Dauerauswahl: was zurückkommt, wenn du eine Endzeit oder eine Dauer wählst. --- */
+"duur.klem.langer" = "Länger als 24 Stunden ist nicht möglich.";
+"duur.klem.korter" = "Kürzer als 5 Minuten ist nicht möglich.";
+"duur.sessie.geklemd" = "%1$@ Diese Sitzung endet um %2$@, %3$@ nach dem Einschalten.";
+"duur.sessie.grens" = "Diese Sitzung endet früher, um %@: darüber liegt eine Grenze, die sich hiermit nicht verschieben lässt.";
+"duur.sessie.stopt" = "Diese Sitzung endet um %1$@ — %2$@ nach dem Einschalten.";
+"duur.staart" = "Die Dauer steht jetzt auf %1$@. Schaltest du das Wachhalten jetzt ein, endet es um %2$@; schaltest du es später ein, verschiebt sich das Ende mit.";
+"duur.tot" = "Bis %1$@. %2$@";
+
+/* --- Ablehnungen: warum das Einschalten oder Anpassen nicht durchging. --- */
+"weiger.pid.weg.sessieloopt" = "Prozess %d existiert nicht (mehr). Die Sitzung läuft einfach weiter.";
+"weiger.sessie.zondereindtijd" = "Es läuft eine Sitzung ohne Endzeit; sie wird von selbst beendet. Versuche es gleich erneut.";
+"weiger.nietverlengen" = "Eine laufende Sitzung wird nicht verlängert — beende die Sitzung zuerst. Sie läuft jetzt bis %@.";
+"weiger.accu" = "Akku %1$d%%, unter deiner Grenze von %2$d%%. Schließ das Netzteil an, oder senke die Akkugrenze.";
+"weiger.temperatuur" = "Der Mac ist zu warm. Warte, bis er abgekühlt ist, und versuche es erneut.";
+"weiger.pid.weg.nietsgestart" = "Prozess %d existiert nicht (mehr); es wurde nichts gestartet.";
+"weiger.grant.ontbreekt" = "%@. Ohne diese Regel können das Zeitlimit, die Akkugrenze und die Temperaturüberwachung den Mac später nicht von selbst wieder schlafen lassen. Installiere sie unter Einstellungen → Diagnose.";
+"weiger.geentoestemming" = "Keine Berechtigung, die Schlafsperre einzuschalten. Installiere die Passwortfreistellung unter Einstellungen → Diagnose.";
+"weiger.geannuleerd" = "Beim Abfragen der Berechtigung abgebrochen.";
+"weiger.vlag.anders" = "Der Befehl meldete keinen Fehler, aber die Schlafsperre steht auf %@ statt auf 1.";
+"weiger.nietgelukt" = "Das Wachhalten hat nicht funktioniert: %@";
+"weiger.albeeindigd" = "Die Sitzung war schon beendet, bevor sie richtig lief.";
+
+/* --- Der Steuerkanal: was `dopamine on`, `off` und `status` zurückgeben. --- */
+"kanaal.nietgestart" = "nicht gestartet";
+"kanaal.gestart.tot" = "Der Mac bleibt bis %1$@ wach (%2$@).";
+"kanaal.gestart.zondereindtijd" = "Der Mac bleibt ohne Endzeit wach (Urlaubsmodus).";
+"kanaal.stopt.eerder" = "Endet früher, sobald %@ fertig ist.";
+"kanaal.limiet.ervoor" = "Du wolltest bis %1$@, aber das Zeitlimit von %2$@ liegt davor.";
+"kanaal.liepal" = "Es lief schon eine Sitzung; eine zweite wurde nicht gestartet.";
+"kanaal.liepal.tot" = "Sie läuft bis %@.";
+"kanaal.stopt.ook" = "Sie endet auch, sobald %@ fertig ist.";
+"kanaal.bezet" = "Dopamine Code ist gerade mit der Schlafsperre beschäftigt. Versuche es gleich erneut.";
+"kanaal.liepniets" = "Es lief nichts; das Wachhalten war schon aus.";
+"kanaal.uit" = "Das Wachhalten ist aus; der Mac darf wieder schlafen.";
+"kanaal.uitzetten.mislukt" = "Das Ausschalten hat nicht funktioniert.";
+"kanaal.zetzelfterug" = "Setze es notfalls selbst zurück: sudo pmset -a disablesleep 0";
+"kanaal.status.aan" = "Der Mac wird wach gehalten";
+"kanaal.status.tot" = " bis %@";
+"kanaal.status.koppeling" = ", und hört auf, sobald %@ fertig ist";
+"kanaal.status.vlagzondersessie" = "Die Schlafsperre ist an, ohne dass eine Sitzung läuft. Dopamine Code versucht, das zurückzusetzen.";
+"kanaal.status.onleesbaar" = "Die Schlafsperre lässt sich nicht auslesen.";
+
+/* --- Das Sicherheitsnetz, das die App nach kill -9 oder einem Absturz zurückholt. --- */
+"kanaal.afsluiten" = "Dopamine Code wird beendet.";
+"vangnet.weggevallen" = "Dopamine Code war verschwunden, während der Mac wach gehalten wurde.";
+"vangnet.staart.opgeruimd" = "Die Schlafsperre ist aufgeräumt; der Mac darf wieder schlafen.";
+"vangnet.staart.nogaan" = "Die Schlafsperre ist noch an — der Mac kann jetzt nicht schlafen.";
+"vangnet.terug.klok" = "Um %1$@ vom Sicherheitsnetz zurückgeholt. %2$@";
+
+/* --- Der Anlass als Teilsatz, für "Von selbst eingeschaltet, weil …". --- */
+"omdat.schakelaar" = "du den Schalter umgelegt hast";
+"omdat.cli" = "die Befehlszeile darum bat";
+"omdat.klep" = "du darum gebeten hattest, dass es sich einschaltet, sobald der Deckel zugeht";
+"omdat.app" = "%@ gestartet ist";
+"omdat.schema" = "das Zeitplanfenster %@ aufging";
+"omdat.sneltoets" = "du den Kurzbefehl gedrückt hast";
+"arming.vervallen" = "Es steht nicht mehr bereit: du hast den Deckel nicht innerhalb von %d Minuten geschlossen. Das Wachhalten ist aus.";
+"trigger.tot" = "bis %1$@ (%2$@)";
+"trigger.zondereindtijd" = "ohne Endzeit (Urlaubsmodus)";
+"trigger.aangezet" = "Von selbst eingeschaltet, weil %1$@. Der Mac bleibt %2$@ wach.";
+"melding.trigger.geweigerd.klok" = "Um %1$@ wollte Dopamine Code das Wachhalten von selbst einschalten (weil %2$@), konnte aber nicht: %3$@";
+
+/* --- Bereitstellung am Deckel, und der Wächter, der still geworden ist. --- */
+"arming.klepaldicht" = "Der Deckel ist schon zu. Das gilt für das nächste Zuklappen — klapp ihn erst auf. Zum sofortigen Einschalten nimm den Schalter.";
+"arming.staatklaar" = "Bereit: das Wachhalten schaltet sich ein, sobald du den Deckel zuklappst. Verfällt von selbst um %@.";
+"wachter.hoelang.minuten" = "seit %d Minuten nicht mehr";
+"wachter.hoelang.nooit" = "noch nie";
+"wachter.stil" = "Der Wächter hat %@ nachgesehen. Solange das so bleibt, bleibt der Mac wach, wenn Dopamine Code hart abgeschossen wird. Sieh unter Systemeinstellungen → Allgemein → Anmeldeobjekte & Erweiterungen nach, ob Dopamine Code im Hintergrund laufen darf, oder nutze 'Wächter reparieren' unter Einstellungen → Diagnose.";
+
+/* --- Vier weitere Stoppgründe, neben reden.tijdom und reden.warm. --- */
+"reden.vlagzondersessie" = "das Flag war an, ohne dass eine Sitzung lief";
+"reden.vlagonleesbaar" = " (Flag unlesbar)";
+"reden.geannuleerd.aanzetten" = "beim Einschalten abgebrochen";
+"reden.nainstallatie" = "Aufräumen nach der Installation der Freistellung";
+"reden.schemaliepot" = "der Zeitplan lief bis %@";
+
+/* --- Meldungen, die Wärmemeldung, die Freigabe, Start bei der Anmeldung und der Warnhinweis beim Beenden. --- */
+"melding.sessieafgelopen.klok" = "Um %1$@: %2$@. Der Mac darf wieder schlafen.";
+"melding.stoppen.mislukt.klok" = "Der %1$d. Versuch zu beenden schlug fehl (%2$@). Setze es selbst im Terminal zurück mit: sudo pmset -a disablesleep 0";
+"melding.warm.snelheid" = " und läuft jetzt mit %d%% Geschwindigkeit.";
+"melding.warm.punt" = ".";
+"melding.warm.kritiek" = "Wird es kritisch, hört Dopamine Code von selbst auf.";
+"melding.warm.gestopt" = "Das Wachhalten wurde beendet, damit macOS selbst wieder eingreifen kann: dieser automatische Notschlaf ist aus, solange der Mac wach gehalten wird.";
+"grant.geinstalleerd" = "Passwortfreistellung installiert.";
+"grant.geschreven.nietbevestigd" = "Die Regel ist geschrieben, aber das System bestätigt sie noch nicht.";
+"login.nogaanzetten" = "Schalte Dopamine Code jetzt noch unter Systemeinstellungen → Allgemein → Anmeldeobjekte & Erweiterungen ein.";
+"login.gelukt" = "Dopamine Code startet ab jetzt bei der Anmeldung mit (über %@).";
+"afsluiten.alert.kop" = "Der Mac kann noch immer nicht schlafen";
+"afsluiten.alert.tekst" = "Dopamine Code konnte das Wachhalten beim Beenden nicht ausschalten. Setze es selbst zurück: öffne Terminal und führe diese Zeile aus.";
+
+/* --- Der Steuerkanal selbst: ob er lauscht, und warum nicht. --- */
+"kanaal.nogniet" = "noch nicht gestartet";
+"kanaal.luistert" = "lauscht auf %@";
+"kanaal.werktniet" = "funktioniert nicht — %@";
+"kanaal.werktniet.log" = "Der Steuerkanal konnte nicht gestartet werden: %@. Die Befehlszeile funktioniert jetzt nicht; die Menüleiste schon.";
+"kanaal.fout.padtelang" = "der Pfad hat %1$d Zeichen und es passen nur %2$d: %3$@";
+"kanaal.fout.mapniet" = "das Verzeichnis konnte nicht erstellt werden: %@";
+"kanaal.fout.aleeniets" = "auf %@ lauscht schon etwas; diese Instanz übernimmt den Steuerkanal nicht";
+"kanaal.fout.socket" = "socket() schlug fehl: %@";
+"kanaal.fout.padpastniet" = "der Pfad passt nicht in eine Socket-Adresse: %@";
+"kanaal.fout.bind" = "bind() auf %1$@ schlug fehl: %2$@";
+"kanaal.fout.listen" = "listen() schlug fehl: %@";
+"kanaal.nietbegrepen" = "Dopamine Code hat diese Anfrage nicht verstanden.";
+
+/* --- Meldungstitel, das Tastenkürzel, die Freigabe, das Diagnose-Flag und die Verlaufszeile. --- */
+"melding.titel.sessiegestopt" = "Das Wachhalten hat von selbst aufgehört";
+"melding.titel.kannietslapen" = "Der Mac kann nicht schlafen";
+"melding.titel.tewarm" = "Der Mac ist zu warm geworden";
+"melding.titel.tochgeslapen" = "Der Mac hat trotzdem geschlafen";
+"melding.titel.weggevallen" = "Dopamine Code war verschwunden";
+"melding.titel.triggermislukt" = "Das selbsttätige Einschalten hat nicht funktioniert";
+"sneltoets.modifiernodig" = "Ein Kurzbefehl braucht mindestens ⌘, ⌥ oder ⌃. Ohne so eine Taste würde er diese Taste in jeder App abfangen.";
+"sneltoets.nietaangenomen" = "macOS wollte den Kurzbefehl nicht annehmen (Fehlercode %d).";
+"sneltoets.albezet" = "%@ wird schon von etwas anderem benutzt. Wähle eine andere Kombination.";
+"sneltoets.mislukt" = "%1$@ konnte nicht eingestellt werden (Fehlercode %2$d).";
+"grant.wachtwoordnodig" = "sudo erlaubt 'pmset -a disablesleep %@' schon, aber nicht ohne Passwort — wahrscheinlich über die Standardregel für Administratoren, nicht über die Dopamine-Code-Regel.";
+"grant.sudoweigert" = "sudo lehnt die Regel ab";
+"grant.scriptontbreekt" = "Das Grant-Skript ist nicht in die App eingebaut. Baue neu mit ./build.sh";
+"grant.scriptbeschadigd" = "Das eingebaute Grant-Skript ist beschädigt.";
+"grant.prompt.installeren" = "Dopamine Code installiert eine sudoers-Regel für genau zwei pmset-Befehle.";
+"grant.prompt.verwijderen" = "Dopamine Code entfernt seine sudoers-Regel.";
+"diag.vlag.aan" = "1 — der Mac darf nicht schlafen";
+"diag.vlag.uit" = "0 — der Mac darf schlafen";
+"geschiedenis.vangnetgreepin" = "ein Sicherheitsnetz griff ein: %@";
+"geschiedenis.geenafsluitregel" = "keine Abschlusszeile — die App ist verschwunden oder wurde ersetzt, das Ende steht also nicht im Protokoll";
+"geschiedenis.logboekweg" = "Das Protokoll liegt nicht unter %@.";
+"geschiedenis.leesfout" = "%1$@ konnte nicht gelesen werden: %2$@";
+"reden.appafgesloten" = "die App wurde beendet";
+
+/* --- Die letzten einzelnen Sätze: Verbinden mit dem Kanal, Starten eines Subprozesses, der Countdown der Bereitstellung und die Ablehnung des Anmeldeobjekts. --- */
+"kanaal.padtelang" = "Der Pfad zum Steuerkanal ist zu lang (%1$d von %2$d Zeichen): %3$@";
+"kanaal.verbindenmislukt" = "Die Verbindung zu %1$@ schlug fehl: %2$@";
+"shell.nietgestart" = "konnte %1$@ nicht starten: %2$@";
+"shell.timeout" = "%1$@ hat nicht innerhalb von %2$ds geantwortet";
+"vlag.pmsetfout" = "pmset meldete einen Fehler";
+"arming.verlopen" = "verfallen";
+"arming.nogseconden" = "noch %d s";
+"arming.nogminuten" = "noch %d Min.";
+"login.doorgebruikergeweigerd" = "Du hast Dopamine Code unter Systemeinstellungen → Allgemein → Anmeldeobjekte & Erweiterungen ausgeschaltet. Schalte es dort wieder ein.";
+
+/* --- Der Wächter: was eine Runde ergab, und ob er eingerichtet ist. --- */
+"wachter.melding.onafgemaakt" = "unvollendete Runde";
+"wachter.melding.vlaguit" = "die Schlafsperre war aus";
+"wachter.melding.appdraait" = "die App läuft";
+"wachter.melding.nietvanons" = "Sperre an, aber nicht von uns";
+"wachter.melding.respijt" = "Aufschub nach bewusstem Beenden (%d×)";
+"wachter.melding.zonderapp" = "Sperre an ohne App (%d×)";
+"wachter.melding.bundelonleesbaar" = "kann das Bundle nicht lesen";
+"wachter.melding.bouwmap" = "Kopie aus dem Build-Ordner, nichts gestartet";
+"wachter.melding.wachten" = "warten, bis der nächste Versuch erlaubt ist";
+"wachter.melding.bundelnietinorde" = "Bundle nicht in Ordnung";
+"wachter.melding.rechtstreeks" = "direkt gestartet";
+"wachter.melding.rechtstreeksmislukt" = "der direkte Start schlug fehl";
+"wachter.melding.teruggehaald" = "App zurückgeholt (Versuch %d)";
+"wachter.melding.terughalenmislukt" = "das Zurückholen schlug fehl";
+"wachter.vorigeafsluiting" = "Letztes Beenden um %1$@ (%2$@); die Schlafsperre war damals %3$@";
+"wachter.stondtoen.aan" = "noch an.";
+"wachter.stondtoen.uit" = "aus.";
+"wachter.nietingesteld.geenexecutable" = "nicht eingerichtet — dem Bundle fehlt CFBundleExecutable";
+"wachter.nietingesteld.bouwmap" = "nicht eingerichtet für eine Kopie aus dem Build-Ordner";
+"wachter.nietingesteld.fout" = "nicht eingerichtet — %@";
+"wachter.nietgeladen.launchctl" = "NICHT geladen — launchctl hat abgelehnt: %@";
+
+/* --- Die Zusammenfassung mehrerer Netzwerkausfälle, für die Meldung beim Aufklappen. --- */
+"storing.samenvatting.min.een" = "%1$d× kein Internet, zusammen etwa %2$d Minute. Das erste Mal: %3$@.";
+"storing.samenvatting.min.meer" = "%1$d× kein Internet, zusammen etwa %2$d Minuten. Das erste Mal: %3$@.";

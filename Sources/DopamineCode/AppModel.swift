@@ -703,7 +703,7 @@ final class AppModel: ObservableObject {
         if let cap = notLaterThan, cap < byLimit {
             return (cap, capReason ?? L10n.t("reden.liepot", Self.clockText(cap)))
         }
-        return (byLimit, "de ingestelde tijd was om")
+        return (byLimit, L10n.t("reden.tijdom"))
     }
 
     private func applyDeadline(start: Date) {
@@ -807,8 +807,8 @@ final class AppModel: ObservableObject {
         let werkelijkeMinuten = autoOffMinutes
         let geklemd = werkelijkeMinuten != gevraagdeMinuten
         let klemZin = gevraagdeMinuten > werkelijkeMinuten
-            ? "Langer dan 24 uur kan niet."
-            : "Korter dan 5 minuten kan niet."
+            ? L10n.t("duur.klem.langer")
+            : L10n.t("duur.klem.korter")
         let gevraagdeKlok = Self.clockText(doel)
 
         // Loopt er een sessie, dan is `deadline` het enige eerlijke antwoord — en niet de som
@@ -817,25 +817,23 @@ final class AppModel: ObservableObject {
         if intendedOn, let echteEinde = deadline {
             let echteKlok = Self.clockText(echteEinde)
             if geklemd {
-                return "\(klemZin) Deze sessie stopt om \(echteKlok), "
-                    + "\(Self.durationText(werkelijkeMinuten)) na het aanzetten."
+                return L10n.t("duur.sessie.geklemd",
+                              klemZin, echteKlok, Self.durationText(werkelijkeMinuten))
             }
             // Een minuut speling: de eindtijd is op de seconde nauwkeurig, de kiezer niet.
             if abs(echteEinde.timeIntervalSince(doel)) >= 60 {
-                return "Deze sessie stopt al eerder, om \(echteKlok): daar ligt een grens "
-                    + "overheen die hiermee niet op te schuiven is."
+                return L10n.t("duur.sessie.grens", echteKlok)
             }
-            return "Deze sessie stopt om \(echteKlok) — \(Self.durationText(werkelijkeMinuten)) "
-                + "na het aanzetten."
+            return L10n.t("duur.sessie.stopt", echteKlok, Self.durationText(werkelijkeMinuten))
         }
 
         // Zonder lopende sessie is er nog geen anker, dus wordt het een duur en geen tijdstip.
         // Dat hardop zeggen: zet je hem een half uur later aan, dan schuift het einde mee.
-        let staart = "De duur staat nu op \(Self.durationText(werkelijkeMinuten)). Zet je het "
-            + "wakker houden nú aan, dan stopt het om "
-            + "\(Self.clockText(nu.addingTimeInterval(Double(werkelijkeMinuten) * 60)))"
-            + "; zet je het later aan, dan schuift het einde mee."
-        return geklemd ? "\(klemZin) \(staart)" : "Tot \(gevraagdeKlok). \(staart)"
+        let staart = L10n.t(
+            "duur.staart",
+            Self.durationText(werkelijkeMinuten),
+            Self.clockText(nu.addingTimeInterval(Double(werkelijkeMinuten) * 60)))
+        return geklemd ? "\(klemZin) \(staart)" : L10n.t("duur.tot", gevraagdeKlok, staart)
     }
 
     /// Het eerstvolgende moment ná nu met dit uur en deze minuut.
@@ -948,7 +946,7 @@ final class AppModel: ObservableObject {
         // te doen en drukt het antwoord af; de vlag blijft van deze app alleen.
         let server = ControlServer { [weak self] verzoek in
             guard let self else {
-                return .lokaal(zin: "Dopamine Code is aan het afsluiten.", code: 4)
+                return .lokaal(zin: L10n.t("kanaal.afsluiten"), code: 4)
             }
             return await self.handleControl(verzoek)
         }
@@ -984,18 +982,27 @@ final class AppModel: ObservableObject {
     private func announceWatchdogRestartIfNeeded() {
         guard RestartGuard.broughtBackByWatchdog else { return }
         let opgeruimd = kernelFlag == false
+        // De sleutels staan hier voluit en niet in een variabele, ook al kan dat korter.
+        // `verify.sh` zoekt sleutels op de vorm `L10n.t("...")` / `L10n.nl("...")`; een
+        // sleutel die via een variabele binnenkomt ziet die controle niet, en dan levert een
+        // typefout geen fout op maar een kale sleutel op het scherm.
+        //
+        // Twee keer dezelfde zin uit één sleutel: het logboek blijft Nederlands, het scherm
+        // volgt de taal van de gebruiker. Zie `L10n.nl`.
         let staart = opgeruimd
-            ? "De slaapblokkade is opgeruimd; de Mac mag weer slapen."
-            : "De slaapblokkade staat nog aan — de Mac kan nu niet slapen."
-        let zin = "Dopamine Code was weggevallen terwijl de Mac wakker gehouden werd. " + staart
-        EventLog.shared.error(zin)
-        lastMessage = zin
+            ? L10n.t("vangnet.staart.opgeruimd")
+            : L10n.t("vangnet.staart.nogaan")
+        let staartNL = opgeruimd
+            ? L10n.nl("vangnet.staart.opgeruimd")
+            : L10n.nl("vangnet.staart.nogaan")
+        EventLog.shared.error(L10n.nl("vangnet.weggevallen") + " " + staartNL)
+        lastMessage = L10n.t("vangnet.weggevallen") + " " + staart
         // Met de klok erin, net als bij `sessionEnded`: dit gebeurt 's nachts en "zojuist" zegt
         // 's ochtends niets meer.
         let clock = DateFormatter()
         clock.dateFormat = "HH:mm"
         Notify.post(.restartedAfterLoss,
-                    "Om \(clock.string(from: Date())) teruggehaald door het vangnet. " + staart)
+                    L10n.t("vangnet.terug.klok", clock.string(from: Date()), staart))
     }
 
     /// Recorded once per launch so that a failure after a macOS update can be traced to
@@ -1287,7 +1294,7 @@ final class AppModel: ObservableObject {
             // open here would silently disable all three for as long as the read fails.
             status = .error(L10n.t("fout.vlag.onleesbaar"))
             if intendedOn, let reason = releaseReason() {
-                await forceRelease(reason: reason + " (vlag onleesbaar)")
+                await forceRelease(reason: reason + L10n.t("reden.vlagonleesbaar"))
             }
             return
         }
@@ -1338,7 +1345,7 @@ final class AppModel: ObservableObject {
             if !status.isError {
                 status = .error(L10n.t("fout.zondersessie"))
             }
-            await attemptRelease(reason: "vlag stond aan zonder actieve sessie")
+            await attemptRelease(reason: L10n.t("reden.vlagzondersessie"))
             return
         }
 
@@ -1450,10 +1457,7 @@ final class AppModel: ObservableObject {
         //    mislukte start geen arming achterlaat die twintig seconden later weer afgaat.
         if let arm = lidArm, !arm.isVerlopen(op: Date()),
            SleepFlag.clamshellClosed() ?? lidClosed {
-            let uitkomst = await startTrigger(
-                SessionRequest(trigger: .klepArming),
-                aanleiding: "je had gevraagd om aan te gaan zodra de klep dichtging"
-            )
+            let uitkomst = await startTrigger(SessionRequest(trigger: .klepArming))
             if uitkomst != .probeerStraksOpnieuw { lidArm = nil }
             gestart = uitkomst == .gestart
         }
@@ -1472,10 +1476,9 @@ final class AppModel: ObservableObject {
     private func verlopenArmingOpruimen() {
         guard let arm = lidArm, arm.isVerlopen(op: Date()) else { return }
         lidArm = nil
-        let zin = "Het klaarzetten is vervallen: je hebt de klep binnen "
-            + "\(Int(LidArm.geldigheid / 60)) minuten niet dichtgedaan. Het wakker houden staat uit."
-        EventLog.shared.info(zin)
-        lastMessage = zin
+        let minuten = Int(LidArm.geldigheid / 60)
+        EventLog.shared.info(L10n.nl("arming.vervallen", minuten))
+        lastMessage = L10n.t("arming.vervallen", minuten)
     }
 
     private func evaluateAppTriggers(alGestart: Bool) async -> Bool {
@@ -1506,8 +1509,7 @@ final class AppModel: ObservableObject {
 
         let uitkomst = await startTrigger(
             SessionRequest(trigger: .app(bundleID: bundleID, naam: info.naam),
-                           bindToPID: info.pid),
-            aanleiding: "\(info.naam) ging draaien"
+                           bindToPID: info.pid)
         )
         // Alleen bij "even bezig" blijft de flank staan; alles anders is een beslissing.
         if uitkomst == .probeerStraksOpnieuw { appsDieDraaiden.remove(bundleID) }
@@ -1553,8 +1555,7 @@ final class AppModel: ObservableObject {
         let uitkomst = await startTrigger(
             SessionRequest(trigger: .schema(omschrijving: venster.omschrijving),
                            notLaterThan: einde,
-                           notLaterThanReason: "het schema liep tot \(Self.clockText(einde))"),
-            aanleiding: "het schema-venster \(venster.omschrijving) ging open"
+                           notLaterThanReason: L10n.t("reden.schemaliepot", Self.clockText(einde))),
         )
         switch uitkomst {
         case .gestart:
@@ -1599,33 +1600,45 @@ final class AppModel: ObservableObject {
     /// logboek mét de naam van de trigger, plus een melding die blijft staan tot je hem leest.
     /// Een gelukte start krijgt geen melding: die zou elke werkdag om 09:00 komen en de vijf
     /// meldingen die er wél toe doen laten verwateren.
-    private func startTrigger(_ request: SessionRequest, aanleiding: String) async -> TriggerUitkomst {
+    /// De aanleiding komt uit `request.trigger` en niet uit een losse parameter. Die stond er
+    /// eerst wel, met de zin voluit bij elke aanroeper — en dat was een tweede plek die wist
+    /// hoe een sessie begonnen was, naast het waardetype dat daarvoor bestaat.
+    private func startTrigger(_ request: SessionRequest) async -> TriggerUitkomst {
+        let aanleiding = request.trigger
         switch await startSession(request) {
         case .gestart(let eind, let minuten):
             // Geen eindtijd is sinds de vakantiestand een geldige uitkomst. Het logboek hoort
             // dat te zeggen en geen tijdstip te verzinnen dat er niet is.
-            let tot = eind.map { "tot \(Self.momentText($0)) (\(Self.durationText(minuten)))" }
-                ?? "zonder eindtijd (vakantiestand)"
-            let zin = "Vanzelf aangezet omdat \(aanleiding). De Mac blijft wakker " + tot + "."
-            EventLog.shared.info(zin)
-            lastMessage = zin
+            //
+            // Twee keer dezelfde zin: het logboek blijft Nederlands, `lastMessage` volgt de
+            // taal van de gebruiker. Zie `L10n.nl`.
+            let tot = eind.map {
+                L10n.t("trigger.tot", Self.momentText($0), Self.durationText(minuten))
+            } ?? L10n.t("trigger.zondereindtijd")
+            let totNL = eind.map {
+                L10n.nl("trigger.tot", Self.momentText($0), Self.durationText(minuten))
+            } ?? L10n.nl("trigger.zondereindtijd")
+            EventLog.shared.info(L10n.nl("trigger.aangezet", aanleiding.omdatNL, totNL))
+            lastMessage = L10n.t("trigger.aangezet", aanleiding.omdat, tot)
             return .gestart
 
         case .liepAl(let eind):
-            EventLog.shared.info("\(aanleiding.prefix(1).uppercased() + aanleiding.dropFirst()), "
+            // Alleen logboek, dus alleen Nederlands.
+            let aanhef = aanleiding.omdatNL
+            EventLog.shared.info("\(aanhef.prefix(1).uppercased() + aanhef.dropFirst()), "
                                  + "maar er liep al een sessie"
                                  + (eind.map { " tot \(Self.momentText($0))" } ?? "") + ".")
             return .nietGestart
 
         case .geweigerd(let reden):
             EventLog.shared.warn("Vanzelf aanzetten geweigerd (\(request.trigger.logNaam)): \(reden)")
-            lastMessage = L10n.t("melding.trigger.mislukt", aanleiding, reden)
+            lastMessage = L10n.t("melding.trigger.mislukt", aanleiding.omdat, reden)
             if request.trigger.isAutomatisch {
                 let klok = DateFormatter()
                 klok.dateFormat = "HH:mm"
                 Notify.post(.triggerRefused,
-                            "Om \(klok.string(from: Date())) wilde Dopamine Code vanzelf aanzetten "
-                            + "(\(aanleiding)), maar dat kon niet: \(reden)")
+                            L10n.t("melding.trigger.geweigerd.klok",
+                                   klok.string(from: Date()), aanleiding.omdat, reden))
             }
             return .nietGestart
 
@@ -1650,19 +1663,18 @@ final class AppModel: ObservableObject {
         // Het gebaar gaat over de vólgende keer dichtklappen. Wapenen met de klep al dicht zou
         // betekenen dat hij meteen afgaat, en dat is iets anders dan waar de knop om vraagt.
         if SleepFlag.clamshellClosed() ?? lidClosed {
-            let zin = "De klep is al dicht. Dit gaat over de vólgende keer dat je hem dichtdoet — "
-                + "doe hem eerst open. Wil je nu aanzetten, gebruik dan de schakelaar."
-            lastMessage = zin
+            // Alleen naar het scherm: de logregel hieronder is zijn eigen Nederlandse zin en
+            // interpoleert deze niet.
+            lastMessage = L10n.t("arming.klepaldicht")
             EventLog.shared.info("Klaarzetten geweigerd: de klep is al dicht.")
             Feedback.failed()
             return
         }
         let arm = LidArm()
         lidArm = arm
-        let zin = "Staat klaar: het wakker houden gaat aan zodra je de klep dichtdoet. "
-            + "Vervalt vanzelf om \(Self.clockText(arm.verlooptOp))."
-        lastMessage = zin
-        EventLog.shared.info(zin)
+        let verlooptOp = Self.clockText(arm.verlooptOp)
+        lastMessage = L10n.t("arming.staatklaar", verlooptOp)
+        EventLog.shared.info(L10n.nl("arming.staatklaar", verlooptOp))
     }
 
     func cancelArming() {
@@ -1794,18 +1806,17 @@ final class AppModel: ObservableObject {
         let leeftijd = RestartGuard.timeSinceLastRound()
         guard leeftijd.map({ $0 > 300 }) ?? true else { return }
         warnedAboutStaleGuard = true
-        let hoelang = leeftijd.map { "al \(Int($0 / 60)) minuten" } ?? "nog nooit"
-        let zin = "De wachter heeft \(hoelang) gekeken. Zolang dat zo blijft, blijft de Mac "
-            + "wakker als Dopamine Code hard afgeschoten wordt. Kijk bij Systeeminstellingen → "
-            + "Algemeen → Inloggen en extensies of Dopamine Code op de achtergrond mag draaien, "
-            + "of gebruik 'Wachter herstellen' bij Instellingen → Diagnose."
-        EventLog.shared.warn(zin)
+        let hoelang = leeftijd.map { L10n.t("wachter.hoelang.minuten", Int($0 / 60)) }
+            ?? L10n.t("wachter.hoelang.nooit")
+        let hoelangNL = leeftijd.map { L10n.nl("wachter.hoelang.minuten", Int($0 / 60)) }
+            ?? L10n.nl("wachter.hoelang.nooit")
+        EventLog.shared.warn(L10n.nl("wachter.stil", hoelangNL))
         // Ook in het paneel, niet alleen in het logboek. Dit gaat over een vangnet dat er stil
         // niet meer is — precies het geval waarin niemand uit zichzelf het logboek opslaat, en
         // waarvoor lichtere gebeurtenissen (een geweigerde trigger) wél een regel krijgen.
         // Géén melding: die zou aankomen terwijl er niets aan de hand lijkt, en de vier
         // gebeurtenissen die 's nachts echt tellen laten verwateren.
-        lastMessage = zin
+        lastMessage = L10n.t("wachter.stil", hoelang)
     }
 
     /// Whether any safety net says the flag should come off right now.
@@ -1872,7 +1883,9 @@ final class AppModel: ObservableObject {
             // room. The clock is in the body because "just now" is meaningless by morning.
             let clock = DateFormatter()
             clock.dateFormat = "HH:mm"
-            Notify.post(.sessionEnded, "Om \(clock.string(from: Date())): \(reason). De Mac mag weer slapen.")
+            Notify.post(.sessionEnded,
+                        L10n.t("melding.sessieafgelopen.klok",
+                               clock.string(from: Date()), reason))
         }
     }
 
@@ -1932,8 +1945,7 @@ final class AppModel: ObservableObject {
                 // Inside the throttle on purpose. Outside it this would post every twenty
                 // seconds all night for one unchanging problem.
                 Notify.post(.releaseFailed,
-                            "Poging \(releaseAttempts) om te stoppen mislukte (\(reason)). Zet het "
-                            + "zelf terug in Terminal met: sudo pmset -a disablesleep 0")
+                            L10n.t("melding.stoppen.mislukt.klok", releaseAttempts, reason))
                 // Re-checking the grant costs two more processes, so only do it alongside
                 // the throttled alarm rather than on every failed attempt.
                 await refreshGrantAsync()
@@ -1990,7 +2002,7 @@ final class AppModel: ObservableObject {
         sessionLimitMinutes = nil
         sessionNotLaterThan = nil
         sessionCapReason = nil
-        deadlineReason = "de ingestelde tijd was om"
+        deadlineReason = L10n.t("reden.tijdom")
         sessionTrigger = nil
         clearBinding()
         displayReassertTimer?.invalidate()
@@ -2144,7 +2156,7 @@ final class AppModel: ObservableObject {
             guard let identity = ProcessWatch.identify(pid) else {
                 EventLog.shared.warn("Koppelen van de lopende sessie aan pid \(pid) geweigerd: "
                                      + "dat proces bestaat niet (meer).")
-                return .geweigerd(reden: "Proces \(pid) bestaat niet (meer). De sessie loopt gewoon door.")
+                return .geweigerd(reden: L10n.t("weiger.pid.weg.sessieloopt", pid))
             }
             nieuweKoppeling = identity
         }
@@ -2152,8 +2164,7 @@ final class AppModel: ObservableObject {
         var nieuweEindtijd: (date: Date, reason: String)?
         if request.limitMinutes != nil || request.notLaterThan != nil {
             guard let start = sessionStart, let huidige = deadline else {
-                return .geweigerd(reden: "Er loopt een sessie zonder eindtijd; die wordt vanzelf gestopt. "
-                                  + "Probeer het zo opnieuw.")
+                return .geweigerd(reden: L10n.t("weiger.sessie.zondereindtijd"))
             }
             let gevraagd = computeDeadline(start: start,
                                            limitMinutes: request.limitMinutes ?? sessionLimitMinutes,
@@ -2161,8 +2172,7 @@ final class AppModel: ObservableObject {
                                            capReason: request.notLaterThan != nil
                                                ? request.notLaterThanReason : sessionCapReason)
             guard gevraagd.date <= huidige else {
-                return .geweigerd(reden: "Een lopende sessie wordt niet verlengd — stop de sessie eerst. "
-                                  + "Hij loopt nu tot \(Self.clockText(huidige)).")
+                return .geweigerd(reden: L10n.t("weiger.nietverlengen", Self.clockText(huidige)))
             }
             nieuweEindtijd = gevraagd
         }
@@ -2243,8 +2253,7 @@ final class AppModel: ObservableObject {
             lastMessage = L10n.t("melding.lader")
             Feedback.failed()
             EventLog.shared.warn("Activeren geweigerd: batterij \(battery.percent)%.")
-            return .geweigerd(reden: "Accu \(battery.percent)%, onder je grens van \(Prefs.batteryFloor)%. "
-                              + "Sluit de lader aan, of verlaag de accugrens.")
+            return .geweigerd(reden: L10n.t("weiger.accu", battery.percent, Prefs.batteryFloor))
         }
         // Read the live state, not the cached one: `thermal` is only fed by ThermalWatch,
         // which is started inside a session and reset to .nominal when one ends — so the
@@ -2255,7 +2264,7 @@ final class AppModel: ObservableObject {
             lastMessage = L10n.t("melding.afkoelen")
             Feedback.failed()
             EventLog.shared.warn("Activeren geweigerd: temperatuur kritiek.")
-            return .geweigerd(reden: "De Mac is te warm. Wacht tot hij is afgekoeld en probeer het opnieuw.")
+            return .geweigerd(reden: L10n.t("weiger.temperatuur"))
         }
 
         // Bestaat het proces waaraan gekoppeld moet worden? Vóór de schrijfactie, want een
@@ -2269,7 +2278,7 @@ final class AppModel: ObservableObject {
                 lastMessage = L10n.t("melding.procesweg", pid)
                 Feedback.failed()
                 EventLog.shared.warn("Activeren geweigerd: pid \(pid) bestaat niet (meer).")
-                return .geweigerd(reden: "Proces \(pid) bestaat niet (meer); er is niets gestart.")
+                return .geweigerd(reden: L10n.t("weiger.pid.weg.nietsgestart", pid))
             }
             koppeling = identity
         }
@@ -2292,9 +2301,7 @@ final class AppModel: ObservableObject {
             lastMessage = L10n.t("melding.grant.eerst", grantText)
             Feedback.failed()
             EventLog.shared.warn("Activeren geweigerd: \(grantText).")
-            return .geweigerd(reden: "\(grantText). Zonder die regel kunnen de tijdslimiet, de "
-                              + "accugrens en de temperatuurbewaking de Mac later niet vanzelf weer "
-                              + "laten slapen. Installeer hem bij Instellingen → Diagnose.")
+            return .geweigerd(reden: L10n.t("weiger.grant.ontbreekt", grantText))
         }
 
         // De enige `write(true, ...)` in de hele codebase. Elke ingang komt hier langs, dus
@@ -2308,8 +2315,7 @@ final class AppModel: ObservableObject {
             lastMessage = L10n.t("melding.grant.installeer")
             await refreshGrantAsync()
             Feedback.failed()
-            return .geweigerd(reden: "Geen toestemming om de slaapblokkade aan te zetten. "
-                              + "Installeer de wachtwoordvrijstelling bij Instellingen → Diagnose.")
+            return .geweigerd(reden: L10n.t("weiger.geentoestemming"))
         case .cancelled:
             // Never claim "off" on the strength of a dialog the user dismissed. The write
             // may already have gone through before the sheet was cancelled, and the sheet
@@ -2321,24 +2327,25 @@ final class AppModel: ObservableObject {
             if SleepFlag.read() != false {
                 status = .error(L10n.t("fout.zondersessie"))
                 lastMessage = L10n.t("melding.geannuleerd.mogelijkaan")
-                await attemptRelease(reason: "geannuleerd tijdens aanzetten")
+                await attemptRelease(reason: L10n.t("reden.geannuleerd.aanzetten"))
             } else {
                 status = .off
                 lastMessage = L10n.t("melding.geannuleerd")
             }
-            return .geweigerd(reden: "Geannuleerd bij het vragen om toestemming.")
+            return .geweigerd(reden: L10n.t("weiger.geannuleerd"))
         case .commandSucceededButFlagWrong(let actual):
             status = .error(L10n.t("fout.onverwacht"))
             lastMessage = L10n.t("melding.vlag.anders",
                                  actual.map { $0 ? "1" : "0" } ?? L10n.t("melding.onleesbaar"))
             Feedback.failed()
-            return .geweigerd(reden: "Het commando gaf geen fout, maar de slaapblokkade staat op "
-                              + "\(actual.map { $0 ? "1" : "0" } ?? "onleesbaar") in plaats van op 1.")
+            return .geweigerd(reden: L10n.t(
+                "weiger.vlag.anders",
+                actual.map { $0 ? "1" : "0" } ?? L10n.t("melding.onleesbaar")))
         case .failed(let message):
             status = .error(L10n.t("fout.nietgelukt"))
             lastMessage = message
             Feedback.failed()
-            return .geweigerd(reden: "Wakker houden is niet gelukt: \(message)")
+            return .geweigerd(reden: L10n.t("weiger.nietgelukt", message))
         }
 
         intendedOn = true
@@ -2452,7 +2459,7 @@ final class AppModel: ObservableObject {
         // the user has already ended is exactly the surprise this app must never produce.
         guard intendedOn, sessionStart == start else {
             EventLog.shared.info("Activering afgebroken: de sessie was al beëindigd.")
-            return .geweigerd(reden: "De sessie was alweer beëindigd voordat hij goed en wel liep.")
+            return .geweigerd(reden: L10n.t("weiger.albeeindigd"))
         }
 
         if grantStatus != .granted {
@@ -2706,15 +2713,15 @@ final class AppModel: ObservableObject {
                 // extra subproces bij, urenlang, met de klep dicht.
                 self.cpuSpeedLimit = limit
                 self.lastMessage = L10n.t("melding.warm")
-                    + (limit.map { $0 < 100 ? " en draait nu op \($0)% snelheid." : "." } ?? ".")
-                    + " Wordt het kritiek, dan stopt Dopamine Code vanzelf."
+                    + (limit.map {
+                        $0 < 100 ? L10n.t("melding.warm.snelheid", $0) : L10n.t("melding.warm.punt")
+                    } ?? L10n.t("melding.warm.punt"))
+                    + " " + L10n.t("melding.warm.kritiek")
             }
         case .critical:
             EventLog.shared.error("Thermische druk KRITIEK — slaap onmiddellijk weer toestaan.")
-            Notify.post(.thermalCritical,
-                        "Het wakker houden is gestopt zodat macOS zelf weer kan ingrijpen: die "
-                        + "automatische noodslaap staat uit zolang de Mac wakker gehouden wordt.")
-            Task { await forceRelease(reason: "de Mac werd te warm") }
+            Notify.post(.thermalCritical, L10n.t("melding.warm.gestopt"))
+            Task { await forceRelease(reason: L10n.t("reden.warm")) }
         }
     }
 
@@ -2826,12 +2833,12 @@ final class AppModel: ObservableObject {
             case .installed:
                 await refreshGrantAsync()
                 lastMessage = grantStatus == .granted
-                    ? "Wachtwoordvrijstelling geïnstalleerd."
-                    : "De regel is geschreven, maar het systeem bevestigt hem nog niet."
+                    ? L10n.t("grant.geinstalleerd")
+                    : L10n.t("grant.geschreven.nietbevestigd")
                 // A stuck flag can now be cleared, so drop the backoff and try at once.
                 allowImmediateRetry()
                 if SleepFlag.read() == true && !intendedOn {
-                    await attemptRelease(reason: "opruimen na installatie van de vrijstelling")
+                    await attemptRelease(reason: L10n.t("reden.nainstallatie"))
                     // A successful release clears `lastMessage` — it has to, or a stale
                     // failure line survives the repair. Restate the outcome here, or the
                     // one click that fixed everything would report nothing at all.
@@ -2895,7 +2902,7 @@ final class AppModel: ObservableObject {
 
     /// Wat Instellingen → Diagnose over het besturingskanaal laat zien.
     var controlChannelText: String {
-        controlServer?.toestandsTekst ?? "niet gestart"
+        controlServer?.toestandsTekst ?? L10n.t("kanaal.nietgestart")
     }
 
     /// De kopieerbare regel om `dopamine` op je PATH te zetten. Nooit automatisch: een app
@@ -2933,32 +2940,28 @@ final class AppModel: ObservableObject {
                 // Een script hoort te kunnen zien dát er geen klok loopt, in plaats van een
                 // tijdstip te krijgen dat er niet is.
                 var zin = eind.map {
-                    "De Mac blijft wakker tot \(Self.momentText($0)) (\(Self.durationText(minuten)))."
-                } ?? "De Mac blijft wakker zonder eindtijd (vakantiestand)."
-                if let binding { zin += " Stopt eerder als \(binding.identity.label) klaar is." }
+                    L10n.t("kanaal.gestart.tot", Self.momentText($0), Self.durationText(minuten))
+                } ?? L10n.t("kanaal.gestart.zondereindtijd")
+                if let binding { zin += " " + L10n.t("kanaal.stopt.eerder", binding.identity.label) }
                 if let eind, let cap = verzoek.nietLaterDan, cap > eind {
                     // Eerlijk zeggen dat de tijdslimiet vóór het gevraagde tijdstip ligt,
                     // in plaats van een eindtijd te beloven die niet gehaald wordt.
-                    zin += " Je vroeg tot \(Self.clockText(cap)), maar de tijdslimiet van "
-                        + "\(Self.durationText(minuten)) ligt daarvóór."
+                    zin += " " + L10n.t("kanaal.limiet.ervoor",
+                                        Self.clockText(cap), Self.durationText(minuten))
                 }
                 return controlResponse(gelukt: true, zin: zin, code: 0)
 
             case .liepAl(let eind):
-                var zin = "Er liep al een sessie; er is geen tweede gestart."
-                if let eind { zin += " Die loopt tot \(Self.momentText(eind))." }
-                if let binding { zin += " Hij stopt ook als \(binding.identity.label) klaar is." }
+                var zin = L10n.t("kanaal.liepal")
+                if let eind { zin += " " + L10n.t("kanaal.liepal.tot", Self.momentText(eind)) }
+                if let binding { zin += " " + L10n.t("kanaal.stopt.ook", binding.identity.label) }
                 return controlResponse(gelukt: true, zin: zin, code: 0)
 
             case .geweigerd(let reden):
                 return controlResponse(gelukt: false, zin: reden, code: 1)
 
             case .bezet:
-                return controlResponse(
-                    gelukt: false,
-                    zin: "Dopamine Code is net met de slaapblokkade bezig. Probeer het zo opnieuw.",
-                    code: 1
-                )
+                return controlResponse(gelukt: false, zin: L10n.t("kanaal.bezet"), code: 1)
             }
 
         case .uit:
@@ -2966,17 +2969,20 @@ final class AppModel: ObservableObject {
             // Ook zonder sessie doorgaan als de vlag aan staat: dan is er juist iets op te
             // ruimen. Alleen als er aantoonbaar niets aan staat is dit een lege handeling.
             if !intendedOn && SleepFlag.read() == false {
-                return controlResponse(gelukt: true, zin: "Er liep niets; het wakker houden stond al uit.", code: 0)
+                return controlResponse(gelukt: true, zin: L10n.t("kanaal.liepniets"), code: 0)
             }
             // Zonder wachtwoordvenster: een buildscript kan er geen invullen.
+            //
+            // De reden blijft Nederlands: `stopSession` zet hem in het logboek en niet in
+            // `lastMessage` — dat pad heeft zijn eigen sleutels.
             let gelukt = await stopSession(reason: "via de opdrachtregel", allowPrompt: false)
             if gelukt {
-                return controlResponse(gelukt: true, zin: "Het wakker houden staat uit; de Mac mag weer slapen.", code: 0)
+                return controlResponse(gelukt: true, zin: L10n.t("kanaal.uit"), code: 0)
             }
             return controlResponse(
                 gelukt: false,
-                zin: (lastMessage ?? "Uitzetten lukte niet.")
-                    + " Zet het zo nodig zelf terug: sudo pmset -a disablesleep 0",
+                zin: (lastMessage ?? L10n.t("kanaal.uitzetten.mislukt"))
+                    + " " + L10n.t("kanaal.zetzelfterug"),
                 code: 1
             )
         }
@@ -2984,21 +2990,24 @@ final class AppModel: ObservableObject {
 
     private func controlStatusSentence() -> String {
         if intendedOn {
-            var zin = "De Mac wordt wakker gehouden"
-            if let deadline { zin += " tot \(Self.momentText(deadline))" }
+            // Per stuk een sleutel, want de staarten zijn optioneel: er zijn zestien
+            // combinaties en die als hele zinnen uitschrijven zou vier bestanden met
+            // zestien bijna-gelijke regels opleveren die bij elke wijziging uit de pas
+            // gaan lopen. De aanhef en elke staart zijn afzonderlijk te vertalen.
+            var zin = L10n.t("kanaal.status.aan")
+            if let deadline { zin += L10n.t("kanaal.status.tot", Self.momentText(deadline)) }
             if let remainingText { zin += " (\(remainingText))" }
-            if let binding { zin += ", en stopt zodra \(binding.identity.label) klaar is" }
+            if let binding { zin += L10n.t("kanaal.status.koppeling", binding.identity.label) }
             if let sessionTrigger { zin += " — \(sessionTrigger.zin)" }
             return zin + "."
         }
         switch SleepFlag.read() {
         case true:
-            return "De slaapblokkade staat aan zonder dat er een sessie loopt. "
-                + "Dopamine Code probeert dat terug te zetten."
+            return L10n.t("kanaal.status.vlagzondersessie")
         case false:
-            return "Er loopt niets; het wakker houden staat uit."
+            return L10n.t("kanaal.liepniets")
         default:
-            return "De slaapblokkade is niet uit te lezen."
+            return L10n.t("kanaal.status.onleesbaar")
         }
     }
 
@@ -3113,9 +3122,8 @@ final class AppModel: ObservableObject {
             switch LaunchAtLogin.enable() {
             case .success(let mechanism):
                 lastMessage = LaunchAtLogin.requiresApproval
-                    ? "Zet Dopamine Code nu nog aan bij Systeeminstellingen → Algemeen → "
-                      + "Inloggen en extensies."
-                    : "Dopamine Code start voortaan mee bij het inloggen (via \(mechanism.rawValue))."
+                    ? L10n.t("login.nogaanzetten")
+                    : L10n.t("login.gelukt", mechanism.rawValue)
             case .failure(let error):
                 Prefs.launchAtLogin = false
                 lastMessage = L10n.t("melding.login.mislukt", error.localizedDescription)
@@ -3194,10 +3202,8 @@ final class AppModel: ObservableObject {
             EventLog.shared.error("Vlag kon bij afsluiten NIET teruggezet worden — de Mac slaapt niet.")
             if !ScreenState.isLocked && !(SleepFlag.clamshellClosed() ?? lidClosed) {
                 let alert = NSAlert()
-                alert.messageText = "De Mac kan nog steeds niet gaan slapen"
-                alert.informativeText =
-                    "Dopamine Code kon het wakker houden bij het afsluiten niet uitzetten. "
-                    + "Zet het zelf terug: open Terminal en voer deze regel uit."
+                alert.messageText = L10n.t("afsluiten.alert.kop")
+                alert.informativeText = L10n.t("afsluiten.alert.tekst")
                     + "\n\nsudo pmset -a disablesleep 0"
                 alert.alertStyle = .critical
                 alert.addButton(withTitle: "OK")

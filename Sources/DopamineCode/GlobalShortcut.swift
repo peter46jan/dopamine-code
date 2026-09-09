@@ -59,8 +59,7 @@ final class GlobalShortcut {
         // hoofdletter D. Dit is de enige weigering die niet over een fout gaat maar over
         // schade, en daarom staat hij vóór het registreren.
         guard carbon & UInt32(cmdKey | optionKey | controlKey) != 0 else {
-            return .mislukt("Een sneltoets heeft minstens ⌘, ⌥ of ⌃ nodig. Zonder zo'n toets "
-                            + "zou hij die toets in elke app opslokken.")
+            return .mislukt(L10n.t("sneltoets.modifiernodig"))
         }
 
         var spec = EventTypeSpec(eventClass: OSType(kEventClassKeyboard),
@@ -71,7 +70,7 @@ final class GlobalShortcut {
         )
         guard handlerStatus == noErr else {
             handler = nil
-            return .mislukt("macOS wilde de sneltoets niet aannemen (foutcode \(handlerStatus)).")
+            return .mislukt(L10n.t("sneltoets.nietaangenomen", handlerStatus))
         }
 
         let id = EventHotKeyID(signature: Self.signature, id: 1)
@@ -83,10 +82,9 @@ final class GlobalShortcut {
             // Deze code komt terug als de combinatie al bezet is. In gewone taal erbij wat je
             // eraan doet, want "foutcode -9878" vertelt niemand iets.
             if status == OSStatus(eventHotKeyExistsErr) {
-                return .mislukt("\(combinatie) is al in gebruik door iets anders. Kies een "
-                                + "andere combinatie.")
+                return .mislukt(L10n.t("sneltoets.albezet", combinatie))
             }
-            return .mislukt("\(combinatie) kon niet ingesteld worden (foutcode \(status)).")
+            return .mislukt(L10n.t("sneltoets.mislukt", combinatie, status))
         }
         return .gezet(Self.beschrijving(keyCode: keyCode, modifierFlags: modifierFlags))
     }

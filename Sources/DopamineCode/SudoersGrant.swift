@@ -50,8 +50,7 @@ enum SudoersGrant {
             // as `NOPASSWD:` in the short rule format. Accept either.
             let text = r.combined
             guard text.contains("!authenticate") || text.contains("NOPASSWD") else {
-                lastError = "sudo staat 'pmset -a disablesleep \(value)' wel toe, maar niet zonder "
-                    + "wachtwoord — waarschijnlijk via de standaardregel voor beheerders, niet via de Dopamine Code-regel."
+                lastError = L10n.t("grant.wachtwoordnodig", value)
                 break
             }
             if value == "0" { return .granted }
@@ -61,7 +60,7 @@ enum SudoersGrant {
         // the warning and the install button. Being wrong in that direction costs a needless
         // warning; being wrong the other way lets the user walk away from a Mac that will
         // never sleep again.
-        if fileExists { return .present(butNotEffective: lastError.isEmpty ? "sudo weigert de regel" : lastError) }
+        if fileExists { return .present(butNotEffective: lastError.isEmpty ? L10n.t("grant.sudoweigert") : lastError) }
         return .missing
     }
 
@@ -95,10 +94,10 @@ enum SudoersGrant {
     private static func runScriptAsRoot(arguments: String, prompt: String) -> InstallOutcome {
         let payload = GrantScript.base64
         guard !payload.isEmpty else {
-            return .failed("Het grant-script is niet in de app ingebouwd. Bouw opnieuw met ./build.sh")
+            return .failed(L10n.t("grant.scriptontbreekt"))
         }
         guard payload.range(of: "^[A-Za-z0-9+/=]+$", options: .regularExpression) != nil else {
-            return .failed("Ingebouwd grant-script is beschadigd.")
+            return .failed(L10n.t("grant.scriptbeschadigd"))
         }
 
         let user = NSUserName()
@@ -125,7 +124,7 @@ enum SudoersGrant {
     static func install() -> InstallOutcome {
         let outcome = runScriptAsRoot(
             arguments: "",
-            prompt: "Dopamine Code installeert een sudoers-regel voor precies twee pmset-commando's."
+            prompt: L10n.t("grant.prompt.installeren")
         )
         if case .installed = outcome {
             EventLog.shared.info("Sudoers-regel geïnstalleerd.")
@@ -136,7 +135,7 @@ enum SudoersGrant {
     static func remove() -> InstallOutcome {
         let outcome = runScriptAsRoot(
             arguments: "--remove",
-            prompt: "Dopamine Code verwijdert zijn sudoers-regel."
+            prompt: L10n.t("grant.prompt.verwijderen")
         )
         if case .installed = outcome {
             EventLog.shared.info("Sudoers-regel verwijderd.")

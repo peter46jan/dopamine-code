@@ -91,6 +91,33 @@ enum RestartGuard {
         var blokkadeStondAan: Bool
     }
 
+    /// Wat een ronde concludeerde: een sleutel plus hoogstens één getal.
+    ///
+    /// **Waarom een sleutel en niet de zin.** De wachter is een ánder proces dan de app: hij
+    /// draait dertig seconden, schrijft dit weg en is weer weg, en Instellingen → Diagnose
+    /// leest het uur later terug. Zou hij de zin al vertaald wegschrijven, dan stond die
+    /// voorgoed in de taal die tóen gold — verander je de taal van de app, dan blijft deze
+    /// regel achter in de oude. De sleutel is taalvrij; vertalen gebeurt bij het lezen, in
+    /// `statusSentence()`.
+    ///
+    /// Eén getal is genoeg: drie van de veertien meldingen hebben er één (een teller), de
+    /// rest heeft er geen. Een lijst `[CVarArg]` zou hier gecodeerd moeten worden en dat is
+    /// meer machinerie dan er iets te winnen valt.
+    private struct Melding {
+        let sleutel: String
+        let getal: Int?
+
+        init(_ sleutel: String, _ getal: Int? = nil) {
+            self.sleutel = sleutel
+            self.getal = getal
+        }
+
+        /// Voor `laatsteMelding`, dat in `verify.sh` en het logboek terechtkomt.
+        var nederlands: String {
+            getal.map { L10n.nl(sleutel, $0) } ?? L10n.nl(sleutel)
+        }
+    }
+
     /// Wat de wachter zelf onthoudt.
     ///
     /// Met opzet geen enkel woord over sessies: geen begintijd, geen eindtijd, geen duur, geen
@@ -98,8 +125,17 @@ enum RestartGuard {
     /// waar dit ontwerp uit voortkomt. Wat hier staat gaat alleen over de wachter zelf.
     private struct WatchState: Codable {
         var laatsteRonde: Date?
-        /// Wat hij de vorige keer concludeerde, in gewone taal, voor Diagnose en `verify.sh`.
+        /// Wat hij de vorige keer concludeerde, als Nederlandse zin.
+        ///
+        /// Blijft staan naast `meldingSleutel`, en niet uit gemakzucht: `verify.sh` leest dit
+        /// veld met `plutil -extract laatsteMelding` en zet het achter zijn wachter-regel. Een
+        /// sleutel op die plek zou daar "wachter.melding.appdraait" van maken. Dit veld is dus
+        /// de leesbare vorm voor gereedschap, `meldingSleutel` die voor het paneel.
         var laatsteMelding: String?
+        /// Dezelfde melding, taalvrij, voor Instellingen → Diagnose.
+        var meldingSleutel: String?
+        /// De invulwaarde bij `meldingSleutel`, als die er een heeft.
+        var meldingGetal: Int?
         var bevestigingen = 0
         var laatsteHerstart: Date?
         var herstartPogingen = 0
@@ -118,6 +154,8 @@ enum RestartGuard {
             let c = try decoder.container(keyedBy: CodingKeys.self)
             laatsteRonde = try c.decodeIfPresent(Date.self, forKey: .laatsteRonde)
             laatsteMelding = try c.decodeIfPresent(String.self, forKey: .laatsteMelding)
+            meldingSleutel = try c.decodeIfPresent(String.self, forKey: .meldingSleutel)
+            meldingGetal = try c.decodeIfPresent(Int.self, forKey: .meldingGetal)
             bevestigingen = try c.decodeIfPresent(Int.self, forKey: .bevestigingen) ?? 0
             laatsteHerstart = try c.decodeIfPresent(Date.self, forKey: .laatsteHerstart)
             herstartPogingen = try c.decodeIfPresent(Int.self, forKey: .herstartPogingen) ?? 0
@@ -237,8 +275,11 @@ enum RestartGuard {
             EventLog.shared.warn("De afsluitmarkering was onleesbaar en is weggegooid.")
             return nil
         }
-        return "Vorige afsluiting om \(klok(marker.tijdstip)) (\(marker.reden)); de slaapblokkade stond toen "
-            + (marker.blokkadeStondAan ? "nog aan." : "uit.")
+        return L10n.t("wachter.vorigeafsluiting",
+                      klok(marker.tijdstip),
+                      marker.reden,
+                      marker.blokkadeStondAan ? L10n.t("wachter.stondtoen.aan")
+                                              : L10n.t("wachter.stondtoen.uit"))
     }
 
     private static func readExitMarker() -> ExitMarker? {
@@ -258,7 +299,7 @@ enum RestartGuard {
         let bundle = Bundle.main.bundleURL
         guard let executable = Bundle.main.infoDictionary?["CFBundleExecutable"] as? String else {
             EventLog.shared.error("Het vangnet kon niet ingesteld worden: CFBundleExecutable ontbreekt in de bundel.")
-            return "niet ingesteld — de bundel mist CFBundleExecutable"
+            return L10n.t("wachter.nietingesteld.geenexecutable")
         }
         let binary = bundle.appendingPathComponent("Contents/MacOS/\(executable)").path
 
@@ -270,7 +311,7 @@ enum RestartGuard {
                 "Deze kopie draait uit de bouwmap (\(bundle.path)); het vangnet wordt daar niet voor "
                 + "ingesteld, want die bundel verdwijnt bij de volgende bouw."
             )
-            return "niet ingesteld voor een kopie uit de bouwmap"
+            return L10n.t("wachter.nietingesteld.bouwmap")
         }
 
         // De types doen ertoe, en dat is hier gemeten. Schrijf je deze plist met de hand in de
@@ -309,7 +350,7 @@ enum RestartGuard {
             try data.write(to: plistURL, options: .atomic)
         } catch {
             EventLog.shared.error("Het vangnet kon niet geschreven worden: \(error.localizedDescription)")
-            return "niet ingesteld — \(error.localizedDescription)"
+            return L10n.t("wachter.nietingesteld.fout", error.localizedDescription)
         }
 
         // Opnieuw bootstrappen van een geladen label geeft "Operation not permitted", dus
@@ -339,7 +380,7 @@ enum RestartGuard {
                 "Het vangnet kon niet geladen worden (launchctl bootstrap: \(result.combined)). "
                 + "Een kill -9 van deze app blijft dan onopgemerkt."
             )
-            return "NIET geladen — launchctl weigerde: \(result.combined)"
+            return L10n.t("wachter.nietgeladen.launchctl", result.combined)
         }
         EventLog.shared.info("Vangnet geladen: \(label), kijkt elke \(intervalSeconds) seconden.")
         return statusSentence()
@@ -370,7 +411,22 @@ enum RestartGuard {
         let seconden = max(Int(Date().timeIntervalSince(ronde)), 0)
         let ouderdom = seconden < 120 ? L10n.t("wachter.secondengeleden", seconden)
                                       : L10n.t("wachter.minutengeleden", seconden / 60)
-        return L10n.t("wachter.keek", staat, ouderdom) + (state.laatsteMelding.map { " — \($0)" } ?? "")
+        return L10n.t("wachter.keek", staat, ouderdom) + meldingStaart(state)
+    }
+
+    /// De melding achter de wachter-regel, vertaald.
+    ///
+    /// Bij voorkeur uit `meldingSleutel`, want dat is de taalvrije vorm. Een statusbestand van
+    /// vóór deze wijziging heeft die sleutel niet en wél de Nederlandse zin; die wordt dan
+    /// woordelijk getoond. Dat duurt hooguit tot de volgende ronde — de wachter kijkt elke
+    /// dertig seconden en schrijft dan beide velden. Terugvallen op niets zou een lege regel
+    /// opleveren waar eerst iets stond, en dat leest als "de wachter heeft niets gevonden".
+    private static func meldingStaart(_ state: WatchState) -> String {
+        if let sleutel = state.meldingSleutel {
+            let zin = state.meldingGetal.map { L10n.t(sleutel, $0) } ?? L10n.t(sleutel)
+            return " — \(zin)"
+        }
+        return state.laatsteMelding.map { " — \($0)" } ?? ""
     }
 
     // MARK: - De ronde
@@ -388,11 +444,14 @@ enum RestartGuard {
     private static func watchdogRound() {
         var state = readState()
         state.laatsteRonde = Date()
-        var melding = "onafgemaakte ronde"
+        var melding = Melding("wachter.melding.onafgemaakt")
         // Ook als er verder niets gebeurt wordt de tijdstempel weggeschreven: een wachter die
         // stilletjes niet meer draait moet zichtbaar zijn in Diagnose en in verify.sh.
         defer {
-            state.laatsteMelding = melding
+            // Beide vormen: de Nederlandse zin voor `verify.sh`, de sleutel voor het paneel.
+            state.laatsteMelding = melding.nederlands
+            state.meldingSleutel = melding.sleutel
+            state.meldingGetal = melding.getal
             writeState(state)
         }
 
@@ -400,7 +459,7 @@ enum RestartGuard {
         // manieren om ernaast te zitten is "voor niets een keer kijken" de goedkope.
         guard SleepFlag.read() != false else {
             state.bevestigingen = 0
-            melding = "de slaapblokkade stond uit"
+            melding = Melding("wachter.melding.vlaguit")
             return
         }
 
@@ -415,7 +474,7 @@ enum RestartGuard {
                 state.herstartPogingen = 0
                 state.escalatieGedaan = false
             }
-            melding = "de app draait"
+            melding = Melding("wachter.melding.appdraait")
             return
         }
 
@@ -434,7 +493,7 @@ enum RestartGuard {
                 )
             }
             state.bevestigingen = 0
-            melding = "blokkade aan, maar niet van ons"
+            melding = Melding("wachter.melding.nietvanons")
             return
         }
 
@@ -445,18 +504,18 @@ enum RestartGuard {
         // Daarna komt de app tóch terug — de tijdslimiet, de accugrens en de temperatuur-
         // bewaking zijn er niet zolang er geen app is.
         if let marker, Date().timeIntervalSince(marker.tijdstip) < deliberateExitGrace {
-            melding = "respijt na bewust afsluiten (\(state.bevestigingen)×)"
+            melding = Melding("wachter.melding.respijt", state.bevestigingen)
             return
         }
 
         guard state.bevestigingen >= requiredConfirmations else {
-            melding = "blokkade aan zonder app (\(state.bevestigingen)×)"
+            melding = Melding("wachter.melding.zonderapp", state.bevestigingen)
             return
         }
 
         guard let executable = Bundle.main.infoDictionary?["CFBundleExecutable"] as? String else {
             EventLog.shared.error("De wachter kan de app niet starten: CFBundleExecutable ontbreekt.")
-            melding = "kan de bundel niet lezen"
+            melding = Melding("wachter.melding.bundelonleesbaar")
             return
         }
         let bundle = Bundle.main.bundleURL
@@ -469,7 +528,7 @@ enum RestartGuard {
                 "De Mac wordt wakker gehouden zonder app, maar deze wachter hoort bij een kopie in de "
                 + "bouwmap (\(bundle.path)) en start die niet."
             )
-            melding = "kopie uit de bouwmap, niets gestart"
+            melding = Melding("wachter.melding.bouwmap")
             return
         }
 
@@ -487,7 +546,7 @@ enum RestartGuard {
         } else if let laatste = state.laatsteHerstart,
                   Date().timeIntervalSince(laatste)
                     < min(firstBackoff * pow(2, Double(max(state.herstartPogingen - 1, 0))), maxBackoff) {
-            melding = "wachten tot de volgende poging mag"
+            melding = Melding("wachter.melding.wachten")
             return
         } else {
             actie = .open
@@ -508,7 +567,7 @@ enum RestartGuard {
                 + "in orde (\(probleem)). Er wordt niets gestart. Zet de slaapblokkade zelf "
                 + "uit met de regel die in Instellingen → Diagnose staat."
             )
-            melding = "bundel niet in orde"
+            melding = Melding("wachter.melding.bundelnietinorde")
             return
         }
 
@@ -521,10 +580,10 @@ enum RestartGuard {
             )
             EventLog.shared.flush()
             if spawnDirect(binary) {
-                melding = "rechtstreeks gestart"
+                melding = Melding("wachter.melding.rechtstreeks")
             } else {
                 EventLog.shared.error("Rechtstreeks starten van \(binary) mislukte ook.")
-                melding = "rechtstreeks starten mislukte"
+                melding = Melding("wachter.melding.rechtstreeksmislukt")
             }
 
         case .open:
@@ -541,10 +600,10 @@ enum RestartGuard {
             state.escalatieGedaan = false
             state.bevestigingen = 0
             if start.ok {
-                melding = "app teruggehaald (poging \(state.herstartPogingen))"
+                melding = Melding("wachter.melding.teruggehaald", state.herstartPogingen)
             } else {
                 EventLog.shared.error("Terughalen met 'open' mislukte: \(start.combined)")
-                melding = "terughalen mislukte"
+                melding = Melding("wachter.melding.terughalenmislukt")
             }
         }
     }

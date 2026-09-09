@@ -34,6 +34,41 @@ enum SessionTrigger: Equatable {
         }
     }
 
+    /// De aanleiding als clausule, voor "Vanzelf aangezet omdat …".
+    ///
+    /// Iets anders dan `zin`, en dat is met opzet. `zin` is een hele mededeling met een
+    /// hoofdletter ("Aangezet doordat je de klep dichtdeed") en past daarom niet achter
+    /// "omdat"; `metLidwoord` is een kaal zelfstandig naamwoord ("de klep") en past er ook
+    /// niet achter. Dit is de derde vorm die dezelfde vraag beantwoordt, en hij hoort hier
+    /// omdat dit het type is dat weet hoe een sessie begonnen is.
+    var omdat: String {
+        switch self {
+        case .schakelaar: return L10n.t("omdat.schakelaar")
+        case .cli: return L10n.t("omdat.cli")
+        case .klepArming: return L10n.t("omdat.klep")
+        case .app(_, let naam): return L10n.t("omdat.app", naam)
+        case .schema(let omschrijving): return L10n.t("omdat.schema", omschrijving)
+        case .sneltoets: return L10n.t("omdat.sneltoets")
+        }
+    }
+
+    /// Dezelfde clausule, altijd in het Nederlands.
+    ///
+    /// Nodig omdat de zin waarin hij staat zowel op het scherm als in het logboek terechtkomt,
+    /// en het logboek Nederlands blijft. Zie `L10n.nl`. De sleutels staan hier twee keer
+    /// voluit en niet in een variabele: `verify.sh` zoekt sleutelgebruik op de vorm
+    /// `L10n.t("...")` / `L10n.nl("...")` en ziet een sleutel achter een parameter niet.
+    var omdatNL: String {
+        switch self {
+        case .schakelaar: return L10n.nl("omdat.schakelaar")
+        case .cli: return L10n.nl("omdat.cli")
+        case .klepArming: return L10n.nl("omdat.klep")
+        case .app(_, let naam): return L10n.nl("omdat.app", naam)
+        case .schema(let omschrijving): return L10n.nl("omdat.schema", omschrijving)
+        case .sneltoets: return L10n.nl("omdat.sneltoets")
+        }
+    }
+
     /// Wat er in het logboek komt te staan, kaal — bedoeld voor tussen haakjes.
     var logNaam: String {
         switch self {
