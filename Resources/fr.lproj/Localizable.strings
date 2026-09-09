@@ -667,3 +667,7 @@
 "wachter.nietingesteld.bouwmap" = "non installé pour une copie du dossier de build";
 "wachter.nietingesteld.fout" = "non installé — %@";
 "wachter.nietgeladen.launchctl" = "NON chargé — launchctl a refusé : %@";
+
+/* --- Le résumé de plusieurs coupures réseau, pour le rapport à l'ouverture de l'écran. --- */
+"storing.samenvatting.min.een" = "Pas d'internet %1$d fois, environ %2$d minute en tout. La première fois : %3$@.";
+"storing.samenvatting.min.meer" = "Pas d'internet %1$d fois, environ %2$d minutes en tout. La première fois : %3$@.";

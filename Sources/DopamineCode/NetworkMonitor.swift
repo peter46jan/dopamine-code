@@ -208,6 +208,12 @@ final class NetworkMonitor {
         guard !finished.isEmpty else { return nil }
         if finished.count == 1 { return finished[0].describe() }
         let total = Int((finished.reduce(0) { $0 + $1.duration } / 60).rounded())
-        return "\(finished.count) keer geen internet, samen ongeveer \(total) minuten. De eerste keer: \(finished[0].describe())."
+        // Enkelvoud en meervoud apart, om dezelfde reden als in `describe()`: één sleutel met
+        // %d levert "ongeveer 1 minuten" op. De sleutel staat pal achter `L10n.t(` en niet
+        // achter een vraagteken, zodat `verify.sh --talen` hem ziet staan.
+        if total == 1 {
+            return L10n.t("storing.samenvatting.min.een", finished.count, total, finished[0].describe())
+        }
+        return L10n.t("storing.samenvatting.min.meer", finished.count, total, finished[0].describe())
     }
 }

@@ -666,3 +666,7 @@
 "wachter.nietingesteld.bouwmap" = "not installed for a copy from the build directory";
 "wachter.nietingesteld.fout" = "not installed — %@";
 "wachter.nietgeladen.launchctl" = "NOT loaded — launchctl refused: %@";
+
+/* --- The summary of several network outages, for the report when the lid opens. --- */
+"storing.samenvatting.min.een" = "No internet %1$d times, about %2$d minute in total. The first time: %3$@.";
+"storing.samenvatting.min.meer" = "No internet %1$d times, about %2$d minutes in total. The first time: %3$@.";

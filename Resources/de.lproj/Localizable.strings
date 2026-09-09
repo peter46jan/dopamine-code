@@ -667,3 +667,7 @@
 "wachter.nietingesteld.bouwmap" = "nicht eingerichtet für eine Kopie aus dem Build-Ordner";
 "wachter.nietingesteld.fout" = "nicht eingerichtet — %@";
 "wachter.nietgeladen.launchctl" = "NICHT geladen — launchctl hat abgelehnt: %@";
+
+/* --- Die Zusammenfassung mehrerer Netzwerkausfälle, für die Meldung beim Aufklappen. --- */
+"storing.samenvatting.min.een" = "%1$d× kein Internet, zusammen etwa %2$d Minute. Das erste Mal: %3$@.";
+"storing.samenvatting.min.meer" = "%1$d× kein Internet, zusammen etwa %2$d Minuten. Das erste Mal: %3$@.";

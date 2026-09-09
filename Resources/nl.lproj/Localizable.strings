@@ -703,3 +703,8 @@
 "wachter.nietingesteld.bouwmap" = "niet ingesteld voor een kopie uit de bouwmap";
 "wachter.nietingesteld.fout" = "niet ingesteld — %@";
 "wachter.nietgeladen.launchctl" = "NIET geladen — launchctl weigerde: %@";
+
+/* --- De samenvatting van meerdere netwerkstoringen, voor de melding bij openklappen.
+   Enkelvoud en meervoud apart, net als bij de losse storing hierboven. --- */
+"storing.samenvatting.min.een" = "%1$d keer geen internet, samen ongeveer %2$d minuut. De eerste keer: %3$@.";
+"storing.samenvatting.min.meer" = "%1$d keer geen internet, samen ongeveer %2$d minuten. De eerste keer: %3$@.";
