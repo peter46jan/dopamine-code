@@ -511,3 +511,13 @@
 "cli.geenantwoord" = "Dopamine Code gaf geen antwoord. Kijk in het logboek: ~/Library/Logs/Dopamine Code/dopamine-code.log";
 "cli.antwoordonleesbaar" = "Het antwoord van Dopamine Code was niet te lezen.";
 "cli.antwoordnietweertegeven" = "Het antwoord kon niet weergegeven worden.";
+
+/* --- De duurkiezer: wat er terugkomt als je een eindtijd of een duur kiest.
+   Stond vast in het Nederlands in AppModel.setAutoOffUntil. --- */
+"duur.klem.langer" = "Langer dan 24 uur kan niet.";
+"duur.klem.korter" = "Korter dan 5 minuten kan niet.";
+"duur.sessie.geklemd" = "%1$@ Deze sessie stopt om %2$@, %3$@ na het aanzetten.";
+"duur.sessie.grens" = "Deze sessie stopt al eerder, om %@: daar ligt een grens overheen die hiermee niet op te schuiven is.";
+"duur.sessie.stopt" = "Deze sessie stopt om %1$@ — %2$@ na het aanzetten.";
+"duur.staart" = "De duur staat nu op %1$@. Zet je het wakker houden nú aan, dan stopt het om %2$@; zet je het later aan, dan schuift het einde mee.";
+"duur.tot" = "Tot %1$@. %2$@";

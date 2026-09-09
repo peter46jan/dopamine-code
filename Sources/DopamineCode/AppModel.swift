@@ -807,8 +807,8 @@ final class AppModel: ObservableObject {
         let werkelijkeMinuten = autoOffMinutes
         let geklemd = werkelijkeMinuten != gevraagdeMinuten
         let klemZin = gevraagdeMinuten > werkelijkeMinuten
-            ? "Langer dan 24 uur kan niet."
-            : "Korter dan 5 minuten kan niet."
+            ? L10n.t("duur.klem.langer")
+            : L10n.t("duur.klem.korter")
         let gevraagdeKlok = Self.clockText(doel)
 
         // Loopt er een sessie, dan is `deadline` het enige eerlijke antwoord — en niet de som
@@ -817,25 +817,23 @@ final class AppModel: ObservableObject {
         if intendedOn, let echteEinde = deadline {
             let echteKlok = Self.clockText(echteEinde)
             if geklemd {
-                return "\(klemZin) Deze sessie stopt om \(echteKlok), "
-                    + "\(Self.durationText(werkelijkeMinuten)) na het aanzetten."
+                return L10n.t("duur.sessie.geklemd",
+                              klemZin, echteKlok, Self.durationText(werkelijkeMinuten))
             }
             // Een minuut speling: de eindtijd is op de seconde nauwkeurig, de kiezer niet.
             if abs(echteEinde.timeIntervalSince(doel)) >= 60 {
-                return "Deze sessie stopt al eerder, om \(echteKlok): daar ligt een grens "
-                    + "overheen die hiermee niet op te schuiven is."
+                return L10n.t("duur.sessie.grens", echteKlok)
             }
-            return "Deze sessie stopt om \(echteKlok) — \(Self.durationText(werkelijkeMinuten)) "
-                + "na het aanzetten."
+            return L10n.t("duur.sessie.stopt", echteKlok, Self.durationText(werkelijkeMinuten))
         }
 
         // Zonder lopende sessie is er nog geen anker, dus wordt het een duur en geen tijdstip.
         // Dat hardop zeggen: zet je hem een half uur later aan, dan schuift het einde mee.
-        let staart = "De duur staat nu op \(Self.durationText(werkelijkeMinuten)). Zet je het "
-            + "wakker houden nú aan, dan stopt het om "
-            + "\(Self.clockText(nu.addingTimeInterval(Double(werkelijkeMinuten) * 60)))"
-            + "; zet je het later aan, dan schuift het einde mee."
-        return geklemd ? "\(klemZin) \(staart)" : "Tot \(gevraagdeKlok). \(staart)"
+        let staart = L10n.t(
+            "duur.staart",
+            Self.durationText(werkelijkeMinuten),
+            Self.clockText(nu.addingTimeInterval(Double(werkelijkeMinuten) * 60)))
+        return geklemd ? "\(klemZin) \(staart)" : L10n.t("duur.tot", gevraagdeKlok, staart)
     }
 
     /// Het eerstvolgende moment ná nu met dit uur en deze minuut.

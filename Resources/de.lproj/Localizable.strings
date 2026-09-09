@@ -503,3 +503,12 @@
 "cli.geenantwoord" = "Dopamine Code gab keine Antwort. Schau ins Protokoll: ~/Library/Logs/Dopamine Code/dopamine-code.log";
 "cli.antwoordonleesbaar" = "Die Antwort von Dopamine Code war nicht lesbar.";
 "cli.antwoordnietweertegeven" = "Die Antwort konnte nicht dargestellt werden.";
+
+/* --- Die Dauerauswahl: was zurückkommt, wenn du eine Endzeit oder eine Dauer wählst. --- */
+"duur.klem.langer" = "Länger als 24 Stunden ist nicht möglich.";
+"duur.klem.korter" = "Kürzer als 5 Minuten ist nicht möglich.";
+"duur.sessie.geklemd" = "%1$@ Diese Sitzung endet um %2$@, %3$@ nach dem Einschalten.";
+"duur.sessie.grens" = "Diese Sitzung endet früher, um %@: darüber liegt eine Grenze, die sich hiermit nicht verschieben lässt.";
+"duur.sessie.stopt" = "Diese Sitzung endet um %1$@ — %2$@ nach dem Einschalten.";
+"duur.staart" = "Die Dauer steht jetzt auf %1$@. Schaltest du das Wachhalten jetzt ein, endet es um %2$@; schaltest du es später ein, verschiebt sich das Ende mit.";
+"duur.tot" = "Bis %1$@. %2$@";

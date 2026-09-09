@@ -503,3 +503,12 @@
 "cli.geenantwoord" = "Dopamine Code n'a pas répondu. Consultez le journal : ~/Library/Logs/Dopamine Code/dopamine-code.log";
 "cli.antwoordonleesbaar" = "La réponse de Dopamine Code était illisible.";
 "cli.antwoordnietweertegeven" = "La réponse n'a pas pu être affichée.";
+
+/* --- Le sélecteur de durée : ce qui revient quand vous choisissez une fin ou une durée. --- */
+"duur.klem.langer" = "Plus de 24 heures, ce n'est pas possible.";
+"duur.klem.korter" = "Moins de 5 minutes, ce n'est pas possible.";
+"duur.sessie.geklemd" = "%1$@ Cette session s'arrête à %2$@, %3$@ après l'activation.";
+"duur.sessie.grens" = "Cette session s'arrête plus tôt, à %@ : une limite la borne, et ceci ne la déplace pas.";
+"duur.sessie.stopt" = "Cette session s'arrête à %1$@ — %2$@ après l'activation.";
+"duur.staart" = "La durée est maintenant de %1$@. Activez le maintien en éveil tout de suite et il s'arrête à %2$@ ; activez-le plus tard et la fin se décale d'autant.";
+"duur.tot" = "Jusqu'à %1$@. %2$@";
