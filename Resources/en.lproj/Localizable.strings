@@ -593,3 +593,17 @@
 "login.gelukt" = "Dopamine Code will start at login from now on (via %@).";
 "afsluiten.alert.kop" = "The Mac still cannot go to sleep";
 "afsluiten.alert.tekst" = "Dopamine Code could not switch keeping awake off while shutting down. Put it back yourself: open Terminal and run this line.";
+
+/* --- The control channel itself: whether it listens, and why not. --- */
+"kanaal.nogniet" = "not started yet";
+"kanaal.luistert" = "listening on %@";
+"kanaal.werktniet" = "not working — %@";
+"kanaal.werktniet.log" = "The control channel could not be started: %@. The command line does not work now; the menu bar does.";
+"kanaal.fout.padtelang" = "the path is %1$d characters and only %2$d fit: %3$@";
+"kanaal.fout.mapniet" = "the directory could not be created: %@";
+"kanaal.fout.aleeniets" = "something is already listening on %@; this instance does not take over the control channel";
+"kanaal.fout.socket" = "socket() failed: %@";
+"kanaal.fout.padpastniet" = "the path does not fit in a socket address: %@";
+"kanaal.fout.bind" = "bind() on %1$@ failed: %2$@";
+"kanaal.fout.listen" = "listen() failed: %@";
+"kanaal.nietbegrepen" = "Dopamine Code did not understand this request.";

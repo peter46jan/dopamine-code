@@ -594,3 +594,17 @@
 "login.gelukt" = "Dopamine Code startet ab jetzt bei der Anmeldung mit (über %@).";
 "afsluiten.alert.kop" = "Der Mac kann noch immer nicht schlafen";
 "afsluiten.alert.tekst" = "Dopamine Code konnte das Wachhalten beim Beenden nicht ausschalten. Setze es selbst zurück: öffne Terminal und führe diese Zeile aus.";
+
+/* --- Der Steuerkanal selbst: ob er lauscht, und warum nicht. --- */
+"kanaal.nogniet" = "noch nicht gestartet";
+"kanaal.luistert" = "lauscht auf %@";
+"kanaal.werktniet" = "funktioniert nicht — %@";
+"kanaal.werktniet.log" = "Der Steuerkanal konnte nicht gestartet werden: %@. Die Kommandozeile funktioniert jetzt nicht; die Menüleiste schon.";
+"kanaal.fout.padtelang" = "der Pfad hat %1$d Zeichen und es passen nur %2$d: %3$@";
+"kanaal.fout.mapniet" = "das Verzeichnis konnte nicht erstellt werden: %@";
+"kanaal.fout.aleeniets" = "auf %@ lauscht schon etwas; diese Instanz übernimmt den Steuerkanal nicht";
+"kanaal.fout.socket" = "socket() schlug fehl: %@";
+"kanaal.fout.padpastniet" = "der Pfad passt nicht in eine Socket-Adresse: %@";
+"kanaal.fout.bind" = "bind() auf %1$@ schlug fehl: %2$@";
+"kanaal.fout.listen" = "listen() schlug fehl: %@";
+"kanaal.nietbegrepen" = "Dopamine Code hat diese Anfrage nicht verstanden.";

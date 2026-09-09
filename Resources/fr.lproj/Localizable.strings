@@ -594,3 +594,17 @@
 "login.gelukt" = "Dopamine Code démarrera désormais à l'ouverture de session (via %@).";
 "afsluiten.alert.kop" = "Le Mac ne peut toujours pas se mettre en veille";
 "afsluiten.alert.tekst" = "Dopamine Code n'a pas pu désactiver le maintien en éveil à la fermeture. Rétablissez-le vous-même : ouvrez Terminal et exécutez cette ligne.";
+
+/* --- Le canal de commande lui-même : s'il écoute, et sinon pourquoi. --- */
+"kanaal.nogniet" = "pas encore démarré";
+"kanaal.luistert" = "écoute sur %@";
+"kanaal.werktniet" = "ne fonctionne pas — %@";
+"kanaal.werktniet.log" = "Le canal de commande n'a pas pu démarrer : %@. La ligne de commande ne fonctionne pas ; la barre des menus oui.";
+"kanaal.fout.padtelang" = "le chemin fait %1$d caractères et seuls %2$d tiennent : %3$@";
+"kanaal.fout.mapniet" = "le dossier n'a pas pu être créé : %@";
+"kanaal.fout.aleeniets" = "quelque chose écoute déjà sur %@ ; cette instance ne reprend pas le canal de commande";
+"kanaal.fout.socket" = "socket() a échoué : %@";
+"kanaal.fout.padpastniet" = "le chemin ne tient pas dans une adresse de socket : %@";
+"kanaal.fout.bind" = "bind() sur %1$@ a échoué : %2$@";
+"kanaal.fout.listen" = "listen() a échoué : %@";
+"kanaal.nietbegrepen" = "Dopamine Code n'a pas compris cette requête.";

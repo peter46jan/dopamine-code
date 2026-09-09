@@ -623,3 +623,19 @@
 "login.gelukt" = "Dopamine Code start voortaan mee bij het inloggen (via %@).";
 "afsluiten.alert.kop" = "De Mac kan nog steeds niet gaan slapen";
 "afsluiten.alert.tekst" = "Dopamine Code kon het wakker houden bij het afsluiten niet uitzetten. Zet het zelf terug: open Terminal en voer deze regel uit.";
+
+/* --- Het besturingskanaal zelf: of het luistert, en waarom niet. Staat in
+   Instellingen → Diagnose. De foutredenen gaan ook naar het logboek, dus ze bestaan
+   twee keer — zie ControlServer.fail en L10n.nl. --- */
+"kanaal.nogniet" = "nog niet gestart";
+"kanaal.luistert" = "luistert op %@";
+"kanaal.werktniet" = "werkt niet — %@";
+"kanaal.werktniet.log" = "Besturingskanaal kon niet gestart worden: %@. De opdrachtregel werkt nu niet; de menubalk wel.";
+"kanaal.fout.padtelang" = "het pad is %1$d tekens en er passen er maar %2$d: %3$@";
+"kanaal.fout.mapniet" = "de map kon niet aangemaakt worden: %@";
+"kanaal.fout.aleeniets" = "er luistert al iets op %@; deze instantie neemt het besturingskanaal niet over";
+"kanaal.fout.socket" = "socket() mislukte: %@";
+"kanaal.fout.padpastniet" = "het pad past niet in een socketadres: %@";
+"kanaal.fout.bind" = "bind() op %1$@ mislukte: %2$@";
+"kanaal.fout.listen" = "listen() mislukte: %@";
+"kanaal.nietbegrepen" = "Dopamine Code begreep dit verzoek niet.";
