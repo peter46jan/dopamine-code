@@ -546,3 +546,10 @@
 "kanaal.status.koppeling" = ", und endet, sobald %@ fertig ist";
 "kanaal.status.vlagzondersessie" = "Die Schlafsperre ist an, ohne dass eine Sitzung läuft. Dopamine Code versucht, das zurückzusetzen.";
 "kanaal.status.onleesbaar" = "Die Schlafsperre lässt sich nicht auslesen.";
+
+/* --- Das Sicherheitsnetz, das die App nach kill -9 oder einem Absturz zurückholt. --- */
+"kanaal.afsluiten" = "Dopamine Code wird beendet.";
+"vangnet.weggevallen" = "Dopamine Code war verschwunden, während der Mac wach gehalten wurde.";
+"vangnet.staart.opgeruimd" = "Die Schlafsperre ist aufgeräumt; der Mac darf wieder schlafen.";
+"vangnet.staart.nogaan" = "Die Schlafsperre ist noch an — der Mac kann jetzt nicht schlafen.";
+"vangnet.terug.klok" = "Um %1$@ vom Sicherheitsnetz zurückgeholt. %2$@";

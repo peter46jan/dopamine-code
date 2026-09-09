@@ -545,3 +545,10 @@
 "kanaal.status.koppeling" = ", and stops once %@ is done";
 "kanaal.status.vlagzondersessie" = "The sleep block is on without a session running. Dopamine Code is trying to clear it.";
 "kanaal.status.onleesbaar" = "The sleep block cannot be read.";
+
+/* --- The watchdog that brings the app back after kill -9 or a crash. --- */
+"kanaal.afsluiten" = "Dopamine Code is shutting down.";
+"vangnet.weggevallen" = "Dopamine Code had gone away while the Mac was being kept awake.";
+"vangnet.staart.opgeruimd" = "The sleep block has been cleared; the Mac may sleep again.";
+"vangnet.staart.nogaan" = "The sleep block is still on — the Mac cannot sleep right now.";
+"vangnet.terug.klok" = "Brought back by the watchdog at %1$@. %2$@";

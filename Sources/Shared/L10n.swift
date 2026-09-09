@@ -31,3 +31,34 @@ enum L10n {
         String(format: NSLocalizedString(key, comment: ""), arguments: args)
     }
 }
+
+extension L10n {
+
+    /// Dezelfde tekst, maar altijd in het Nederlands.
+    ///
+    /// **Waarom dit bestaat.** Het logboek blijft Nederlands: `verify.sh` en de probes in
+    /// `audit/` lezen die regels woordelijk terug, en het is diagnostisch gereedschap voor
+    /// één paar ogen. Maar een handvol zinnen komt op twee plekken terecht — op het scherm
+    /// én in het logboek. `announceWatchdogRestartIfNeeded` is er het duidelijkste geval
+    /// van: dezelfde zin gaat naar `EventLog.error` en naar `lastMessage`.
+    ///
+    /// Zonder deze functie is de keuze daar: het logboek meevertalen (en dan leest de
+    /// ontwikkelaar zijn eigen logboek in een taal die hij niet koos), of de zin
+    /// Nederlands laten (en dan staat er Nederlands in een Engelse app). Met deze functie
+    /// bestaat de zin twee keer uit één sleutel: `t` voor de gebruiker, `nl` voor het
+    /// logboek.
+    ///
+    /// Valt de `nl.lproj`-map weg, dan is de gewone opzoeking het beste wat er nog is —
+    /// beter een vertaalde logregel dan een kale sleutel.
+    static func nl(_ key: String) -> String {
+        guard let pad = Bundle.main.path(forResource: "nl", ofType: "lproj"),
+              let bundel = Bundle(path: pad)
+        else { return NSLocalizedString(key, comment: "") }
+        return bundel.localizedString(forKey: key, value: nil, table: nil)
+    }
+
+    /// `nl` met invulwaarden. Zelfde volgorde-afspraak als bij `t`.
+    static func nl(_ key: String, _ args: CVarArg...) -> String {
+        String(format: nl(key), arguments: args)
+    }
+}

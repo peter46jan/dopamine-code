@@ -1046,7 +1046,7 @@ test_translations() {
         [ -f "$f" ] || continue
         sed 's://.*::' "$f"
       done \
-      | grep -oE '(Text|Label|Button|LabeledContent|Section)\("[a-z]+(\.[a-z]+)+"|L10n\.t\("[a-z]+(\.[a-z]+)+"|(naam|tekst): *"[a-z]+(\.[a-z]+)+"' \
+      | grep -oE '(Text|Label|Button|LabeledContent|Section)\("[a-z]+(\.[a-z]+)+"|L10n\.(t|nl)\("[a-z]+(\.[a-z]+)+"|(naam|tekst): *"[a-z]+(\.[a-z]+)+"' \
       | grep -oE '"[a-z]+(\.[a-z]+)+"' | tr -d '"' | sort -u)"
   if [ -z "$gebruikt" ]; then
     skip "Geen sleutelgebruik in de bronnen gevonden; nog niets omgezet?"

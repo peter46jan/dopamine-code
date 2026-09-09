@@ -565,3 +565,12 @@
 "kanaal.status.koppeling" = ", en stopt zodra %@ klaar is";
 "kanaal.status.vlagzondersessie" = "De slaapblokkade staat aan zonder dat er een sessie loopt. Dopamine Code probeert dat terug te zetten.";
 "kanaal.status.onleesbaar" = "De slaapblokkade is niet uit te lezen.";
+
+/* --- Het vangnet dat de app terughaalt na kill -9 of een crash. Deze zinnen gaan
+   naar het scherm EN naar het logboek; het logboek leest ze via L10n.nl en blijft dus
+   Nederlands. --- */
+"kanaal.afsluiten" = "Dopamine Code is aan het afsluiten.";
+"vangnet.weggevallen" = "Dopamine Code was weggevallen terwijl de Mac wakker gehouden werd.";
+"vangnet.staart.opgeruimd" = "De slaapblokkade is opgeruimd; de Mac mag weer slapen.";
+"vangnet.staart.nogaan" = "De slaapblokkade staat nog aan — de Mac kan nu niet slapen.";
+"vangnet.terug.klok" = "Om %1$@ teruggehaald door het vangnet. %2$@";

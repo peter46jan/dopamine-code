@@ -546,3 +546,10 @@
 "kanaal.status.koppeling" = ", et s'arrête dès que %@ a terminé";
 "kanaal.status.vlagzondersessie" = "Le blocage de veille est actif sans session en cours. Dopamine Code tente de le rétablir.";
 "kanaal.status.onleesbaar" = "Le blocage de veille est illisible.";
+
+/* --- Le garde-fou qui relance l'app après un kill -9 ou un plantage. --- */
+"kanaal.afsluiten" = "Dopamine Code est en train de se fermer.";
+"vangnet.weggevallen" = "Dopamine Code avait disparu alors que le Mac était maintenu éveillé.";
+"vangnet.staart.opgeruimd" = "Le blocage de veille a été levé ; le Mac peut à nouveau dormir.";
+"vangnet.staart.nogaan" = "Le blocage de veille est toujours actif — le Mac ne peut pas dormir pour l'instant.";
+"vangnet.terug.klok" = "Relancé par le garde-fou à %1$@. %2$@";

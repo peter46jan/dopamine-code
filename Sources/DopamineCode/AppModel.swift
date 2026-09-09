@@ -946,7 +946,7 @@ final class AppModel: ObservableObject {
         // te doen en drukt het antwoord af; de vlag blijft van deze app alleen.
         let server = ControlServer { [weak self] verzoek in
             guard let self else {
-                return .lokaal(zin: "Dopamine Code is aan het afsluiten.", code: 4)
+                return .lokaal(zin: L10n.t("kanaal.afsluiten"), code: 4)
             }
             return await self.handleControl(verzoek)
         }
@@ -982,18 +982,27 @@ final class AppModel: ObservableObject {
     private func announceWatchdogRestartIfNeeded() {
         guard RestartGuard.broughtBackByWatchdog else { return }
         let opgeruimd = kernelFlag == false
+        // De sleutels staan hier voluit en niet in een variabele, ook al kan dat korter.
+        // `verify.sh` zoekt sleutels op de vorm `L10n.t("...")` / `L10n.nl("...")`; een
+        // sleutel die via een variabele binnenkomt ziet die controle niet, en dan levert een
+        // typefout geen fout op maar een kale sleutel op het scherm.
+        //
+        // Twee keer dezelfde zin uit één sleutel: het logboek blijft Nederlands, het scherm
+        // volgt de taal van de gebruiker. Zie `L10n.nl`.
         let staart = opgeruimd
-            ? "De slaapblokkade is opgeruimd; de Mac mag weer slapen."
-            : "De slaapblokkade staat nog aan — de Mac kan nu niet slapen."
-        let zin = "Dopamine Code was weggevallen terwijl de Mac wakker gehouden werd. " + staart
-        EventLog.shared.error(zin)
-        lastMessage = zin
+            ? L10n.t("vangnet.staart.opgeruimd")
+            : L10n.t("vangnet.staart.nogaan")
+        let staartNL = opgeruimd
+            ? L10n.nl("vangnet.staart.opgeruimd")
+            : L10n.nl("vangnet.staart.nogaan")
+        EventLog.shared.error(L10n.nl("vangnet.weggevallen") + " " + staartNL)
+        lastMessage = L10n.t("vangnet.weggevallen") + " " + staart
         // Met de klok erin, net als bij `sessionEnded`: dit gebeurt 's nachts en "zojuist" zegt
         // 's ochtends niets meer.
         let clock = DateFormatter()
         clock.dateFormat = "HH:mm"
         Notify.post(.restartedAfterLoss,
-                    "Om \(clock.string(from: Date())) teruggehaald door het vangnet. " + staart)
+                    L10n.t("vangnet.terug.klok", clock.string(from: Date()), staart))
     }
 
     /// Recorded once per launch so that a failure after a macOS update can be traced to
